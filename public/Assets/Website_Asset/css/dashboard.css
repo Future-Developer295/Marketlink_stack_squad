@@ -909,3 +909,121 @@ img {
 .ml-table th {
     vertical-align: middle;
 }
+
+
+
+  
+        /* Avatar Icon */
+.ml-avatar-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: var(--ml-primary-dark);
+    color: #ffffff;
+    
+    /* Perfect Center Alignment */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    cursor: pointer;
+    line-height: 1 !important; /* Extra line space hatane ke liye */
+    padding: 0 !important;
+}
+
+/* FontAwesome icon alignment reset */
+.ml-avatar-circle i {
+    font-size: 16px;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+}
+
+.ml-avatar-circle:hover {
+    background-color: var(--ml-primary);
+    transform: scale(1.04);
+}
+
+.dropdown-toggle-no-caret::after {
+    display: none !important;
+}
+
+/* Dropdown Container */
+.ml-dropdown-menu {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    padding: 6px !important;
+    min-width: 200px !important;
+    margin-top: 8px !important;
+    background: #ffffff !important;
+}
+
+/* User Name Box (No "Logged in as") */
+.ml-dropdown-header {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.ml-dropdown-header .user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.ml-dropdown-header .user-role {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+}
+
+/* Subtle Divider */
+.ml-dropdown-divider {
+    border-top: 1px solid #f1f5f9;
+    margin: 4px 0;
+}
+
+/* Items & Hover Effects */
+.ml-dropdown-item {
+    border-radius: 8px;
+    padding: 8px 12px !important;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ml-dropdown-item i {
+    font-size: 14px;
+    width: 16px;
+    color: #64748b;
+}
+
+.ml-dropdown-item:hover {
+    background-color: #f8fafc !important;
+    color: #2563eb !important;
+}
+
+.ml-dropdown-item:hover i {
+    color: #2563eb;
+}
+
+/* Logout Item */
+.ml-dropdown-item.text-danger {
+    color: #dc2626 !important;
+}
+
+.ml-dropdown-item.text-danger i {
+    color: #dc2626;
+}
+
+.ml-dropdown-item.text-danger:hover {
+    background-color: #fef2f2 !important;
+    color: #b91c1c !important;
+}
+    
