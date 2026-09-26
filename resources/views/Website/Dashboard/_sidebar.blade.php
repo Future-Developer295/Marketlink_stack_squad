@@ -9,12 +9,12 @@
         </div>
     </div>
     <nav class="ml-dash-nav">
-        <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'is-active' : '' }}"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-        <a href="{{ url('/dashboard/orders') }}" class="{{ request()->is('dashboard/orders*') ? 'is-active' : '' }}"><i class="fa-regular fa-rectangle-list"></i> My Orders</a>
-        <a href="{{ url('/dashboard/reviews') }}" class="{{ request()->is('dashboard/reviews*') ? 'is-active' : '' }}"><i class="fa-regular fa-star"></i> My Reviews</a>
-        <a href="{{ url('/dashboard/favorites') }}" class="{{ request()->is('dashboard/favorites*') ? 'is-active' : '' }}"><i class="fa-regular fa-heart"></i> Favorites</a>
-        <a href="{{ url('/dashboard/notifications') }}" class="{{ request()->is('dashboard/notifications*') ? 'is-active' : '' }}"><i class="fa-regular fa-bell"></i> Notifications</a>
-        <a href="{{ url('/dashboard/profile') }}" class="{{ request()->is('dashboard/profile*') ? 'is-active' : '' }}"><i class="fa-regular fa-id-card"></i> Profile Settings</a>
+        <a href="{{ route('customer_dashboard') }}" class="{{ request()->routeIs('customer_dashboard') ? 'is-active' : '' }}"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <a href="{{ route('customer_orders') }}" class="{{ request()->routeIs('customer_orders', 'customer_order_detail') ? 'is-active' : '' }}"><i class="fa-regular fa-rectangle-list"></i> My Orders</a>
+        <a href="{{ route('customer_reviews') }}" class="{{ request()->routeIs('customer_reviews') ? 'is-active' : '' }}"><i class="fa-regular fa-star"></i> My Reviews</a>
+        <a href="{{ route('customer_favorites') }}" class="{{ request()->routeIs('customer_favorites') ? 'is-active' : '' }}"><i class="fa-regular fa-heart"></i> Favorites</a>
+        <a href="{{ route('customer_notifications') }}" class="{{ request()->routeIs('customer_notifications') ? 'is-active' : '' }}"><i class="fa-regular fa-bell"></i> Notifications</a>
+        <a href="{{ route('customer_profile') }}" class="{{ request()->routeIs('customer_profile') ? 'is-active' : '' }}"><i class="fa-regular fa-id-card"></i> Profile Settings</a>
     </nav>
     <form action="{{ url('/logout') }}" method="POST" class="mt-3">
         @csrf

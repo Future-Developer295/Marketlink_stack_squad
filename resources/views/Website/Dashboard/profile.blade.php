@@ -5,7 +5,7 @@
 @section('body')
 
 <div class="ml-container">
-    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ url('/dashboard') }}">Dashboard</a> / <span class="active">Profile Settings</span></nav>
+    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ route('customer_dashboard') }}">Dashboard</a> / <span class="active">Profile Settings</span></nav>
 </div>
 
 <section class="ml-section pt-2">
@@ -18,7 +18,7 @@
             </div>
 
             <div class="col-lg-9">
-                <form method="POST" action="{{ url('/dashboard/profile') }}">
+                <form method="POST" action="{{ route('customer_profile_update') }}">
                     @csrf
                     @method('PUT')
 

@@ -37,7 +37,7 @@ class DashboardController extends Controller
             return redirect()->route('farmer_dashboard');
         }
 
-        return redirect('/');
+        return redirect()->route('customer_dashboard');
     }
     public function farmerDashboard()
     {
