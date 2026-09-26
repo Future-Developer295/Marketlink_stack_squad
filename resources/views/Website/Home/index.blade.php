@@ -23,7 +23,7 @@
             </div>
             <div class="col-lg-6">
                 <div class="position-relative">
-                    <img src="https://images.unsplash.com/photo-1595855759920-86582396756c?auto=format&fit=crop&w=900&q=60" class="rounded-4 shadow" alt="Local farmer with fresh vegetables">
+                    <img src="{{asset('Assets/Website_Asset/home_img/ChatGPT Image Sep 27, 2026, 12_05_15 AM.png')}}" class="rounded-4 shadow" alt="Local farmer with fresh vegetables">
                     @if($farmers->isNotEmpty())
                     @php($spotlight = $farmers->first())
                     <div class="ml-card position-absolute bottom-0 start-0 m-3 p-3 d-flex align-items-center gap-3">
