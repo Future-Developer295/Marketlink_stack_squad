@@ -5,7 +5,7 @@
 @section('body')
 
 <div class="ml-container">
-    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ url('/dashboard/orders') }}">My Orders</a> / <span class="active">#{{ $order->id }}</span></nav>
+    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ route('customer_orders') }}">My Orders</a> / <span class="active">#{{ $order->id }}</span></nav>
 </div>
 
 <section class="ml-section pt-2">

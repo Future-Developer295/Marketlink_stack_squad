@@ -33,7 +33,7 @@
                 <div class="ml-card">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <strong>Recent Orders</strong>
-                        <a href="{{ url('/dashboard/orders') }}" class="ml-btn-link small">View All <i class="fa-solid fa-arrow-right"></i></a>
+                        <a href="{{ route('customer_orders') }}" class="ml-btn-link small">View All <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
 
                     @forelse($recentOrders as $order)
@@ -47,7 +47,7 @@
                             <span class="ml-badge ml-badge-mint">{{ ucfirst($order->status) }}</span>
                             <strong class="d-block mt-1">Rs. {{ number_format($order->total_amount, 0) }}</strong>
                         </div>
-                        <a href="{{ url('/dashboard/orders/'.$order->id) }}" class="ml-btn-link small">Details</a>
+                        <a href="{{ route('customer_order_detail', $order->id) }}" class="ml-btn-link small">Details</a>
                     </div>
                     @empty
                     @include('Website.Partials.empty-state', [

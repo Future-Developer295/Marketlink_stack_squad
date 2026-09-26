@@ -5,7 +5,7 @@
 @section('body')
 
 <div class="ml-container">
-    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ url('/dashboard') }}">Dashboard</a> / <span class="active">My Orders</span></nav>
+    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ route('customer_dashboard') }}">Dashboard</a> / <span class="active">My Orders</span></nav>
 </div>
 
 <section class="ml-section pt-2">
@@ -20,9 +20,9 @@
             <div class="col-lg-9">
                 <div class="ml-card mb-3">
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="{{ url('/dashboard/orders') }}" class="ml-chip {{ request('status') ? '' : 'is-active' }}">All ({{ $statusCounts->sum() }})</a>
+                        <a href="{{ route('customer_orders') }}" class="ml-chip {{ request('status') ? '' : 'is-active' }}">All ({{ $statusCounts->sum() }})</a>
                         @foreach($statusCounts as $status => $count)
-                        <a href="{{ url('/dashboard/orders').'?status='.$status }}" class="ml-chip {{ request('status') == $status ? 'is-active' : '' }}">{{ ucfirst($status) }} ({{ $count }})</a>
+                        <a href="{{ route('customer_orders', ['status' => $status]) }}" class="ml-chip {{ request('status') == $status ? 'is-active' : '' }}">{{ ucfirst($status) }} ({{ $count }})</a>
                         @endforeach
                     </div>
                 </div>
@@ -59,7 +59,7 @@
                                     <td>{{ $order->order_date?->format('d M Y') }}</td>
                                     <td>Rs. {{ number_format($order->total_amount, 0) }}</td>
                                     <td><span class="ml-badge ml-badge-mint">{{ ucfirst($order->status) }}</span></td>
-                                    <td><a href="{{ url('/dashboard/orders/'.$order->id) }}" class="ml-btn-link small">View</a></td>
+                                    <td><a href="{{ route('customer_order_detail', $order->id) }}" class="ml-btn-link small">View</a></td>
                                 </tr>
                                 @endforeach
                             </tbody>

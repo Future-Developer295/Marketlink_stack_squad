@@ -5,7 +5,7 @@
 @section('body')
 
 <div class="ml-container">
-    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ url('/dashboard') }}">Dashboard</a> / <span class="active">Favorites</span></nav>
+    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ route('customer_dashboard') }}">Dashboard</a> / <span class="active">Favorites</span></nav>
 </div>
 
 <section class="ml-section pt-2">
@@ -65,7 +65,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <form method="POST" action="{{ url('/dashboard/favorites/'.$favorite->id) }}">
+                                        <form method="POST" action="{{ route('customer_favorite_remove', $favorite->id) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="ml-btn-link small text-danger"><i class="fa-solid fa-trash"></i> Remove</button>

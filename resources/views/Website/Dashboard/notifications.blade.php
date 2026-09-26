@@ -5,7 +5,7 @@
 @section('body')
 
 <div class="ml-container">
-    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ url('/dashboard') }}">Dashboard</a> / <span class="active">Notifications</span></nav>
+    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ route('customer_dashboard') }}">Dashboard</a> / <span class="active">Notifications</span></nav>
 </div>
 
 <section class="ml-section pt-2">
@@ -37,7 +37,7 @@
                             </div>
                         </div>
                         @unless($notification->is_read)
-                        <form method="POST" action="{{ url('/dashboard/notifications/'.$notification->id.'/read') }}">
+                        <form method="POST" action="{{ route('customer_notification_read', $notification->id) }}">
                             @csrf
                             <button type="submit" class="ml-btn-link small">Mark as Read</button>
                         </form>
