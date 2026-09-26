@@ -35,7 +35,7 @@
                 <div class="nav-group-label">MAIN</div>
 
                 @can('view dashboard')
-                    <a class="nav-link-custom @yield('nav_dashboard_farmer')" href="{{ route('index') }}">
+                    <a class="nav-link-custom @yield('nav_dashboard_farmer')" href="{{ route('dashboard') }}">
                         <i class="bi bi-grid-1x2-fill"></i> Farmer Dashboard
                     </a>
                 @endcan

@@ -4,19 +4,116 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
 
-// Single entry point for "/dashboard": sends admin/farmer/customer to
-// their own dashboard. Registered under both names since different
-// layouts in the app reference either name to build the link.
+
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('index');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',])->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'role:farmer'])
+    ->prefix('dashboard/farmer')
+    ->as('farmer.')
+    ->group(function () {
+        Route::get('/', [DashboardController::class, 'farmerDashboard'])
+            ->name('dashboard')
+            ->middleware('permission:view dashboard');
 
-    Route::get('/dashboard/farmer', [DashboardController::class, 'farmerDashboard'])
-        ->name('farmer_dashboard')
-        ->middleware('permission:view dashboard');
+        Route::get('/profile', [DashboardController::class, 'farmerProfile'])
+            ->name('profile')
+            ->middleware('permission:view profile');
+        Route::post('/profile', [DashboardController::class, 'farmerProfileUpdate'])
+            ->name('profile.update')
+            ->middleware('permission:edit profile');
+
+        Route::get('/markets', [DashboardController::class, 'farmerMarkets'])
+            ->name('markets.index')
+            ->middleware('permission:view markets');
+        Route::get('/markets/join', [DashboardController::class, 'farmerMarketCreate'])
+            ->name('markets.create')
+            ->middleware('permission:join markets');
+        Route::post('/markets', [DashboardController::class, 'farmerMarketStore'])
+            ->name('markets.store')
+            ->middleware('permission:join markets');
+        Route::post('/markets/{id}/leave', [DashboardController::class, 'farmerMarketLeave'])
+            ->name('markets.leave')
+            ->middleware('permission:leave markets');
+
+        Route::get('/products', [DashboardController::class, 'farmerProducts'])
+            ->name('products.index')
+            ->middleware('permission:view products');
+        Route::get('/products/create', [DashboardController::class, 'farmerProductCreate'])
+            ->name('products.create')
+            ->middleware('permission:add products');
+        Route::post('/products', [DashboardController::class, 'farmerProductStore'])
+            ->name('products.store')
+            ->middleware('permission:add products');
+        Route::get('/products/{id}', [DashboardController::class, 'farmerProductShow'])
+            ->name('products.show')
+            ->middleware('permission:view products');
+        Route::get('/products/{id}/edit', [DashboardController::class, 'farmerProductEdit'])
+            ->name('products.edit')
+            ->middleware('permission:edit products');
+        Route::post('/products/{id}', [DashboardController::class, 'farmerProductUpdate'])
+            ->name('products.update')
+            ->middleware('permission:edit products');
+        Route::post('/products/{id}/delete', [DashboardController::class, 'farmerProductDestroy'])
+            ->name('products.destroy')
+            ->middleware('permission:delete products');
+
+        Route::get('/weekly-stock', [DashboardController::class, 'farmerStock'])
+            ->name('stock.index')
+            ->middleware('permission:view weekly stock');
+        Route::get('/weekly-stock/create', [DashboardController::class, 'farmerStockCreate'])
+            ->name('stock.create')
+            ->middleware('permission:add weekly stock');
+        Route::post('/weekly-stock', [DashboardController::class, 'farmerStockStore'])
+            ->name('stock.store')
+            ->middleware('permission:add weekly stock');
+        Route::get('/weekly-stock/{id}/edit', [DashboardController::class, 'farmerStockEdit'])
+            ->name('stock.edit')
+            ->middleware('permission:edit weekly stock');
+        Route::post('/weekly-stock/{id}', [DashboardController::class, 'farmerStockUpdate'])
+            ->name('stock.update')
+            ->middleware('permission:edit weekly stock');
+        Route::post('/weekly-stock/{id}/delete', [DashboardController::class, 'farmerStockDestroy'])
+            ->name('stock.destroy')
+            ->middleware('permission:delete weekly stock');
+
+        Route::get('/orders', [DashboardController::class, 'farmerOrders'])
+            ->name('orders.index')
+            ->middleware('permission:view orders');
+        Route::get('/orders/{id}', [DashboardController::class, 'farmerOrderShow'])
+            ->name('orders.show')
+            ->middleware('permission:view order');
+        Route::post('/orders/{id}/status', [DashboardController::class, 'farmerOrderUpdateStatus'])
+            ->name('orders.updateStatus')
+            ->middleware('permission:update order status');
+
+        Route::get('/pickup-slots', [DashboardController::class, 'farmerSlots'])
+            ->name('slots.index')
+            ->middleware('permission:view pickup slots');
+        Route::get('/pickup-slots/create', [DashboardController::class, 'farmerSlotCreate'])
+            ->name('slots.create')
+            ->middleware('permission:add pickup slots');
+        Route::post('/pickup-slots', [DashboardController::class, 'farmerSlotStore'])
+            ->name('slots.store')
+            ->middleware('permission:add pickup slots');
+        Route::get('/pickup-slots/{id}/edit', [DashboardController::class, 'farmerSlotEdit'])
+            ->name('slots.edit')
+            ->middleware('permission:edit pickup slots');
+        Route::post('/pickup-slots/{id}', [DashboardController::class, 'farmerSlotUpdate'])
+            ->name('slots.update')
+            ->middleware('permission:edit pickup slots');
+        Route::post('/pickup-slots/{id}/delete', [DashboardController::class, 'farmerSlotDestroy'])
+            ->name('slots.destroy')
+            ->middleware('permission:delete pickup slots');
+
+        Route::get('/reviews', [DashboardController::class, 'farmerReviews'])
+            ->name('reviews.index')
+            ->middleware('permission:view reviews');
+    });
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',])->group(function () {
 
     Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard'])
         ->name('admin_dashboard')
@@ -313,16 +410,10 @@ Route::get('/about', [WebsiteController::class, 'about']);
 Route::get('/contact', [WebsiteController::class, 'contact']);
 Route::post('/contact', [WebsiteController::class, 'submitContact']);
 
-// /login, /register and /logout are intentionally NOT defined here.
-// Laravel Fortify already registers them (named 'login', 'register', 'logout')
-// and was winning the route match anyway, making duplicate routes here dead
-// code. See app/Providers/FortifyServiceProvider.php for the custom
-// loginView()/registerView() that make Fortify render this app's own
-// Website.Auth.login / Website.Auth.register Blade views.
+
 
 Route::middleware('auth')->group(function () {
 
-    // Customer Dashboard
     Route::prefix('dashboard/customer')->group(function () {
         Route::get('/', [WebsiteController::class, 'index'])
             ->name('customer_dashboard');
