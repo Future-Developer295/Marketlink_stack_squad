@@ -39,35 +39,53 @@
                 </div>
                 <p class="text-muted mt-3">{{ $product->description }}</p>
 
-                <form method="POST" action="{{ url('/cart/add/'.$product->id) }}">
-                @csrf
-                <div class="ml-card mt-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="ml-form-label mb-1">Quantity ({{ $product->unit }})</span>
-                            <div class="ml-quantity" data-quantity data-min="1" data-max="{{ max($product->stock_quantity, 1) }}">
-                                <button type="button" data-decrement>&minus;</button>
-                                <input type="text" name="quantity" value="1" readonly>
-                                <button type="button">+</button>
+                <!-- Quantity Form -->
+                <form method="POST" action="{{ url('/cart/add/'.$product->id) }}" id="add-to-cart-form">
+                    @csrf
+                    <div class="ml-card mt-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="ml-form-label mb-1">Quantity ({{ $product->unit }})</span>
+                                <div class="ml-quantity" data-quantity data-min="1" data-max="{{ max($product->stock_quantity, 1) }}">
+                                    <button type="button" data-decrement>&minus;</button>
+                                    <input type="text" name="quantity" value="1" readonly>
+                                    <button type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="small text-muted d-block">Available: {{ $product->stock_quantity }} {{ $product->unit }}</span>
+                                <strong>Subtotal</strong>
+                                <h4 class="text-success mb-0">Rs. {{ number_format($product->price, 0) }}</h4>
                             </div>
                         </div>
-                        <div class="text-end">
-                            <span class="small text-muted d-block">Available: {{ $product->stock_quantity }} {{ $product->unit }}</span>
-                            <strong>Subtotal</strong>
-                            <h4 class="text-success mb-0">Rs. {{ number_format($product->price, 0) }}</h4>
-                        </div>
                     </div>
+                </form>
+
+                <!-- Side-by-Side Flex Action Row -->
+                <div class="d-flex gap-3 mt-3 align-items-center">
+                    @if($product->stock_quantity > 0)
+                        <!-- Add to Cart Button (Linked to form above) -->
+                        <button type="submit" form="add-to-cart-form" class="btn ml-btn-primary flex-grow-1">
+                            <i class="fa-solid fa-cart-plus"></i>
+                            Add to Cart
+                            <span class="small d-block fw-normal">Reserve for pickup</span>
+                        </button>
+
+                        <!-- Save to Favorites Form -->
+                        <form method="POST" action="{{ route('customer_favorite_add') }}" class="m-0">
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            <button type="submit" class="btn ml-btn-secondary text-nowrap py-4">
+                                <i class="fa-regular fa-heart"></i> Save to Favorites
+                            </button>
+                        </form>
+                    @else
+                        <button type="button" class="btn ml-btn-secondary flex-grow-1" disabled>
+                            Currently Out of Stock
+                        </button>
+                    @endif
                 </div>
 
-                @if($product->stock_quantity > 0)
-                <div class="d-flex gap-3 mt-3">
-                    <button type="submit" class="btn ml-btn-primary flex-grow-1"><i class="fa-solid fa-cart-plus"></i> Add to Cart <span class="small d-block fw-normal">Reserve for pickup</span></button>
-                    <button type="button" class="btn ml-btn-secondary"><i class="fa-regular fa-heart"></i> Save to Favorites</button>
-                </div>
-                @else
-                <button type="button" class="btn ml-btn-secondary flex-grow-1 mt-3" disabled>Currently Out of Stock</button>
-                @endif
-                </form>
                 <p class="small text-muted mt-3"><i class="fa-solid fa-circle-check text-success"></i> Pickup Only &middot; Reserve online and inspect your produce directly at stall before settling payment in person.</p>
 
                 <div class="row g-3 mt-3">
@@ -159,7 +177,7 @@
                 <div class="ml-rating justify-content-center mb-2">
                     @for($i = 1; $i <= 5; $i++)
                         <i class="fa-solid fa-star {{ $i > round($ratingAverage) ? 'text-muted' : '' }}"></i>
-                    @endfor
+                        @endfor
                 </div>
                 <p class="text-muted small">Based on {{ $ratingCount }} verified market pickup reviews</p>
             </div>
@@ -167,27 +185,27 @@
                 @forelse($reviews as $review)
                 @if($loop->first)
                 <div class="row g-3">
-                @endif
+                    @endif
                     <div class="col-md-4">
                         <div class="ml-card h-100">
                             <div class="ml-rating small mb-2">
                                 @for($i = 1; $i <= 5; $i++)
                                     <i class="fa-solid fa-star {{ $i > $review->rating ? 'text-muted' : '' }}"></i>
-                                @endfor
+                                    @endfor
                             </div>
                             <p class="small text-muted">{{ $review->comment }}</p>
                             <strong class="d-block small mt-2">{{ $review->user->name ?? 'Verified Buyer' }}</strong>
                             <span class="small text-muted">{{ $review->created_at->diffForHumans() }}</span>
                         </div>
                     </div>
-                @if($loop->last)
+                    @if($loop->last)
                 </div>
                 @endif
                 @empty
                 @include('Website.Partials.empty-state', [
-                    'icon' => 'fa-comment-slash',
-                    'title' => 'No Reviews Yet',
-                    'message' => 'Be the first to review this product after your pickup.',
+                'icon' => 'fa-comment-slash',
+                'title' => 'No Reviews Yet',
+                'message' => 'Be the first to review this product after your pickup.',
                 ])
                 @endforelse
             </div>

@@ -19,11 +19,18 @@
 
             <div class="panel-tools">
 
-                <form class="search-box" method="GET" action="{{ route('products') }}">
-                    <i class="bi bi-search"></i>
+                <form class="search-box" method="GET" action="{{ route('products') }}" id="productSearchForm">
+    <i class="bi bi-search"></i>
 
-                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search...">
-                </form>
+    <input
+        type="text"
+        name="q"
+        id="productSearch"
+        value="{{ request('q') }}"
+        placeholder="Search..."
+        autocomplete="off"
+    >
+</form>
 
                 <a class="btn-primary" href="{{ route('product_add') }}">
                     <i class="bi bi-plus-lg"></i>
@@ -63,16 +70,14 @@
 
 
                 <tbody>
-                    <?php 
-    $index = 1;
-                    ?>
+                    
                     @forelse($products as $product)
 
                         <tr>
 
                             <td>
                                 <span class="id-chip">
-                                    {{ $index++ }}
+                                    {{ $product->id }}
                                 </span>
                             </td>
 
@@ -241,3 +246,23 @@
     </div>
 
 @endsection
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('productSearch');
+    const rows = document.querySelectorAll('.dtable tbody tr');
+
+    searchInput.addEventListener('input', function () {
+        const search = this.value.toLowerCase().trim();
+
+        rows.forEach(function (row) {
+            const text = row.textContent.toLowerCase();
+
+            if (text.includes(search)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+});
+</script>

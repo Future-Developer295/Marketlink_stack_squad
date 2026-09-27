@@ -20,9 +20,9 @@
             <div class="col-lg-9">
                 @if($notifications->isEmpty())
                 @include('Website.Partials.empty-state', [
-                    'icon' => 'fa-bell',
-                    'title' => 'No Notifications',
-                    'message' => 'Updates about your orders and account will appear here.',
+                'icon' => 'fa-bell',
+                'title' => 'No Notifications',
+                'message' => 'Updates about your orders and account will appear here.',
                 ])
                 @else
                 <div class="ml-card">
@@ -37,7 +37,7 @@
                             </div>
                         </div>
                         @unless($notification->is_read)
-                        <form method="POST" action="{{ url('/dashboard/notifications/'.$notification->id.'/read') }}">
+                        <form method="POST" action="{{ route('customer_notification_read', $notification->id) }}">
                             @csrf
                             <button type="submit" class="ml-btn-link small">Mark as Read</button>
                         </form>

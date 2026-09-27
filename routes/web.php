@@ -268,6 +268,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/dashboard/reports/download/{id}', [DashboardController::class, 'reportDownload'])
         ->name('report_download')
         ->middleware('permission:download reports');
+        
 
     Route::get('/dashboard/announcements', [DashboardController::class, 'announcements'])
         ->name('announcements')
@@ -344,6 +345,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/favorites', [WebsiteController::class, 'favorites'])
             ->name('customer_favorites');
+        Route::post('/favorites', [WebsiteController::class, 'addFavorite'])
+            ->name('customer_favorite_add');
 
         Route::delete('/favorites/{favorite}', [WebsiteController::class, 'removeFavorite'])
             ->name('customer_favorite_remove');

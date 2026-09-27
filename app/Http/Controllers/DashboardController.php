@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Models\Market;
 use App\Models\MarketFarmer;
 use App\Models\Order;
+use App\Models\Notification;
 use App\Models\OrderItem;
 use App\Models\FarmerProfile;
 use App\Models\User;
@@ -614,16 +615,25 @@ class DashboardController extends Controller
         return redirect()->route('categories');
     }
 
-    public function products()
-    {
-        $products = Product::with(['farmer', 'category'])
-            ->where('farmer_id', Auth::id())
-            ->latest()
-            ->get();
+    public function products(Request $request)
+{
+    $query = Product::with(['farmer', 'category'])
+        ->where('farmer_id', Auth::id());
 
-        return view('Dashboard.Products.products', compact('products'));
+    if ($request->filled('q')) {
+        $search = $request->q;
+
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', '%' . $search . '%')
+                ->orWhere('description', 'like', '%' . $search . '%')
+                ->orWhere('unit', 'like', '%' . $search . '%');
+        });
     }
 
+    $products = $query->orderBy('id', 'asc')->get();
+
+    return view('Dashboard.Products.products', compact('products'));
+}
     public function productAdd()
     {
         return view('Dashboard.Products.add-product');
@@ -964,7 +974,7 @@ class DashboardController extends Controller
 
     public function users()
     {
-        $users = User::latest()->get();
+        $users = User::orderBy('id', 'asc')->get();
 
         return view('Dashboard.Users.users', compact('users'));
     }
@@ -1247,7 +1257,9 @@ class DashboardController extends Controller
 
     public function announcements()
     {
-        $announcements = Announcement::with('admin')->latest()->get();
+        $announcements = Announcement::with('admin')
+    ->orderBy('id', 'asc')
+    ->get();
 
         return view('Dashboard.Announcements.announcements', compact('announcements'));
     }
@@ -1309,4 +1321,5 @@ class DashboardController extends Controller
 
         return redirect()->route('announcements')->with('success', 'Announcement deleted successfully.');
     }
+    
 }

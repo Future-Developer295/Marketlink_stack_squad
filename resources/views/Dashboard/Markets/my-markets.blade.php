@@ -18,25 +18,25 @@ active
 
         <div class="panel-tools">
 
-            <form class="search-box" method="GET" action="{{ route('my_markets') }}">
+            <div class="search-box">
                 <i class="bi bi-search"></i>
 
                 <input
                     type="text"
-                    name="q"
-                    value="{{ request('q') }}"
-                    placeholder="Search…"
-                />
-            </form>
+                    id="marketSearch"
+                    placeholder="Search..."
+                    autocomplete="off"
+                >
+            </div>
 
             <a class="btn-primary" href="{{ route('my_markets_join') }}">
-                <i class="bi bi-plus-lg"></i> Join a Market
+                <i class="bi bi-plus-lg"></i>
+                Join a Market
             </a>
 
         </div>
 
     </div>
-
 
     <div class="tbl-wrap">
 
@@ -53,11 +53,11 @@ active
                 </tr>
             </thead>
 
-
             <tbody>
+
                 @forelse($myMarkets as $item)
 
-                    <tr>
+                    <tr class="markets-table-row">
 
                         <td>
                             <span class="id-chip">
@@ -65,18 +65,15 @@ active
                             </span>
                         </td>
 
-
                         <td>
                             <strong>
                                 {{ $item->market->name }}
                             </strong>
                         </td>
 
-
                         <td>
                             {{ $item->market->city }}
                         </td>
-
 
                         <td>
                             {{ \Carbon\Carbon::parse($item->market->start_time)->format('g:i A') }}
@@ -84,20 +81,23 @@ active
                             {{ \Carbon\Carbon::parse($item->market->end_time)->format('g:i A') }}
                         </td>
 
-
                         <td>
-    @if($item->is_active)
-        <span class="badge-status bs-in">
-            <i class="bi bi-circle-fill"></i>
-            Active
-        </span>
-    @else
-        <span class="badge-status">
-            <i class="bi bi-circle-fill"></i>
-            Pending
-        </span>
-    @endif
-</td>
+                            @if($item->is_active)
+
+                                <span class="badge-status bs-in">
+                                    <i class="bi bi-circle-fill"></i>
+                                    Active
+                                </span>
+
+                            @else
+
+                                <span class="badge-status">
+                                    <i class="bi bi-circle-fill"></i>
+                                    Pending
+                                </span>
+
+                            @endif
+                        </td>
 
                         <td>
 
@@ -129,7 +129,7 @@ active
                 @empty
 
                     <tr>
-                        <td colspan="6" style="text-align: center;">
+                        <td colspan="6" style="text-align:center;">
                             No markets found.
                         </td>
                     </tr>
@@ -145,3 +145,34 @@ active
 </div>
 
 @endsection
+
+@push('scripts')
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const searchInput = document.getElementById('marketSearch');
+
+    if (!searchInput) {
+        return;
+    }
+
+    searchInput.addEventListener('input', function () {
+
+        const search = this.value.toLowerCase().trim();
+
+        document.querySelectorAll('.markets-table-row').forEach(function (row) {
+
+            const text = row.textContent.toLowerCase();
+
+            row.style.display = text.includes(search) ? '' : 'none';
+
+        });
+
+    });
+
+});
+</script>
+
+@endpush
+

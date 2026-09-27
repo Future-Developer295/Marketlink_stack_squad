@@ -20,11 +20,11 @@
             <div class="col-lg-9">
                 @if($favorites->isEmpty())
                 @include('Website.Partials.empty-state', [
-                    'icon' => 'fa-heart',
-                    'title' => 'No Favorites Yet',
-                    'message' => 'Farmers and products you save will appear here.',
-                    'actionUrl' => url('/products'),
-                    'actionLabel' => 'Browse Products',
+                'icon' => 'fa-heart',
+                'title' => 'No Favorites Yet',
+                'message' => 'Farmers and products you save will appear here.',
+                'actionUrl' => url('/products'),
+                'actionLabel' => 'Browse Products',
                 ])
                 @else
                 <div class="ml-card">
@@ -45,16 +45,16 @@
                                     <td>{{ $favorite->product_id ? 'Product' : 'Farmer' }}</td>
                                     <td>
                                         @if($favorite->product)
-                                            {{ $favorite->product->name }}
+                                        {{ $favorite->product->name }}
                                         @elseif($favorite->farmer)
-                                            {{ $favorite->farmer->stall_name ?? $favorite->farmer->business_name }}
+                                        {{ $favorite->farmer->stall_name ?? $favorite->farmer->business_name }}
                                         @endif
                                     </td>
                                     <td class="small text-muted">
                                         @if($favorite->product)
-                                            Rs. {{ number_format($favorite->product->price, 0) }} / {{ $favorite->product->unit }}
+                                        Rs. {{ number_format($favorite->product->price, 0) }} / {{ $favorite->product->unit }}
                                         @elseif($favorite->farmer)
-                                            {{ $favorite->farmer->city }}, {{ $favorite->farmer->state }}
+                                        {{ $favorite->farmer->city }}, {{ $favorite->farmer->state }}
                                         @endif
                                     </td>
                                     <td>
@@ -65,7 +65,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <form method="POST" action="{{ url('/dashboard/favorites/'.$favorite->id) }}">
+                                        <form method="POST" action="{{ route('customer_favorite_remove', $favorite->id) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="ml-btn-link small text-danger"><i class="fa-solid fa-trash"></i> Remove</button>

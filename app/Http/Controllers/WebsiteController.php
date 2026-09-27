@@ -347,6 +347,13 @@ class WebsiteController extends Controller
                         'order_date' => now(),
                         'notes' => $validated['notes'] ?? null,
                     ]);
+                    Notification::create([
+                        'user_id' => Auth::id(),
+                        'type' => 'order',
+                        'title' => 'Order Placed',
+                        'message' => 'Your order has been placed successfully.',
+                        'is_read' => false,
+                    ]);
 
                     foreach ($items as $item) {
                         OrderItem::create([
@@ -432,7 +439,7 @@ class WebsiteController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,'.$user->id,
+            'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'required|string|max:20',
             'address' => 'nullable|string|max:255',
             'current_password' => 'nullable|string',
@@ -501,6 +508,16 @@ class WebsiteController extends Controller
             ->get();
 
         return view('Website.Dashboard.favorites', compact('favorites'));
+    }
+    public function addFavorite(Request $request): RedirectResponse
+    {
+        Favorite::firstOrCreate([
+            'user_id' => Auth::id(),
+            'product_id' => $request->product_id,
+            'farmer_id' => null,
+        ]);
+
+        return back()->with('success', 'Product added to your favorites.');
     }
 
     public function removeFavorite(string $favorite): RedirectResponse
