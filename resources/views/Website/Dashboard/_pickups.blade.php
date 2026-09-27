@@ -1,0 +1,18 @@
+<section class="customer-panel pickup-panel" aria-labelledby="pickups-heading">
+    <div class="customer-section-heading"><div><span class="customer-eyebrow">FROM FIELD TO YOUR WEEK</span><h2 id="pickups-heading">Your next pickups<span class="section-dot">.</span></h2></div><a href="{{ route('customer_orders') }}" class="customer-text-link">All orders <span>↗</span></a></div>
+    @forelse($activeOrders as $order)
+        @php($slot = $order->pickupSlot)
+        @php($market = $slot?->market)
+        @php($stage = array_search($order->status, ['pending', 'confirmed', 'ready', 'picked_up']))
+        <article class="pickup-order">
+            <div class="pickup-order-heading"><span class="order-number">PRE-ORDER #{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</span><span class="customer-status status-{{ $order->status }}"><span></span>{{ $order->statusLabel() }}</span></div>
+            <div class="pickup-destination"><div class="pickup-calendar"><span>{{ $slot?->date?->format('M') ?? 'DATE' }}</span><strong>{{ $slot?->date?->format('d') ?? '—' }}</strong><small>{{ $slot?->date?->format('D') ?? 'TBC' }}</small></div><div><h3>{{ $order->farmer?->stall_name ?? 'Your grower' }}</h3><p><i class="fa-regular fa-clock"></i> {{ $slot ? substr($slot->start_time, 0, 5).' – '.substr($slot->end_time, 0, 5) : 'Time to be confirmed' }}</p><p><i class="fa-solid fa-location-dot"></i> {{ $market?->name ?? 'Location to be confirmed' }}{{ $market ? ' · '.$market->city : '' }}</p></div></div>
+            <ol class="pickup-progress" aria-label="Order progress">@foreach(['Placed', 'Accepted', 'Ready for pickup', 'Completed'] as $step)<li class="{{ $loop->index <= $stage ? 'is-complete' : '' }}" @if($loop->index === $stage) aria-current="step" @endif><span>@if($loop->index < $stage)<i class="fa-solid fa-check"></i>@else{{ $loop->iteration }}@endif</span>{{ $step }}</li>@endforeach</ol>
+            <div class="pickup-order-summary"><span>{{ $order->items->sum('quantity') }} items <span>· Pay at pickup</span></span><strong>Rs. {{ number_format($order->total_amount) }}</strong></div>
+            <div class="pickup-actions"><a href="{{ route('customer_order_detail', $order) }}" class="customer-button customer-button-small">View pre-order <span>↗</span></a>@if($market)<a href="https://www.google.com/maps/dir/?api=1&amp;destination={{ urlencode(implode(', ', [$market->name, $market->address, $market->city])) }}" target="_blank" rel="noopener noreferrer" class="customer-button customer-button-quiet customer-button-small"><i class="fa-solid fa-location-arrow"></i> Directions</a>@endif<form method="POST" action="{{ route('customer_order_cancel', $order) }}" data-cancel-order>@csrf<button type="submit" class="customer-cancel" @disabled(! $order->canCancel())>Cancel</button></form></div>
+            <p class="cancellation-note">{{ $order->canCancel() ? 'Cancel before '.$order->cancellationDeadline()->format('d M, H:i').', unless marked ready earlier.' : 'Cancellation closed. Contact your grower if plans change.' }}</p>
+        </article>
+    @empty
+        <div class="customer-empty"><span class="empty-illustration"><i class="fa-solid fa-basket-shopping"></i></span><h3>A fresh week is waiting.</h3><p>No active pre-orders. Find something you love and choose a pickup time that works for you.</p><a href="{{ url('/products') }}" class="customer-button">Start your first basket <span>↗</span></a></div>
+    @endforelse
+</section>

@@ -1,23 +1,24 @@
-<div class="ml-card ml-dash-sidebar">
-    <div class="d-flex align-items-center gap-3 mb-3">
-        <div class="ml-avatar-lg d-flex align-items-center justify-content-center bg-light">
-            <i class="fa-solid fa-user text-success fs-4"></i>
-        </div>
-        <div>
-            <strong class="d-block">{{ auth()->user()->name }}</strong>
-            <span class="small text-muted">{{ auth()->user()->email }}</span>
-        </div>
-    </div>
-    <nav class="ml-dash-nav">
-        <a href="{{ route('customer_dashboard') }}" class="{{ request()->routeIs('customer_dashboard') ? 'is-active' : '' }}"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-        <a href="{{ route('customer_orders') }}" class="{{ request()->routeIs('customer_orders', 'customer_order_detail') ? 'is-active' : '' }}"><i class="fa-regular fa-rectangle-list"></i> My Orders</a>
-        <a href="{{ route('customer_reviews') }}" class="{{ request()->routeIs('customer_reviews') ? 'is-active' : '' }}"><i class="fa-regular fa-star"></i> My Reviews</a>
-        <a href="{{ route('customer_favorites') }}" class="{{ request()->routeIs('customer_favorites') ? 'is-active' : '' }}"><i class="fa-regular fa-heart"></i> Favorites</a>
-        <a href="{{ route('customer_notifications') }}" class="{{ request()->routeIs('customer_notifications') ? 'is-active' : '' }}"><i class="fa-regular fa-bell"></i> Notifications</a>
-        <a href="{{ route('customer_profile') }}" class="{{ request()->routeIs('customer_profile') ? 'is-active' : '' }}"><i class="fa-regular fa-id-card"></i> Profile Settings</a>
-    </nav>
-    <form action="{{ url('/logout') }}" method="POST" class="mt-3">
-        @csrf
-        <button type="submit" class="btn ml-btn-secondary ml-btn-block ml-btn-sm"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-    </form>
+<div class="customer-navigation">
+    <div class="customer-mobile-bar"><a href="{{ route('customer_dashboard') }}" class="customer-brand"><i class="fa-solid fa-leaf"></i> MarketLink</a><button type="button" class="customer-icon-button" data-sidebar-open aria-controls="customer-sidebar" aria-expanded="false" aria-label="Open account menu"><i class="fa-solid fa-bars-staggered"></i></button></div>
+    <button class="customer-sidebar-backdrop" data-sidebar-close aria-label="Close account menu" hidden></button>
+    <aside class="customer-sidebar" id="customer-sidebar" aria-label="Account navigation">
+        <div class="customer-sidebar-brand"><a href="{{ url('/') }}" class="customer-brand"><i class="fa-solid fa-leaf"></i> MarketLink<span>YOUR LOCAL CONNECTION</span></a><button class="customer-icon-button sidebar-close" data-sidebar-close type="button" aria-label="Close account menu"><i class="fa-solid fa-xmark"></i></button></div>
+        <div class="customer-identity"><span class="customer-avatar">{{ mb_substr(auth()->user()->name, 0, 1) }}</span><div><strong>{{ auth()->user()->name }}</strong><span>Your little local world</span></div></div>
+        <span class="customer-nav-caption">YOUR SPACE</span>
+        <nav class="customer-nav">
+            @foreach([
+                ['customer_dashboard', 'fa-border-all', 'Overview'],
+                ['customer_orders', 'fa-bag-shopping', 'My pre-orders'],
+                ['customer_favorites', 'fa-heart', 'Saved favorites'],
+                ['customer_reviews', 'fa-star', 'My reviews'],
+                ['customer_notifications', 'fa-bell', 'Updates'],
+                ['customer_profile', 'fa-sliders', 'Account settings'],
+            ] as [$destination, $icon, $label])
+                @php($isCurrent = request()->routeIs($destination) || ($destination === 'customer_orders' && request()->routeIs('customer_order_detail')))
+                <a href="{{ route($destination) }}" @if($isCurrent) aria-current="page" @endif><i class="fa-solid {{ $icon }}"></i><span>{{ $label }}</span>@if($isCurrent)<i class="fa-solid fa-arrow-up-right-from-square nav-active-mark"></i>@endif</a>
+            @endforeach
+        </nav>
+        <div class="customer-sidebar-note"><i class="fa-solid fa-seedling"></i><h3>A little local.<br>A lot of good.</h3><p>Meet the people behind your next fresh find.</p><a href="{{ url('/products') }}">Explore the harvest <span>↗</span></a></div>
+        <div class="customer-sidebar-bottom"><a href="{{ url('/contact') }}"><i class="fa-regular fa-circle-question"></i> Need a hand?</a><form action="{{ route('logout') }}" method="POST">@csrf<button type="submit"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign out</button></form></div>
+    </aside>
 </div>

@@ -32,6 +32,19 @@ class Product extends Model
         ];
     }
 
+    public function imageUrl(): string
+    {
+        if ($this->image && filter_var($this->image, FILTER_VALIDATE_URL) && in_array(parse_url($this->image, PHP_URL_SCHEME), ['http', 'https'], true)) {
+            return $this->image;
+        }
+
+        if ($this->image && is_file(public_path('product_images/'.basename($this->image)))) {
+            return asset('product_images/'.basename($this->image));
+        }
+
+        return asset('Assets/Website_Asset/images/product-placeholder.svg');
+    }
+
     public function farmer(): BelongsTo
     {
         return $this->belongsTo(FarmerProfile::class, 'farmer_id');
