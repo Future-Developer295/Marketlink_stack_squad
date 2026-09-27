@@ -1529,7 +1529,6 @@ class DashboardController extends Controller
 
         $order->save();
 
-<<<<<<< HEAD
         if ($request->status === 'ready') {
             Notification::create([
                 'user_id' => $order->user_id,
@@ -1538,15 +1537,6 @@ class DashboardController extends Controller
                 'message' => 'Your order #'.$order->id.' is ready for pickup.',
                 'is_read' => false,
             ]);
-=======
-        if (auth()->user()->hasRole('admin') && $oldStatus !== $order->status) {
-            ActivityLogger::log(
-                'updated',
-                "Updated order #{$order->id} status from \"{$oldStatus}\" to \"{$order->status}\"",
-                Order::class,
-                $order->id
-            );
->>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
         }
 
         return redirect()
@@ -1816,7 +1806,6 @@ class DashboardController extends Controller
 
     public function marketStore(Request $request)
     {
-<<<<<<< HEAD
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'address' => ['required', 'string'],
@@ -1831,34 +1820,6 @@ class DashboardController extends Controller
         ]);
 
         Market::create($validated);
-=======
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'required|string',
-            'city' => 'required|string|max:255',
-            'state' => 'nullable|string|max:255',
-            'country' => 'required|string|max:255',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'operating_days' => 'nullable|array',
-            'operating_days.*' => 'in:Mon,Tue,Wed,Thu,Fri,Sat,Sun',
-            'start_time' => 'nullable',
-            'end_time' => 'nullable',
-        ]);
-
-        Market::create([
-            'name' => $request->name,
-            'address' => $request->address,
-            'city' => $request->city,
-            'state' => $request->state,
-            'country' => $request->country,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'operating_days' => implode(', ', $request->operating_days ?? []),
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-        ]);
->>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
 
         return redirect()
             ->route('markets')
@@ -1893,7 +1854,6 @@ class DashboardController extends Controller
 
         $market = Market::findOrFail($id);
 
-<<<<<<< HEAD
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'address' => ['required', 'string'],
@@ -1908,20 +1868,6 @@ class DashboardController extends Controller
         ]);
 
         $market->update($validated);
-=======
-        $market->update([
-            'name' => $request->name,
-            'address' => $request->address,
-            'city' => $request->city,
-            'state' => $request->state,
-            'country' => $request->country,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'operating_days' => implode(', ', $request->operating_days ?? []),
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-        ]);
->>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
 
         return redirect()
             ->route('markets')
@@ -2297,28 +2243,11 @@ class DashboardController extends Controller
 
     public function customers(Request $request)
     {
-<<<<<<< HEAD
         $customers = User::where(
             'role',
             'customer'
         )
             ->withCount('orders')
-=======
-        $query = User::where('role', 'customer')
-            ->withCount('orders');
-
-        if ($request->filled('q')) {
-            $search = $request->q;
-
-            $query->where(function ($query) use ($search) {
-                $query
-                    ->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('email', 'like', '%' . $search . '%');
-            });
-        }
-
-        $customers = $query
->>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
             ->latest()
             ->get();
 
@@ -2350,7 +2279,6 @@ class DashboardController extends Controller
         $customer->is_active = ! $customer->is_active;
         $customer->save();
 
-<<<<<<< HEAD
         return redirect()
             ->route('customers')
             ->with(
@@ -2359,17 +2287,6 @@ class DashboardController extends Controller
                     ? 'Customer activated successfully.'
                     : 'Customer deactivated successfully.'
             );
-=======
-        ActivityLogger::log(
-            'deleted',
-            "Deleted customer \"{$customerName}\"",
-            User::class,
-            $id
-        );
-
-        return redirect()->route('customers')
-            ->with('success', 'Customer deleted successfully.');
->>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
     }
 
     public function reviews()
