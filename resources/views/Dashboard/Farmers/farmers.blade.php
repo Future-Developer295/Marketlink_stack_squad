@@ -8,9 +8,14 @@
         <div class="panel-header">
             <span class="panel-title"><i class="bi bi-person-workspace"></i> Farmers</span>
             <div class="panel-tools">
-                <form class="search-box">
+                <form class="search-box" method="GET" action="{{ route('farmers') }}">
                     <i class="bi bi-search"></i>
-                    <input type="text" name="q" placeholder="Search…" />
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search…" />
+                    @if (request('q'))
+                        <a href="{{ route('farmers') }}" class="search-clear" title="Clear search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    @endif
                 </form>
             </div>
         </div>

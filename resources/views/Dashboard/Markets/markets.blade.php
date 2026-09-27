@@ -8,9 +8,14 @@ active
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-shop-window"></i> Markets</span>
         <div class="panel-tools">
-            <form class="search-box">
+            <form class="search-box" method="GET" action="{{ route('markets') }}">
                 <i class="bi bi-search"></i>
-                <input type="text" name="q" placeholder="Search…" />
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Search…" />
+                @if (request('q'))
+                    <a href="{{ route('markets') }}" class="search-clear" title="Clear search">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                @endif
             </form>
             <a class="btn-primary" href="{{ route('market_add') }}"><i class="bi bi-plus-lg"></i> Add Market</a>
         </div>

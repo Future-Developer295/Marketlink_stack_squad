@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
+use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\FarmerProfile;
 use App\Models\Market;
@@ -17,6 +18,8 @@ use App\Models\Review;
 use App\Models\ReviewReply;
 use App\Models\User;
 use App\Models\WeeklyStockTemplate;
+use App\Support\ActivityLogger;
+use App\Support\SimpleXlsxWriter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -52,7 +55,7 @@ class DashboardController extends Controller
             mkdir($path, 0755, true);
         }
 
-        $name = time().'_'.uniqid().'.'.$file->extension();
+        $name = time() . '_' . uniqid() . '.' . $file->extension();
         $file->move($path, $name);
 
         return $name;
@@ -64,7 +67,7 @@ class DashboardController extends Controller
             return;
         }
 
-        $path = public_path($directory.'/'.$file);
+        $path = public_path($directory . '/' . $file);
 
         if (file_exists($path)) {
             unlink($path);
@@ -161,7 +164,7 @@ class DashboardController extends Controller
                 ->pluck('total', 'status');
 
             $orderStatusData = array_map(
-                fn ($key) => (int) ($statusCounts[$key] ?? 0),
+                fn($key) => (int) ($statusCounts[$key] ?? 0),
                 $statusKeys
             );
 
@@ -178,12 +181,12 @@ class DashboardController extends Controller
                 ->get();
 
             $topProductLabels = $topProducts
-                ->map(fn ($item) => $item->product->name ?? 'Unknown')
+                ->map(fn($item) => $item->product->name ?? 'Unknown')
                 ->values()
                 ->all();
 
             $topProductData = $topProducts
-                ->map(fn ($item) => (int) $item->units_sold)
+                ->map(fn($item) => (int) $item->units_sold)
                 ->values()
                 ->all();
         }
@@ -294,7 +297,7 @@ class DashboardController extends Controller
         $role = Role::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|string|max:255|unique:roles,name,'.$id,
+            'name' => 'required|string|max:255|unique:roles,name,' . $id,
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,name',
         ]);
@@ -314,7 +317,16 @@ class DashboardController extends Controller
     {
         $role = Role::findOrFail($id);
 
+        $roleName = $role->name;
+
         $role->delete();
+
+        ActivityLogger::log(
+            'deleted',
+            "Deleted role \"{$roleName}\"",
+            Role::class,
+            $id
+        );
 
         return redirect()
             ->route('roles')
@@ -378,7 +390,7 @@ class DashboardController extends Controller
         $permission = Permission::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|string|max:255|unique:permissions,name,'.$id,
+            'name' => 'required|string|max:255|unique:permissions,name,' . $id,
         ]);
 
         $permission->update([
@@ -394,7 +406,16 @@ class DashboardController extends Controller
     {
         $permission = Permission::findOrFail($id);
 
+        $permissionName = $permission->name;
+
         $permission->delete();
+
+        ActivityLogger::log(
+            'deleted',
+            "Deleted permission \"{$permissionName}\"",
+            Permission::class,
+            $id
+        );
 
         return redirect()
             ->route('permissions')
@@ -468,7 +489,7 @@ class DashboardController extends Controller
             ->pluck('total', 'status');
 
         $orderStatusData = array_map(
-            fn ($key) => (int) ($statusCounts[$key] ?? 0),
+            fn($key) => (int) ($statusCounts[$key] ?? 0),
             $statusKeys
         );
 
@@ -514,6 +535,14 @@ class DashboardController extends Controller
             ? round(($approvedFarmers / $totalFarmerProfiles) * 100)
             : 0;
 
+        $lowStockCount = Product::lowStock()->count();
+
+        $lowStockList = Product::with(['farmer', 'category'])
+            ->lowStock()
+            ->orderBy('stock_quantity')
+            ->take(5)
+            ->get();
+
         return view('Dashboard.admin-dashboard', compact(
             'totalUsers',
             'pendingFarmers',
@@ -533,8 +562,50 @@ class DashboardController extends Controller
             'topMarketData',
             'userRoleLabels',
             'userRoleData',
-            'approvalRate'
+            'approvalRate',
+            'lowStockCount',
+            'lowStockList'
         ));
+    }
+
+    /**
+     * Platform-wide low-stock alerts: every product (any farmer) whose
+     * stock_quantity has fallen to/below its low_stock_threshold.
+     */
+    public function lowStockAlerts(Request $request)
+    {
+        $query = Product::with(['farmer.user', 'category'])
+            ->lowStock();
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhereHas('farmer', function ($query) use ($search) {
+                        $query->where('stall_name', 'like', '%' . $search . '%')
+                            ->orWhere('business_name', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        if ($request->get('status') === 'out') {
+            $query->where('stock_quantity', '<=', 0);
+        }
+
+        $lowStockProducts = $query
+            ->orderBy('stock_quantity')
+            ->get();
+
+        $outOfStockCount = $lowStockProducts
+            ->where('stock_quantity', '<=', 0)
+            ->count();
+
+        return view(
+            'Dashboard.LowStock.index',
+            compact('lowStockProducts', 'outOfStockCount')
+        );
     }
 
     public function myProfile()
@@ -597,15 +668,15 @@ class DashboardController extends Controller
                 $farmer->farmer_image &&
                 file_exists(
                     public_path(
-                        'farmer_images/'.
-                        $farmer->farmer_image
+                        'farmer_images/' .
+                            $farmer->farmer_image
                     )
                 )
             ) {
                 unlink(
                     public_path(
-                        'farmer_images/'.
-                        $farmer->farmer_image
+                        'farmer_images/' .
+                            $farmer->farmer_image
                     )
                 );
             }
@@ -616,13 +687,13 @@ class DashboardController extends Controller
                 mkdir($directory, 0755, true);
             }
 
-            $imageName = time().
-                '_'.
-                uniqid().
-                '.'.
+            $imageName = time() .
+                '_' .
+                uniqid() .
+                '.' .
                 $request
-                    ->file('farmer_image')
-                    ->extension();
+                ->file('farmer_image')
+                ->extension();
 
             $request
                 ->file('farmer_image')
@@ -662,12 +733,12 @@ class DashboardController extends Controller
                         ->where(
                             'name',
                             'like',
-                            '%'.$search.'%'
+                            '%' . $search . '%'
                         )
                         ->orWhere(
                             'city',
                             'like',
-                            '%'.$search.'%'
+                            '%' . $search . '%'
                         );
                 }
             );
@@ -690,43 +761,25 @@ class DashboardController extends Controller
             compact('markets')
         );
     }
-
     public function myMarketsJoinStore(Request $request)
     {
         $request->validate([
             'market_id' => 'required|exists:markets,id',
         ]);
 
-        $marketFarmer = MarketFarmer::where(
-            'market_id',
-            $request->market_id
-        )
-            ->where(
-                'farmer_id',
-                Auth::id()
-            )
-            ->first();
-
-        if ($marketFarmer) {
-            $marketFarmer->update([
-                'is_active' => false,
-            ]);
-        } else {
-            MarketFarmer::create([
+        MarketFarmer::updateOrCreate(
+            [
                 'market_id' => $request->market_id,
-
                 'farmer_id' => Auth::id(),
-
-                'is_active' => false,
-            ]);
-        }
+            ],
+            [
+                'is_active' => true,
+            ]
+        );
 
         return redirect()
             ->route('my_markets')
-            ->with(
-                'success',
-                'Join request sent. Waiting for admin approval.'
-            );
+            ->with('success', 'Market joined successfully.');
     }
 
     public function myMarketsLeave($id)
@@ -751,11 +804,23 @@ class DashboardController extends Controller
             );
     }
 
-    public function categories()
+    public function categories(Request $request)
     {
-        $categories = Category::orderBy(
-            'name'
-        )->get();
+        $query = Category::query();
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('slug', 'like', '%' . $search . '%');
+            });
+        }
+
+        $categories = $query
+            ->orderBy('name')
+            ->get();
 
         return view(
             'Dashboard.Categories.categories',
@@ -834,7 +899,16 @@ class DashboardController extends Controller
     {
         $category = Category::findOrFail($id);
 
+        $categoryName = $category->name;
+
         $category->delete();
+
+        ActivityLogger::log(
+            'deleted',
+            "Deleted category \"{$categoryName}\"",
+            Category::class,
+            $id
+        );
 
         return redirect()
             ->route('categories')
@@ -844,7 +918,7 @@ class DashboardController extends Controller
             );
     }
 
-    public function products()
+    public function products(Request $request)
     {
         $query = Product::with([
             'farmer',
@@ -858,6 +932,21 @@ class DashboardController extends Controller
                 'farmer_id',
                 $farmer->id
             );
+        }
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhereHas('category', function ($query) use ($search) {
+                        $query->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('farmer', function ($query) use ($search) {
+                        $query->where('name', 'like', '%' . $search . '%');
+                    });
+            });
         }
 
         $products = $query
@@ -917,13 +1006,13 @@ class DashboardController extends Controller
                 );
             }
 
-            $imageName = time().
-                '_'.
-                uniqid().
-                '.'.
+            $imageName = time() .
+                '_' .
+                uniqid() .
+                '.' .
                 $request
-                    ->file('image')
-                    ->extension();
+                ->file('image')
+                ->extension();
 
             $request
                 ->file('image')
@@ -1019,15 +1108,15 @@ class DashboardController extends Controller
                 $product->image &&
                 file_exists(
                     public_path(
-                        'product_images/'.
-                        $product->image
+                        'product_images/' .
+                            $product->image
                     )
                 )
             ) {
                 unlink(
                     public_path(
-                        'product_images/'.
-                        $product->image
+                        'product_images/' .
+                            $product->image
                     )
                 );
             }
@@ -1044,13 +1133,13 @@ class DashboardController extends Controller
                 );
             }
 
-            $imageName = time().
-                '_'.
-                uniqid().
-                '.'.
+            $imageName = time() .
+                '_' .
+                uniqid() .
+                '.' .
                 $request
-                    ->file('image')
-                    ->extension();
+                ->file('image')
+                ->extension();
 
             $request
                 ->file('image')
@@ -1121,15 +1210,15 @@ class DashboardController extends Controller
             $product->image &&
             file_exists(
                 public_path(
-                    'product_images/'.
-                    $product->image
+                    'product_images/' .
+                        $product->image
                 )
             )
         ) {
             unlink(
                 public_path(
-                    'product_images/'.
-                    $product->image
+                    'product_images/' .
+                        $product->image
                 )
             );
         }
@@ -1144,17 +1233,27 @@ class DashboardController extends Controller
             );
     }
 
-    public function stock()
+    public function stock(Request $request)
     {
         $farmer = $this->currentFarmer();
 
-        $weekly_stock = WeeklyStockTemplate::with(
+        $query = WeeklyStockTemplate::with(
             'product'
         )
             ->where(
                 'farmer_id',
                 $farmer->id
-            )
+            );
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->whereHas('product', function ($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            });
+        }
+
+        $weekly_stock = $query
             ->latest()
             ->get();
 
@@ -1362,7 +1461,7 @@ class DashboardController extends Controller
                     $query->where(
                         'name',
                         'like',
-                        '%'.$search.'%'
+                        '%' . $search . '%'
                     );
                 }
             );
@@ -1424,10 +1523,13 @@ class DashboardController extends Controller
 
         $order = $query->findOrFail($id);
 
+        $oldStatus = $order->status;
+
         $order->status = $request->status;
 
         $order->save();
 
+<<<<<<< HEAD
         if ($request->status === 'ready') {
             Notification::create([
                 'user_id' => $order->user_id,
@@ -1436,6 +1538,15 @@ class DashboardController extends Controller
                 'message' => 'Your order #'.$order->id.' is ready for pickup.',
                 'is_read' => false,
             ]);
+=======
+        if (auth()->user()->hasRole('admin') && $oldStatus !== $order->status) {
+            ActivityLogger::log(
+                'updated',
+                "Updated order #{$order->id} status from \"{$oldStatus}\" to \"{$order->status}\"",
+                Order::class,
+                $order->id
+            );
+>>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
         }
 
         return redirect()
@@ -1446,7 +1557,7 @@ class DashboardController extends Controller
             );
     }
 
-    public function slots()
+    public function slots(Request $request)
     {
         $query = PickupSlot::with('market');
 
@@ -1457,6 +1568,16 @@ class DashboardController extends Controller
                 'farmer_id',
                 $farmer->id
             );
+        }
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->whereHas('market', function ($query) use ($search) {
+                $query
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('city', 'like', '%' . $search . '%');
+            });
         }
 
         $slots = $query
@@ -1661,9 +1782,24 @@ class DashboardController extends Controller
             );
     }
 
-    public function markets()
+    public function markets(Request $request)
     {
-        $markets = Market::all();
+        $query = Market::query();
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('city', 'like', '%' . $search . '%')
+                    ->orWhere('state', 'like', '%' . $search . '%');
+            });
+        }
+
+        $markets = $query
+            ->orderBy('name')
+            ->get();
 
         return view(
             'Dashboard.Markets.markets',
@@ -1680,6 +1816,7 @@ class DashboardController extends Controller
 
     public function marketStore(Request $request)
     {
+<<<<<<< HEAD
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'address' => ['required', 'string'],
@@ -1694,9 +1831,38 @@ class DashboardController extends Controller
         ]);
 
         Market::create($validated);
+=======
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string',
+            'city' => 'required|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'country' => 'required|string|max:255',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'operating_days' => 'nullable|array',
+            'operating_days.*' => 'in:Mon,Tue,Wed,Thu,Fri,Sat,Sun',
+            'start_time' => 'nullable',
+            'end_time' => 'nullable',
+        ]);
+
+        Market::create([
+            'name' => $request->name,
+            'address' => $request->address,
+            'city' => $request->city,
+            'state' => $request->state,
+            'country' => $request->country,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'operating_days' => implode(', ', $request->operating_days ?? []),
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+        ]);
+>>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
 
         return redirect()
-            ->route('markets');
+            ->route('markets')
+            ->with('success', 'Market added successfully.');
     }
 
     public function marketEdit($id)
@@ -1709,12 +1875,25 @@ class DashboardController extends Controller
         );
     }
 
-    public function marketUpdate(
-        Request $request,
-        $id
-    ) {
+    public function marketUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string',
+            'city' => 'required|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'country' => 'required|string|max:255',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'operating_days' => 'nullable|array',
+            'operating_days.*' => 'in:Mon,Tue,Wed,Thu,Fri,Sat,Sun',
+            'start_time' => 'nullable',
+            'end_time' => 'nullable',
+        ]);
+
         $market = Market::findOrFail($id);
 
+<<<<<<< HEAD
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'address' => ['required', 'string'],
@@ -1729,24 +1908,62 @@ class DashboardController extends Controller
         ]);
 
         $market->update($validated);
+=======
+        $market->update([
+            'name' => $request->name,
+            'address' => $request->address,
+            'city' => $request->city,
+            'state' => $request->state,
+            'country' => $request->country,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'operating_days' => implode(', ', $request->operating_days ?? []),
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+        ]);
+>>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
 
         return redirect()
-            ->route('markets');
+            ->route('markets')
+            ->with('success', 'Market updated successfully.');
     }
 
     public function marketDelete($id)
     {
         $market = Market::findOrFail($id);
 
+        $marketName = $market->name;
+
         $market->delete();
+
+        ActivityLogger::log(
+            'deleted',
+            "Deleted market \"{$marketName}\"",
+            Market::class,
+            $id
+        );
 
         return redirect()
             ->route('markets');
     }
 
-    public function users()
+    public function users(Request $request)
     {
-        $users = User::latest()->get();
+        $query = User::query();
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%');
+            });
+        }
+
+        $users = $query
+            ->latest()
+            ->get();
 
         return view(
             'Dashboard.Users.users',
@@ -1832,7 +2049,7 @@ class DashboardController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
 
-            'email' => 'required|email|max:255|unique:users,email,'.
+            'email' => 'required|email|max:255|unique:users,email,' .
                 $user->id,
 
             'phone' => 'nullable|string|max:20',
@@ -1880,7 +2097,16 @@ class DashboardController extends Controller
     {
         $user = User::findOrFail($id);
 
+        $userName = $user->name;
+
         $user->delete();
+
+        ActivityLogger::log(
+            'deleted',
+            "Deleted user \"{$userName}\"",
+            User::class,
+            $id
+        );
 
         return redirect()
             ->route('users')
@@ -1890,12 +2116,30 @@ class DashboardController extends Controller
             );
     }
 
-    public function farmers()
+    public function farmers(Request $request)
     {
-        $farmers = MarketFarmer::with([
+        $query = MarketFarmer::with([
             'farmer',
             'market',
-        ])->get();
+        ]);
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->whereHas('farmer', function ($query) use ($search) {
+                        $query
+                            ->where('name', 'like', '%' . $search . '%')
+                            ->orWhere('email', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('market', function ($query) use ($search) {
+                        $query->where('name', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        $farmers = $query->get();
 
         $pendingFarmerApplications = FarmerProfile::where('approval_status', 'pending')
             ->with('user')
@@ -1994,6 +2238,8 @@ class DashboardController extends Controller
             )->first();
 
             if ($profile) {
+                $wasPending = $profile->approval_status !== 'approved';
+
                 $profile->approval_status =
                     'approved';
 
@@ -2004,6 +2250,15 @@ class DashboardController extends Controller
                     now();
 
                 $profile->save();
+
+                if ($wasPending) {
+                    ActivityLogger::log(
+                        'approved',
+                        "Approved farmer \"{$profile->stall_name}\"",
+                        FarmerProfile::class,
+                        $profile->id
+                    );
+                }
             }
         }
 
@@ -2021,7 +2276,16 @@ class DashboardController extends Controller
             $id
         );
 
+        $farmerName = optional($farmer->farmer)->name;
+
         $farmer->delete();
+
+        ActivityLogger::log(
+            'deleted',
+            "Removed farmer \"{$farmerName}\" from market",
+            MarketFarmer::class,
+            $id
+        );
 
         return redirect()
             ->route('farmers')
@@ -2031,51 +2295,62 @@ class DashboardController extends Controller
             );
     }
 
-    public function customers()
+    public function customers(Request $request)
     {
+<<<<<<< HEAD
         $customers = User::where(
             'role',
             'customer'
         )
             ->withCount('orders')
+=======
+        $query = User::where('role', 'customer')
+            ->withCount('orders');
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%');
+            });
+        }
+
+        $customers = $query
+>>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
             ->latest()
             ->get();
 
-        return view(
-            'Dashboard.Customers.customers',
-            compact('customers')
-        );
+        return view('Dashboard.Customers.customers', compact('customers'));
     }
 
     public function customerView($id)
     {
-        $customer = User::where(
-            'role',
-            'customer'
-        )
+        $customer = User::where('role', 'customer')
+            ->withCount('orders')
             ->with([
-                'orders',
+                'orders' => function ($q) {
+                    $q->latest();
+                },
                 'reviews',
                 'favorites',
             ])
             ->findOrFail($id);
 
-        return view(
-            'Dashboard.Customers.view-customer',
-            compact('customer')
-        );
+        return view('Dashboard.Customers.view-customer', compact('customer'));
     }
 
     public function customerToggleStatus($id)
     {
-        $customer = User::where(
-            'role',
-            'customer'
-        )->findOrFail($id);
+        $customer = User::where('role', 'customer')->findOrFail($id);
+
+        $customerName = $customer->name;
 
         $customer->is_active = ! $customer->is_active;
         $customer->save();
 
+<<<<<<< HEAD
         return redirect()
             ->route('customers')
             ->with(
@@ -2084,6 +2359,17 @@ class DashboardController extends Controller
                     ? 'Customer activated successfully.'
                     : 'Customer deactivated successfully.'
             );
+=======
+        ActivityLogger::log(
+            'deleted',
+            "Deleted customer \"{$customerName}\"",
+            User::class,
+            $id
+        );
+
+        return redirect()->route('customers')
+            ->with('success', 'Customer deleted successfully.');
+>>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
     }
 
     public function reviews()
@@ -2166,6 +2452,13 @@ class DashboardController extends Controller
 
         $review->save();
 
+        ActivityLogger::log(
+            $review->is_flagged ? 'flagged' : 'unflagged',
+            ($review->is_flagged ? 'Flagged' : 'Unflagged') . " review #{$review->id}",
+            Review::class,
+            $review->id
+        );
+
         return redirect()
             ->route('reviews')
             ->with(
@@ -2190,6 +2483,13 @@ class DashboardController extends Controller
         $review = $query->findOrFail($id);
 
         $review->delete();
+
+        ActivityLogger::log(
+            'deleted',
+            "Deleted review #{$id}",
+            Review::class,
+            $id
+        );
 
         return redirect()
             ->route('reviews')
@@ -2216,12 +2516,243 @@ class DashboardController extends Controller
             );
         }
 
+        // Date range filter: show any generated report whose own
+        // date_from -> date_to period overlaps the selected window.
+        // Leaving both blank means "all dates".
+        if ($request->filled('date_from')) {
+            $query->where(
+                'date_to',
+                '>=',
+                $request->date_from
+            );
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where(
+                'date_from',
+                '<=',
+                $request->date_to
+            );
+        }
+
         $reports = $query->get();
 
         return view(
             'Dashboard.Reports.reports',
             compact('reports')
         );
+    }
+
+    /**
+     * Export the REAL underlying data (Orders/Sales, Farmers, Products) for
+     * the selected date range and type — not just the "Generated Reports"
+     * list metadata. This is the same data that goes into an individual
+     * report's PDF, just covering the whole filtered range/type at once.
+     *
+     *   - PDF   -> everything combined into a single file (one section per type)
+     *   - XLSX  -> a separate sheet/table per type
+     */
+    public function reportsExport(Request $request)
+    {
+        $request->validate([
+            'format' => 'required|in:pdf,xlsx',
+            'report_type' => 'nullable|in:all,sales,orders,farmers,products',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
+        $type = $request->report_type ?: 'all';
+        $dateFrom = $request->date_from;
+        $dateTo = $request->date_to;
+
+        $sections = [];
+
+        // Sales / Orders
+        if (in_array($type, ['all', 'sales', 'orders'])) {
+            $query = Order::with(['user', 'farmer', 'pickupSlot']);
+
+            if ($dateFrom) {
+                $query->where('order_date', '>=', $dateFrom . ' 00:00:00');
+            }
+
+            if ($dateTo) {
+                $query->where('order_date', '<=', $dateTo . ' 23:59:59');
+            }
+
+            $orders = $query->orderBy('order_date', 'asc')->get();
+
+            $sections['orders'] = [
+                'label' => $type === 'sales' ? 'Sales Summary' : 'Orders',
+                'data' => $orders,
+            ];
+        }
+
+        // Farmer Activity
+        if (in_array($type, ['all', 'farmers'])) {
+            $query = FarmerProfile::with('user');
+
+            if ($dateFrom) {
+                $query->where('created_at', '>=', $dateFrom . ' 00:00:00');
+            }
+
+            if ($dateTo) {
+                $query->where('created_at', '<=', $dateTo . ' 23:59:59');
+            }
+
+            $farmers = $query->orderBy('created_at', 'asc')->get();
+
+            $sections['farmers'] = [
+                'label' => 'Farmer Activity',
+                'data' => $farmers,
+            ];
+        }
+
+        // Product Inventory
+        if (in_array($type, ['all', 'products'])) {
+            $query = Product::with(['farmer', 'category']);
+
+            if ($dateFrom) {
+                $query->where('created_at', '>=', $dateFrom . ' 00:00:00');
+            }
+
+            if ($dateTo) {
+                $query->where('created_at', '<=', $dateTo . ' 23:59:59');
+            }
+
+            $products = $query->orderBy('created_at', 'asc')->get();
+
+            $sections['products'] = [
+                'label' => 'Product Inventory',
+                'data' => $products,
+            ];
+        }
+
+        $filters = [
+            'report_type' => $type,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+        ];
+
+        if ($request->format === 'xlsx') {
+            return $this->reportsExportXlsx($sections, $filters);
+        }
+
+        // format === 'pdf': everything combined into one file, one section per type
+        $pdf = Pdf::loadView(
+            'Dashboard.Reports.reports-export-pdf',
+            [
+                'sections' => $sections,
+                'filters' => $filters,
+            ]
+        );
+
+        return $pdf->download(
+            'MarketLink_Reports_Export_' . now()->format('Ymd_His') . '.pdf'
+        );
+    }
+
+    /**
+     * Build the multi-sheet Excel export: one sheet/table per data type
+     * (only the types actually included), using the real detailed rows
+     * (same columns as the single-report Excel/PDF download), styled to
+     * match the PDF export (green title banner, date-range subtitle,
+     * bordered/zebra-striped table).
+     */
+    protected function reportsExportXlsx(array $sections, array $filters)
+    {
+        $xlsx = new SimpleXlsxWriter;
+
+        $subtitle = 'Date Range: ' .
+            ($filters['date_from'] ?? 'Any') . ' - ' . ($filters['date_to'] ?? 'Any') .
+            '   |   Generated: ' . now()->format('d M Y H:i');
+
+        if (empty($sections)) {
+            $xlsx->addSheet('Data', ['No data'], [], 'Reports Data Export', $subtitle);
+        }
+
+        foreach ($sections as $key => $section) {
+            if ($key === 'orders') {
+                [$headers, $rows] = $this->buildOrdersRows($section['data']);
+            } elseif ($key === 'farmers') {
+                [$headers, $rows] = $this->buildFarmersRows($section['data']);
+            } else {
+                [$headers, $rows] = $this->buildProductsRows($section['data']);
+            }
+
+            $xlsx->addSheet($section['label'], $headers, $rows, $section['label'], $subtitle);
+        }
+
+        $fileName = 'MarketLink_Reports_Export_' . now()->format('Ymd_His') . '.xlsx';
+
+        return response($xlsx->output(), 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
+    }
+
+    /**
+     * Shared row-builders, used by both the single-report download
+     * and the bulk reports export, so PDF/Excel/single/bulk all show
+     * the exact same columns for the same data type.
+     */
+    protected function buildOrdersRows($orders): array
+    {
+        $headers = ['ID', 'Customer', 'Farmer', 'Pickup Slot', 'Total Amount', 'Status', 'Order Date', 'Notes'];
+
+        $rows = $orders->map(fn($order) => [
+            $order->id,
+            $order->user->name ?? 'N/A',
+            $order->farmer->stall_name ?? 'N/A',
+            $order->pickupSlot->id ?? 'N/A',
+            number_format($order->total_amount, 2),
+            ucfirst($order->status),
+            $order->order_date->format('d M Y H:i'),
+            $order->notes ?? 'N/A',
+        ])->all();
+
+        return [$headers, $rows];
+    }
+
+    protected function buildFarmersRows($farmers): array
+    {
+        $headers = ['ID', 'Farmer', 'Stall Name', 'Business', 'Description', 'Address', 'City', 'State', 'Country', 'Operating Days', 'Start', 'End', 'Approval'];
+
+        $rows = $farmers->map(fn($farmer) => [
+            $farmer->id,
+            $farmer->user->name ?? 'N/A',
+            $farmer->stall_name,
+            $farmer->business_name,
+            $farmer->description,
+            $farmer->address,
+            $farmer->city,
+            $farmer->state,
+            $farmer->country,
+            $farmer->operating_days,
+            $farmer->start_time,
+            $farmer->end_time,
+            ucfirst($farmer->approval_status),
+        ])->all();
+
+        return [$headers, $rows];
+    }
+
+    protected function buildProductsRows($products): array
+    {
+        $headers = ['ID', 'Product', 'Farmer', 'Category', 'Description', 'Price', 'Stock', 'Unit', 'Active'];
+
+        $rows = $products->map(fn($product) => [
+            $product->id,
+            $product->name,
+            $product->farmer->stall_name ?? 'N/A',
+            $product->category->name ?? 'N/A',
+            $product->description,
+            number_format($product->price, 2),
+            $product->stock_quantity,
+            $product->unit,
+            $product->is_active ? 'Yes' : 'No',
+        ])->all();
+
+        return [$headers, $rows];
     }
 
     public function reportGenerate(Request $request)
@@ -2260,11 +2791,11 @@ class DashboardController extends Controller
                 ->whereBetween(
                     'order_date',
                     [
-                        $request->date_from.
-                        ' 00:00:00',
+                        $request->date_from .
+                            ' 00:00:00',
 
-                        $request->date_to.
-                        ' 23:59:59',
+                        $request->date_to .
+                            ' 23:59:59',
                     ]
                 )
                 ->get();
@@ -2277,11 +2808,11 @@ class DashboardController extends Controller
                 ->whereBetween(
                     'created_at',
                     [
-                        $request->date_from.
-                        ' 00:00:00',
+                        $request->date_from .
+                            ' 00:00:00',
 
-                        $request->date_to.
-                        ' 23:59:59',
+                        $request->date_to .
+                            ' 23:59:59',
                     ]
                 )
                 ->get();
@@ -2293,11 +2824,11 @@ class DashboardController extends Controller
                 ->whereBetween(
                     'created_at',
                     [
-                        $request->date_from.
-                        ' 00:00:00',
+                        $request->date_from .
+                            ' 00:00:00',
 
-                        $request->date_to.
-                        ' 23:59:59',
+                        $request->date_to .
+                            ' 23:59:59',
                     ]
                 )
                 ->get();
@@ -2324,13 +2855,13 @@ class DashboardController extends Controller
         }
 
         $fileName =
-            'report_'.
-            $report->id.
+            'report_' .
+            $report->id .
             '.pdf';
 
         $path =
-            $directory.
-            '/'.
+            $directory .
+            '/' .
             $fileName;
 
         file_put_contents(
@@ -2339,22 +2870,22 @@ class DashboardController extends Controller
         );
 
         $report->update([
-            'file_path' => 'reports/'.
+            'file_path' => 'reports/' .
                 $fileName,
         ]);
 
         return response()->download(
             $path,
-            'MarketLink_Report_'.
-            $report->id.
-            '.pdf',
+            'MarketLink_Report_' .
+                $report->id .
+                '.pdf',
             [
                 'Content-Type' => 'application/pdf',
             ]
         );
     }
 
-    public function reportDownload($id)
+    public function reportDownload(Request $request, $id)
     {
         $report = Report::findOrFail($id);
 
@@ -2370,11 +2901,11 @@ class DashboardController extends Controller
                 ->whereBetween(
                     'order_date',
                     [
-                        $report->date_from.
-                        ' 00:00:00',
+                        $report->date_from .
+                            ' 00:00:00',
 
-                        $report->date_to.
-                        ' 23:59:59',
+                        $report->date_to .
+                            ' 23:59:59',
                     ]
                 )
                 ->get();
@@ -2387,11 +2918,11 @@ class DashboardController extends Controller
                 ->whereBetween(
                     'created_at',
                     [
-                        $report->date_from.
-                        ' 00:00:00',
+                        $report->date_from .
+                            ' 00:00:00',
 
-                        $report->date_to.
-                        ' 23:59:59',
+                        $report->date_to .
+                            ' 23:59:59',
                     ]
                 )
                 ->get();
@@ -2403,14 +2934,18 @@ class DashboardController extends Controller
                 ->whereBetween(
                     'created_at',
                     [
-                        $report->date_from.
-                        ' 00:00:00',
+                        $report->date_from .
+                            ' 00:00:00',
 
-                        $report->date_to.
-                        ' 23:59:59',
+                        $report->date_to .
+                            ' 23:59:59',
                     ]
                 )
                 ->get();
+        }
+
+        if ($request->query('format') === 'xlsx') {
+            return $this->reportDownloadXlsx($report, $data);
         }
 
         $pdf = Pdf::loadView(
@@ -2422,17 +2957,58 @@ class DashboardController extends Controller
         );
 
         return $pdf->download(
-            'MarketLink_Report_'.
-            $report->id.
-            '_Download.pdf'
+            'MarketLink_Report_' .
+                $report->id .
+                '_Download.pdf'
         );
     }
 
-    public function announcements()
+    /**
+     * Download a single generated report's underlying data as a one-sheet
+     * Excel file (same rows/columns as the PDF version, just in xlsx form).
+     */
+    protected function reportDownloadXlsx(Report $report, $data)
     {
-        $announcements = Announcement::with(
-            'admin'
-        )
+        $xlsx = new SimpleXlsxWriter;
+
+        if ($report->report_type === 'sales' || $report->report_type === 'orders') {
+            [$headers, $rows] = $this->buildOrdersRows($data);
+        } elseif ($report->report_type === 'farmers') {
+            [$headers, $rows] = $this->buildFarmersRows($data);
+        } else {
+            [$headers, $rows] = $this->buildProductsRows($data);
+        }
+
+        $title = ucfirst($report->report_type) . ' Report #' . $report->id;
+
+        $subtitle = 'Date Range: ' . $report->date_from->format('d M Y') . ' - ' . $report->date_to->format('d M Y') .
+            '   |   Generated: ' . $report->generated_at->format('d M Y H:i');
+
+        $xlsx->addSheet(ucfirst($report->report_type), $headers, $rows, $title, $subtitle);
+
+        $fileName = 'MarketLink_Report_' . $report->id . '_Download.xlsx';
+
+        return response($xlsx->output(), 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
+    }
+
+    public function announcements(Request $request)
+    {
+        $query = Announcement::with('admin');
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('title', 'like', '%' . $search . '%')
+                    ->orWhere('message', 'like', '%' . $search . '%');
+            });
+        }
+
+        $announcements = $query
             ->latest()
             ->get();
 
@@ -2539,7 +3115,16 @@ class DashboardController extends Controller
             $id
         );
 
+        $title = $announcement->title ?? "#{$id}";
+
         $announcement->delete();
+
+        ActivityLogger::log(
+            'deleted',
+            "Deleted announcement \"{$title}\"",
+            Announcement::class,
+            $id
+        );
 
         return redirect()
             ->route('announcements')
@@ -2547,5 +3132,273 @@ class DashboardController extends Controller
                 'success',
                 'Announcement deleted successfully.'
             );
+    }
+
+    /**
+     * Admin accountability screen: who did what and when.
+     */
+    public function activityLog(Request $request)
+    {
+        $query = ActivityLog::with('user')
+            ->action($request->get('action'));
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('description', 'like', '%' . $search . '%')
+                    ->orWhere('actor_name', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->from);
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->to);
+        }
+
+        $logs = $query
+            ->latest()
+            ->paginate(25)
+            ->withQueryString();
+
+        $actions = ActivityLog::select('action')
+            ->distinct()
+            ->orderBy('action')
+            ->pluck('action');
+
+        return view(
+            'Dashboard.ActivityLog.index',
+            compact('logs', 'actions')
+        );
+    }
+
+    /**
+     * Top-selling farmers by revenue/orders (platform-wide leaderboard).
+     */
+    public function farmerLeaderboard(Request $request)
+    {
+        $sort = $request->get('sort', 'revenue');
+        $period = $request->get('period', 'all');
+
+        $dateFrom = match ($period) {
+            '7days' => now()->subDays(7),
+            '30days' => now()->subDays(30),
+            'month' => now()->startOfMonth(),
+            default => null,
+        };
+
+        $ordersFilter = function ($query) use ($dateFrom) {
+            $query->where('status', '!=', 'cancelled');
+
+            if ($dateFrom) {
+                $query->where('order_date', '>=', $dateFrom);
+            }
+        };
+
+        $farmers = FarmerProfile::with('user')
+            ->where('approval_status', 'approved')
+            ->withCount(['orders as orders_count' => $ordersFilter])
+            ->withSum(['orders as total_revenue' => $ordersFilter], 'total_amount')
+            ->withCount('products')
+            ->withAvg('reviews', 'rating')
+            ->get();
+
+        $farmers = $farmers->map(function ($farmer) {
+            $farmer->total_revenue = (float) ($farmer->total_revenue ?? 0);
+            $farmer->orders_count = (int) ($farmer->orders_count ?? 0);
+            $farmer->avg_rating = round((float) ($farmer->reviews_avg_rating ?? 0), 1);
+
+            return $farmer;
+        });
+
+        $farmers = $sort === 'orders'
+            ? $farmers->sortByDesc('orders_count')->values()
+            : $farmers->sortByDesc('total_revenue')->values();
+
+        return view(
+            'Dashboard.Leaderboard.index',
+            compact('farmers', 'sort', 'period')
+        );
+    }
+
+    /**
+     * Platform-wide commission / fee tracking: how much the platform earns
+     * (and how much each farmer is owed) on their order revenue, based on
+     * each farmer's commission_rate override or the platform default.
+     */
+    public function commissionTracking(Request $request)
+    {
+        $period = $request->get('period', 'all');
+        $farmerId = $request->get('farmer_id');
+
+        $dateFrom = match ($period) {
+            '7days' => now()->subDays(7),
+            '30days' => now()->subDays(30),
+            'month' => now()->startOfMonth(),
+            default => null,
+        };
+
+        $ordersFilter = function ($query) use ($dateFrom) {
+            $query->where('status', '!=', 'cancelled');
+
+            if ($dateFrom) {
+                $query->where('order_date', '>=', $dateFrom);
+            }
+        };
+
+        $farmersQuery = FarmerProfile::with('user')
+            ->withCount(['orders as orders_count' => $ordersFilter])
+            ->withSum(['orders as total_revenue' => $ordersFilter], 'total_amount');
+
+        if ($farmerId) {
+            $farmersQuery->where('id', $farmerId);
+        }
+
+        $farmers = $farmersQuery->get()
+            ->map(function ($farmer) {
+                $farmer->total_revenue = (float) ($farmer->total_revenue ?? 0);
+                $farmer->orders_count = (int) ($farmer->orders_count ?? 0);
+                $farmer->rate = $farmer->effective_commission_rate;
+                $farmer->commission_amount = round($farmer->total_revenue * $farmer->rate / 100, 2);
+                $farmer->payout_amount = round($farmer->total_revenue - $farmer->commission_amount, 2);
+
+                return $farmer;
+            })
+            ->filter(fn($farmer) => $farmer->orders_count > 0 || $farmerId)
+            ->sortByDesc('total_revenue')
+            ->values();
+
+        $totals = [
+            'revenue' => round($farmers->sum('total_revenue'), 2),
+            'commission' => round($farmers->sum('commission_amount'), 2),
+            'payout' => round($farmers->sum('payout_amount'), 2),
+            'orders' => (int) $farmers->sum('orders_count'),
+        ];
+
+        $allFarmers = FarmerProfile::with('user')
+            ->where('approval_status', 'approved')
+            ->orderBy('stall_name')
+            ->get();
+
+        return view(
+            'Dashboard.Commission.index',
+            compact('farmers', 'totals', 'period', 'farmerId', 'allFarmers')
+        );
+    }
+
+    /**
+     * Set (or clear) a single farmer's commission_rate override.
+     * Leaving the field blank resets them to the platform default.
+     */
+    public function commissionRateUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'commission_rate' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        $farmer = FarmerProfile::findOrFail($id);
+
+        $farmer->commission_rate = $request->filled('commission_rate')
+            ? $request->commission_rate
+            : null;
+
+        $farmer->save();
+
+        $label = $request->filled('commission_rate')
+            ? $farmer->commission_rate . '%'
+            : 'platform default';
+
+        ActivityLogger::log(
+            'updated',
+            "Set commission rate for \"{$farmer->stall_name}\" to {$label}",
+            FarmerProfile::class,
+            $farmer->id
+        );
+
+        return redirect()
+            ->back()
+            ->with('success', 'Commission rate updated.');
+    }
+
+    /**
+     * Per-product sales analytics for the logged-in farmer: units sold,
+     * revenue, order count and a fast/slow-mover tag relative to this
+     * farmer's own average, so slow-moving stock stands out at a glance.
+     */
+    public function productSalesAnalytics(Request $request)
+    {
+        $farmer = $this->currentFarmer();
+        $period = $request->get('period', 'all');
+        $sort = $request->get('sort', 'revenue');
+
+        $dateFrom = match ($period) {
+            '7days' => now()->subDays(7),
+            '30days' => now()->subDays(30),
+            'month' => now()->startOfMonth(),
+            default => null,
+        };
+
+        $sales = OrderItem::query()
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('orders.farmer_id', $farmer->id)
+            ->where('orders.status', '!=', 'cancelled')
+            ->when($dateFrom, fn($query) => $query->where('orders.order_date', '>=', $dateFrom))
+            ->selectRaw('order_items.product_id')
+            ->selectRaw('SUM(order_items.quantity) as units_sold')
+            ->selectRaw('SUM(order_items.subtotal) as revenue')
+            ->selectRaw('COUNT(DISTINCT order_items.order_id) as orders_count')
+            ->selectRaw('MAX(orders.order_date) as last_sold_at')
+            ->groupBy('order_items.product_id')
+            ->get()
+            ->keyBy('product_id');
+
+        $rows = Product::where('farmer_id', $farmer->id)
+            ->orderBy('name')
+            ->get()
+            ->map(function ($product) use ($sales) {
+                $s = $sales->get($product->id);
+
+                $product->units_sold = (int) ($s->units_sold ?? 0);
+                $product->revenue = (float) ($s->revenue ?? 0);
+                $product->orders_count = (int) ($s->orders_count ?? 0);
+                $product->last_sold_at = $s && $s->last_sold_at
+                    ? \Carbon\Carbon::parse($s->last_sold_at)
+                    : null;
+
+                return $product;
+            });
+
+        $avgUnits = $rows->where('units_sold', '>', 0)->avg('units_sold') ?? 0;
+
+        $rows = $rows->map(function ($product) use ($avgUnits) {
+            $product->movement = match (true) {
+                $product->units_sold <= 0 => 'no_sales',
+                $avgUnits > 0 && $product->units_sold >= $avgUnits * 1.5 => 'fast',
+                $avgUnits > 0 && $product->units_sold <= $avgUnits * 0.5 => 'slow',
+                default => 'steady',
+            };
+
+            return $product;
+        });
+
+        $rows = $sort === 'units'
+            ? $rows->sortByDesc('units_sold')->values()
+            : $rows->sortByDesc('revenue')->values();
+
+        $totals = [
+            'revenue' => round($rows->sum('revenue'), 2),
+            'units' => (int) $rows->sum('units_sold'),
+            'slow_count' => $rows->where('movement', 'slow')->count(),
+            'no_sales_count' => $rows->where('movement', 'no_sales')->count(),
+        ];
+
+        return view(
+            'Dashboard.ProductAnalytics.index',
+            compact('rows', 'totals', 'period', 'sort')
+        );
     }
 }

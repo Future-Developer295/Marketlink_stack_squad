@@ -31,6 +31,7 @@ class FarmerProfile extends Model
         'approval_status',
         'approved_by',
         'approved_at',
+        'commission_rate',
     ];
 
     protected function casts(): array
@@ -42,7 +43,19 @@ class FarmerProfile extends Model
             'end_time' => 'datetime:H:i',
             'cutoff_hours' => 'integer',
             'approved_at' => 'datetime',
+            'commission_rate' => 'decimal:2',
         ];
+    }
+
+    /**
+     * The rate actually applied to this farmer's orders: their own
+     * override if set, otherwise the platform default from config.
+     */
+    public function getEffectiveCommissionRateAttribute(): float
+    {
+        return $this->commission_rate !== null
+            ? (float) $this->commission_rate
+            : (float) config('marketlink.default_commission_rate', 10.00);
     }
 
     public function user(): BelongsTo

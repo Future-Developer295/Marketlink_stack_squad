@@ -31,9 +31,9 @@ class FortifyServiceProvider extends ServiceProvider
     {
         // Render this app's own Blade views instead of Jetstream's default
         // Livewire login/register pages, so Fortify's routes (login/register)
-        // show the MarketLink-branded forms in resources/views/Website/Auth/.
-        Fortify::loginView(fn () => view('Website.Auth.login'));
-        Fortify::registerView(fn () => view('Website.Auth.register'));
+        // show the MarketLink-branded split-screen forms in resources/views/Auth/.
+        Fortify::loginView(fn () => view('Auth.login'));
+        Fortify::registerView(fn () => view('Auth.register'));
 
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);

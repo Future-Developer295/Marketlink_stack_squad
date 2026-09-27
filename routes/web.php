@@ -258,6 +258,29 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         ->name('customer_toggle_status')
         ->middleware('permission:delete customers');
 
+    Route::get('/dashboard/farmer-leaderboard', [DashboardController::class, 'farmerLeaderboard'])
+        ->name('farmer_leaderboard')
+        ->middleware('permission:view farmer leaderboard');
+
+    Route::get('/dashboard/low-stock-alerts', [DashboardController::class, 'lowStockAlerts'])
+        ->name('low_stock_alerts')
+        ->middleware('permission:view low stock alerts');
+
+    Route::get('/dashboard/activity-log', [DashboardController::class, 'activityLog'])
+        ->name('activity_log')
+        ->middleware('permission:view activity log');
+
+    Route::get('/dashboard/commission-tracking', [DashboardController::class, 'commissionTracking'])
+        ->name('commission_tracking')
+        ->middleware('permission:view commission tracking');
+    Route::post('/dashboard/commission-tracking/{id}/rate', [DashboardController::class, 'commissionRateUpdate'])
+        ->name('commission_rate_update')
+        ->middleware('permission:edit commission rate');
+
+    Route::get('/dashboard/product-sales-analytics', [DashboardController::class, 'productSalesAnalytics'])
+        ->name('product_sales_analytics')
+        ->middleware('permission:view product sales analytics');
+
     Route::get('/dashboard/reviews', [DashboardController::class, 'reviews'])
         ->name('reviews')
         ->middleware('permission:view reviews');
@@ -279,6 +302,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         ->middleware('permission:generate reports');
     Route::get('/dashboard/reports/download/{id}', [DashboardController::class, 'reportDownload'])
         ->name('report_download')
+        ->middleware('permission:download reports');
+    Route::get('/dashboard/reports/export', [DashboardController::class, 'reportsExport'])
+        ->name('reports_export')
         ->middleware('permission:download reports');
 
     Route::get('/dashboard/announcements', [DashboardController::class, 'announcements'])

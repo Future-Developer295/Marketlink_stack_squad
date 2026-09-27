@@ -24,9 +24,45 @@
   .burger-btn {
     display: flex;
   }
+
+  /* Stat boxes: compact cards, single scrollable line instead of stacking */
   .stats-row {
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-wrap: nowrap;
+    grid-template-columns: unset;
+    overflow-x: auto;
+    gap: 10px;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
   }
+  .stats-row::-webkit-scrollbar {
+    height: 5px;
+  }
+  .stats-row::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+  }
+  .stat-card {
+    flex: 0 0 136px;
+    min-width: 136px;
+    padding: 14px 14px 12px;
+  }
+  .stat-icon-wrap {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+  .stat-num {
+    font-size: 19px;
+  }
+  .stat-label {
+    font-size: 10px;
+  }
+  .stat-trend {
+    font-size: 8.5px;
+    margin-top: 4px;
+  }
+
   .grid-2,
   .grid-3 {
     grid-template-columns: 1fr;
@@ -37,10 +73,28 @@
   .panel-tools {
     gap: 6px;
   }
+
+  /* Users table: hide Phone & Role on tablets */
+  .users-table .col-hide-md {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
-  .stats-row {
-    grid-template-columns: 1fr;
+  .stat-card {
+    flex: 0 0 118px;
+    min-width: 118px;
+    padding: 12px 12px 10px;
+  }
+  .stat-num {
+    font-size: 17px;
+  }
+
+  /* Users table: keep only #ID, Name and Actions on phones */
+  .users-table .col-hide-sm {
+    display: none;
+  }
+  .users-tbl-wrap {
+    overflow-x: visible;
   }
 }

@@ -401,7 +401,31 @@ input[type="file"]::file-selector-button { background: var(--accent-soft); color
   .topbar { min-height: 90px; padding: 22px 20px; }
   .page-title { font-size: 21px; }
   .page-body { padding: 0 20px 24px; }
-  .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+  /* Stat boxes: single scrollable line, compact cards */
+  .stats-row {
+    display: flex;
+    flex-wrap: nowrap;
+    grid-template-columns: unset;
+    overflow-x: auto;
+    gap: 10px;
+    padding-bottom: 6px;
+    margin-bottom: 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .stats-row::-webkit-scrollbar { height: 5px; }
+  .stats-row::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  .stat-card {
+    flex: 0 0 136px;
+    min-width: 136px;
+    padding: 14px 14px 12px;
+  }
+  .stat-card .stat-icon-wrap { width: 26px; height: 26px; font-size: 12px; top: 10px; right: 10px; border-radius: 8px; }
+  .stat-num { font-size: 19px; letter-spacing: -0.5px; margin-bottom: 2px; }
+  .stat-label { font-size: 10px; }
+  .stat-trend { font-size: 8.5px; margin-top: 4px; }
+
   .grid-2, .grid-3, .detail-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .panel-header { padding: 18px 20px; }
   .panel-tools { gap: 9px; }
@@ -409,6 +433,9 @@ input[type="file"]::file-selector-button { background: var(--accent-soft); color
   .search-box input { width: 100%; }
   .panel-header .field-input { max-width: 100%; }
   .permission-list { grid-template-columns: minmax(0, 1fr); }
+
+  /* Users table: trim to #ID, Name, Role, Actions on tablets */
+  .users-table .col-hide-md { display: none; }
 }
 @media (max-width: 576px) {
   .shell { margin: 0; border-radius: 0; min-height: 100vh; }
@@ -420,12 +447,19 @@ input[type="file"]::file-selector-button { background: var(--accent-soft); color
   .page-title { font-size: 18px; letter-spacing: -.55px; overflow-wrap: anywhere; }
   .breadcrumb-mini { font-size: 9px; gap: 4px; flex-wrap: wrap; }
   .page-body { padding: 0 14px 24px; }
-  .stats-row { grid-template-columns: minmax(0, 1fr); gap: 10px; margin-bottom: 18px; }
-  .stat-card { padding: 18px 20px; }
-  .stat-label { min-height: auto; }
-  .stat-num { font-size: 29px; }
-  .stat-trend { margin-top: 7px; }
-  .stat-card .stat-icon-wrap { width: 38px; height: 38px; right: 20px; }
+
+  /* Keep stat boxes on one compact scrollable line on phones too */
+  .stats-row { gap: 8px; margin-bottom: 16px; }
+  .stat-card { flex: 0 0 118px; min-width: 118px; padding: 12px 12px 10px; }
+  .stat-label { min-height: auto; font-size: 9.5px; }
+  .stat-num { font-size: 17px; }
+  .stat-trend { margin-top: 4px; font-size: 8px; }
+  .stat-card .stat-icon-wrap { width: 24px; height: 24px; top: 9px; right: 9px; font-size: 11px; }
+
+  /* Users table: show only #ID, Name and Actions on phones */
+  .users-table .col-hide-sm { display: none; }
+  .users-tbl-wrap { overflow-x: visible; }
+
   .panel-header { align-items: stretch; padding: 18px; }
   .panel-tools { width: 100%; align-items: stretch; }
   .panel-tools > form { width: 100%; }

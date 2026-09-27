@@ -6,11 +6,13 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
         $adminPermissions = [
             'view admin dashboard',
 
@@ -38,9 +40,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete categories',
 
             'view products',
-            'add products',
-            'edit products',
             'delete products',
+
+            
 
             'view reviews',
             'flag reviews',
@@ -64,6 +66,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'add permissions',
             'edit permissions',
             'delete permissions',
+
+            'view activity log',
+            'view farmer leaderboard',
+
+            'view commission tracking',
+            'edit commission rate',
+
+            'view product sales analytics',
         ];
 
         $farmerPermissions = [
@@ -86,6 +96,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit weekly stock',
             'delete weekly stock',
 
+            'view product sales analytics',
+
+            'view low stock alerts',
+
             'view orders',
             'view order',
             'update order status',
@@ -96,15 +110,18 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete pickup slots',
 
             'view reviews',
+            'flag reviews',
         ];
 
         $customerPermissions = [];
 
-        foreach (array_merge(
-            $adminPermissions,
-            $farmerPermissions,
-            $customerPermissions
-        ) as $permission) {
+        $permissions = collect([
+            ...$adminPermissions,
+            ...$farmerPermissions,
+            ...$customerPermissions,
+        ])->unique()->values();
+
+        foreach ($permissions as $permission) {
             Permission::firstOrCreate([
                 'name' => $permission,
                 'guard_name' => 'web',
@@ -127,13 +144,15 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         $admin->syncPermissions($adminPermissions);
-
         $farmer->syncPermissions($farmerPermissions);
-
         $customer->syncPermissions($customerPermissions);
 
-        User::whereNotNull('role')->get()->each(function ($user) {
-            $user->syncRoles([$user->role]);
-        });
+        User::whereIn('role', ['admin', 'farmer', 'customer'])
+            ->get()
+            ->each(function ($user) {
+                $user->syncRoles([$user->role]);
+            });
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }
