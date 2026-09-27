@@ -770,7 +770,6 @@ class WebsiteController extends Controller
             'pickup_slot.*.required' => 'Please select a pickup date and time slot for every farmer in your cart.',
         ]);
 
-<<<<<<< HEAD
         foreach ($itemsByFarmer as $farmerId => $items) {
             if (empty($validated['pickup_slot'][$farmerId])) {
                 return redirect()
@@ -789,27 +788,11 @@ class WebsiteController extends Controller
                     $validated
                 ) {
                     $orders = collect();
-=======
-                    $order = Order::create([
-                        'user_id' => Auth::id(),
-                        'farmer_id' => $farmerId,
-                        'pickup_slot_id' =>
-                        $validated['pickup_slot'][$farmerId]
-                            ?? null,
-                        'total_amount' => $totalAmount,
-                        'status' => 'pending',
-                        'order_date' => now(),
-                        'notes' =>
-                        $validated['notes']
-                            ?? null,
-                    ]);
->>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
 
                     foreach (
                         $itemsByFarmer as
                         $farmerId => $items
                     ) {
-<<<<<<< HEAD
                         $pickupSlotId = $validated['pickup_slot'][$farmerId];
 
                         $pickupSlot = PickupSlot::where('id', $pickupSlotId)
@@ -862,18 +845,6 @@ class WebsiteController extends Controller
                             'status' => 'pending',
                             'order_date' => now(),
                             'notes' => $validated['notes'] ?? null,
-=======
-                        OrderItem::create([
-                            'order_id' => $order->id,
-                            'product_id' =>
-                            $item['product']->id,
-                            'quantity' =>
-                            $item['quantity'],
-                            'price' =>
-                            $item['product']->price,
-                            'subtotal' =>
-                            $item['subtotal'],
->>>>>>> 281ee3e (Dashbord Improvement And New Feature Add)
                         ]);
 
                         foreach ($items as $index => $item) {
