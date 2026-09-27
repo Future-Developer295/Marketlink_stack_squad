@@ -66,7 +66,6 @@
                 <div class="ml-media-card">
                     <div class="ml-media-card__image">
                         <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=700&q=60" alt="{{ $market->name }}">
-                        <button class="ml-favorite-btn ml-image-fav" type="button" aria-label="Save market"><i class="fa-regular fa-heart"></i></button>
                     </div>
                     <div class="ml-media-card__body">
                         <div class="d-flex justify-content-between align-items-start">
@@ -111,7 +110,16 @@
                 <div class="ml-media-card">
                     <div class="ml-media-card__image">
                         <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=700&q=60" alt="{{ $farmer->stall_name }}">
-                        <button class="ml-favorite-btn ml-image-fav" type="button" aria-label="Save farmer"><i class="fa-regular fa-heart"></i></button>
+                        @auth
+                            <form action="{{ route('favorite.toggle', ['type' => 'farmer', 'id' => $farmer->id]) }}" method="POST" class="ml-image-fav">
+                                @csrf
+                                <button type="submit" class="ml-favorite-btn" aria-label="{{ $favoritedFarmerIds->contains($farmer->id) ? 'Remove from favorites' : 'Save farmer' }}">
+                                    <i class="fa-{{ $favoritedFarmerIds->contains($farmer->id) ? 'solid' : 'regular' }} fa-heart"></i>
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}" class="ml-favorite-btn ml-image-fav" aria-label="Save farmer"><i class="fa-regular fa-heart"></i></a>
+                        @endauth
                     </div>
                     <div class="ml-media-card__body">
                         <div class="d-flex justify-content-between align-items-start">
@@ -157,7 +165,16 @@
                     <div class="ml-media-card__image">
                         <img src="{{ $product->image ? asset('product_images/' . $product->image) : 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&w=500&q=60' }}" alt="{{ $product->name }}">
                         <span class="ml-badge {{ $product->stock_quantity > 5 ? 'ml-badge-mint' : 'ml-badge-warning' }} ml-image-tag">{{ $product->stock_quantity > 5 ? 'In Stock' : 'Low Stock ('.$product->stock_quantity.' left)' }}</span>
-                        <button class="ml-favorite-btn ml-image-fav" type="button" aria-label="Save product"><i class="fa-regular fa-heart"></i></button>
+                        @auth
+                            <form action="{{ route('favorite.toggle', ['type' => 'product', 'id' => $product->id]) }}" method="POST" class="ml-image-fav">
+                                @csrf
+                                <button type="submit" class="ml-favorite-btn" aria-label="{{ $favoritedProductIds->contains($product->id) ? 'Remove from favorites' : 'Save product' }}">
+                                    <i class="fa-{{ $favoritedProductIds->contains($product->id) ? 'solid' : 'regular' }} fa-heart"></i>
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}" class="ml-favorite-btn ml-image-fav" aria-label="Save product"><i class="fa-regular fa-heart"></i></a>
+                        @endauth
                     </div>
                     <div class="ml-media-card__body">
                         <span class="small text-muted">{{ $product->farmer->stall_name ?? $product->farmer->business_name ?? '' }}</span>

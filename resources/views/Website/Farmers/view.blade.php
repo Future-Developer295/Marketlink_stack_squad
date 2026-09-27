@@ -77,9 +77,18 @@
                         <a href="{{ url('/products') }}?farmer={{ $farmer->id }}" class="btn ml-btn-primary">
                             <i class="fa-solid fa-basket-shopping me-2"></i>Browse Weekly Stock
                         </a>
-                        <button type="button" class="btn ml-btn-secondary">
-                            <i class="fa-regular fa-heart me-2"></i>Save Farmer
-                        </button>
+                        @auth
+                            <form action="{{ route('favorite.toggle', ['type' => 'farmer', 'id' => $farmer->id]) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn ml-btn-secondary">
+                                    <i class="fa-{{ $isFavorited ? 'solid' : 'regular' }} fa-heart me-2"></i>{{ $isFavorited ? 'Saved' : 'Save Farmer' }}
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}" class="btn ml-btn-secondary">
+                                <i class="fa-regular fa-heart me-2"></i>Save Farmer
+                            </a>
+                        @endauth
                     </div>
                 </div>
             </div>
@@ -122,6 +131,28 @@
                 </div>
             </div>
         </div>
+
+        @if($farmer->latitude && $farmer->longitude)
+        <div class="ml-card mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h6 class="mb-0"><i class="fa-solid fa-location-dot"></i> Pickup Location</h6>
+                <a
+                    href="https://www.google.com/maps/dir/?api=1&destination={{ $farmer->latitude }},{{ $farmer->longitude }}"
+                    target="_blank"
+                    rel="noopener"
+                    class="btn ml-btn-secondary ml-btn-sm"
+                >
+                    <i class="fa-solid fa-diamond-turn-right"></i> Get Directions
+                </a>
+            </div>
+            <div
+                id="farmerMap"
+                data-lat="{{ $farmer->latitude }}"
+                data-lng="{{ $farmer->longitude }}"
+                style="height:320px;border-radius:14px;overflow:hidden;"
+            ></div>
+        </div>
+        @endif
     </div>
 </section>
 

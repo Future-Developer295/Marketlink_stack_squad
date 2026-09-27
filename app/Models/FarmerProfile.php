@@ -27,6 +27,7 @@ class FarmerProfile extends Model
         'operating_days',
         'start_time',
         'end_time',
+        'cutoff_hours',
         'approval_status',
         'approved_by',
         'approved_at',
@@ -39,6 +40,7 @@ class FarmerProfile extends Model
             'longitude' => 'decimal:8',
             'start_time' => 'datetime:H:i',
             'end_time' => 'datetime:H:i',
+            'cutoff_hours' => 'integer',
             'approved_at' => 'datetime',
         ];
     }
@@ -76,5 +78,10 @@ class FarmerProfile extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'farmer_id');
+    }
+
+    public function marketFarmers(): HasMany
+    {
+        return $this->hasMany(MarketFarmer::class, 'farmer_id', 'user_id');
     }
 }

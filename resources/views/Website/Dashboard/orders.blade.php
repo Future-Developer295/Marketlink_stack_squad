@@ -22,7 +22,7 @@
                     <div class="d-flex flex-wrap gap-2">
                         <a href="{{ route('customer_orders') }}" class="ml-chip {{ request('status') ? '' : 'is-active' }}">All ({{ $statusCounts->sum() }})</a>
                         @foreach($statusCounts as $status => $count)
-                        <a href="{{ route('customer_orders', ['status' => $status]) }}" class="ml-chip {{ request('status') == $status ? 'is-active' : '' }}">{{ ucfirst($status) }} ({{ $count }})</a>
+                        <a href="{{ route('customer_orders', ['status' => $status]) }}" class="ml-chip {{ request('status') == $status ? 'is-active' : '' }}">{{ \App\Models\Order::STATUS_LABELS[$status] ?? ucfirst($status) }} ({{ $count }})</a>
                         @endforeach
                     </div>
                 </div>
@@ -58,8 +58,16 @@
                                     <td>{{ $order->items->count() }}</td>
                                     <td>{{ $order->order_date?->format('d M Y') }}</td>
                                     <td>Rs. {{ number_format($order->total_amount, 0) }}</td>
-                                    <td><span class="ml-badge ml-badge-mint">{{ ucfirst($order->status) }}</span></td>
-                                    <td><a href="{{ route('customer_order_detail', $order->id) }}" class="ml-btn-link small">View</a></td>
+                                    <td><span class="ml-badge ml-badge-mint">{{ $order->statusLabel() }}</span></td>
+                                    <td>
+                                        <a href="{{ route('customer_order_detail', $order->id) }}" class="ml-btn-link small">View</a>
+                                        @if($order->status === 'picked_up')
+                                        <form method="POST" action="{{ route('customer_order_reorder', $order->id) }}" class="d-inline ms-2">
+                                            @csrf
+                                            <button type="submit" class="ml-btn-link small">Reorder</button>
+                                        </form>
+                                        @endif
+                                    </td>
                                 </tr>
                                 @endforeach
                             </tbody>

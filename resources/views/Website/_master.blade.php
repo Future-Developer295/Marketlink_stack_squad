@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link href="{{ asset('Assets/Website_Asset/css/dashboard.css') }}" rel="stylesheet">
     @yield('page_styles')
 </head>
@@ -39,7 +40,8 @@
                             href="{{ url('/products') }}">Products</a></li>
                     <li class="nav-item"><a class="nav-link ml-nav-link {{ request()->is('about*') ? 'active' : '' }}"
                             href="{{ url('/about') }}">About</a></li>
-                    <li class="nav-item"><a class="nav-link ml-nav-link {{ request()->is('contact*') ? 'active' : '' }}"
+                    <li class="nav-item"><a
+                            class="nav-link ml-nav-link {{ request()->is('contact*') ? 'active' : '' }}"
                             href="{{ url('/contact') }}">Contact</a></li>
                 </ul>
 
@@ -51,19 +53,27 @@
                     <a href="{{ url('/cart') }}" class="ml-icon-btn" aria-label="Cart">
                         <i class="fa-solid fa-cart-shopping"></i>
                         @php($cartCount = collect(session('cart', []))->sum())
-                        @if($cartCount > 0)
+                        @if ($cartCount > 0)
                             <span class="ml-cart-badge">{{ $cartCount }}</span>
                         @endif
                     </a>
 
                     @auth
+                        <a href="{{ route('customer_notifications') }}" class="ml-icon-btn" aria-label="Notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            @php($unreadNotifCount = auth()->user()->notifications()->where('is_read', false)->count())
+                            @if ($unreadNotifCount > 0)
+                                <span class="ml-cart-badge">{{ $unreadNotifCount }}</span>
+                            @endif
+                        </a>
+
                         <div class="dropdown d-inline-block">
-                          <button class="btn p-0 border-0 bg-transparent shadow-none dropdown-toggle-no-caret"
-        type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-    <span class="ml-avatar-circle">
-        <i class="fa-solid fa-user"></i>
-    </span>
-</button>
+                            <button class="btn p-0 border-0 bg-transparent shadow-none dropdown-toggle-no-caret"
+                                type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="ml-avatar-circle">
+                                    <i class="fa-solid fa-user"></i>
+                                </span>
+                            </button>
 
                             <ul class="dropdown-menu dropdown-menu-end ml-dropdown-menu" aria-labelledby="userMenuDropdown">
                                 <!-- User Profile Header -->
@@ -152,6 +162,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('Assets/Website_Asset/js/website.js') }}"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     @yield('page_scripts')
 </body>
 

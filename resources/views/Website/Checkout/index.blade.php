@@ -88,13 +88,14 @@
                     <div class="mt-3">
                         <label class="ml-form-label small">Select Pickup Slot</label>
                         @if($slots->isNotEmpty())
-                        <select name="pickup_slot[{{ $farmerId }}]" class="form-select">
+                        <select name="pickup_slot[{{ $farmerId }}]" class="form-select" required>
+                            <option value="" disabled selected>Choose a pickup slot</option>
                             @foreach($slots as $slot)
                             <option value="{{ $slot->id }}">{{ \Illuminate\Support\Carbon::parse($slot->date)->format('D, d M Y') }} &middot; {{ $slot->start_time }} - {{ $slot->end_time }}</option>
                             @endforeach
                         </select>
                         @else
-                        <p class="small text-muted mb-0">No published pickup slots for this farmer yet. They will confirm a pickup time directly.</p>
+                        <p class="small text-danger mb-0"><i class="fa-solid fa-triangle-exclamation"></i> No published pickup slots for this farmer yet. Checkout cannot be completed until a pickup slot is available.</p>
                         @endif
                     </div>
                 </div>

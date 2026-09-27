@@ -17,100 +17,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         Route::get('/', [DashboardController::class, 'farmerDashboard'])
             ->name('dashboard')
             ->middleware('permission:view dashboard');
-
-        Route::get('/profile', [DashboardController::class, 'farmerProfile'])
-            ->name('profile')
-            ->middleware('permission:view profile');
-        Route::post('/profile', [DashboardController::class, 'farmerProfileUpdate'])
-            ->name('profile.update')
-            ->middleware('permission:edit profile');
-
-        Route::get('/markets', [DashboardController::class, 'farmerMarkets'])
-            ->name('markets.index')
-            ->middleware('permission:view markets');
-        Route::get('/markets/join', [DashboardController::class, 'farmerMarketCreate'])
-            ->name('markets.create')
-            ->middleware('permission:join markets');
-        Route::post('/markets', [DashboardController::class, 'farmerMarketStore'])
-            ->name('markets.store')
-            ->middleware('permission:join markets');
-        Route::post('/markets/{id}/leave', [DashboardController::class, 'farmerMarketLeave'])
-            ->name('markets.leave')
-            ->middleware('permission:leave markets');
-
-        Route::get('/products', [DashboardController::class, 'farmerProducts'])
-            ->name('products.index')
-            ->middleware('permission:view products');
-        Route::get('/products/create', [DashboardController::class, 'farmerProductCreate'])
-            ->name('products.create')
-            ->middleware('permission:add products');
-        Route::post('/products', [DashboardController::class, 'farmerProductStore'])
-            ->name('products.store')
-            ->middleware('permission:add products');
-        Route::get('/products/{id}', [DashboardController::class, 'farmerProductShow'])
-            ->name('products.show')
-            ->middleware('permission:view products');
-        Route::get('/products/{id}/edit', [DashboardController::class, 'farmerProductEdit'])
-            ->name('products.edit')
-            ->middleware('permission:edit products');
-        Route::post('/products/{id}', [DashboardController::class, 'farmerProductUpdate'])
-            ->name('products.update')
-            ->middleware('permission:edit products');
-        Route::post('/products/{id}/delete', [DashboardController::class, 'farmerProductDestroy'])
-            ->name('products.destroy')
-            ->middleware('permission:delete products');
-
-        Route::get('/weekly-stock', [DashboardController::class, 'farmerStock'])
-            ->name('stock.index')
-            ->middleware('permission:view weekly stock');
-        Route::get('/weekly-stock/create', [DashboardController::class, 'farmerStockCreate'])
-            ->name('stock.create')
-            ->middleware('permission:add weekly stock');
-        Route::post('/weekly-stock', [DashboardController::class, 'farmerStockStore'])
-            ->name('stock.store')
-            ->middleware('permission:add weekly stock');
-        Route::get('/weekly-stock/{id}/edit', [DashboardController::class, 'farmerStockEdit'])
-            ->name('stock.edit')
-            ->middleware('permission:edit weekly stock');
-        Route::post('/weekly-stock/{id}', [DashboardController::class, 'farmerStockUpdate'])
-            ->name('stock.update')
-            ->middleware('permission:edit weekly stock');
-        Route::post('/weekly-stock/{id}/delete', [DashboardController::class, 'farmerStockDestroy'])
-            ->name('stock.destroy')
-            ->middleware('permission:delete weekly stock');
-
-        Route::get('/orders', [DashboardController::class, 'farmerOrders'])
-            ->name('orders.index')
-            ->middleware('permission:view orders');
-        Route::get('/orders/{id}', [DashboardController::class, 'farmerOrderShow'])
-            ->name('orders.show')
-            ->middleware('permission:view order');
-        Route::post('/orders/{id}/status', [DashboardController::class, 'farmerOrderUpdateStatus'])
-            ->name('orders.updateStatus')
-            ->middleware('permission:update order status');
-
-        Route::get('/pickup-slots', [DashboardController::class, 'farmerSlots'])
-            ->name('slots.index')
-            ->middleware('permission:view pickup slots');
-        Route::get('/pickup-slots/create', [DashboardController::class, 'farmerSlotCreate'])
-            ->name('slots.create')
-            ->middleware('permission:add pickup slots');
-        Route::post('/pickup-slots', [DashboardController::class, 'farmerSlotStore'])
-            ->name('slots.store')
-            ->middleware('permission:add pickup slots');
-        Route::get('/pickup-slots/{id}/edit', [DashboardController::class, 'farmerSlotEdit'])
-            ->name('slots.edit')
-            ->middleware('permission:edit pickup slots');
-        Route::post('/pickup-slots/{id}', [DashboardController::class, 'farmerSlotUpdate'])
-            ->name('slots.update')
-            ->middleware('permission:edit pickup slots');
-        Route::post('/pickup-slots/{id}/delete', [DashboardController::class, 'farmerSlotDestroy'])
-            ->name('slots.destroy')
-            ->middleware('permission:delete pickup slots');
-
-        Route::get('/reviews', [DashboardController::class, 'farmerReviews'])
-            ->name('reviews.index')
-            ->middleware('permission:view reviews');
     });
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',])->group(function () {
@@ -335,6 +241,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('/dashboard/farmers/delete/{id}', [DashboardController::class, 'farmerDelete'])
         ->name('farmer_delete')
         ->middleware('permission:delete farmers');
+    Route::post('/dashboard/farmers/{id}/approve', [DashboardController::class, 'farmerApprove'])
+        ->name('farmer_approve')
+        ->middleware('permission:edit farmers');
+    Route::post('/dashboard/farmers/{id}/reject', [DashboardController::class, 'farmerReject'])
+        ->name('farmer_reject')
+        ->middleware('permission:edit farmers');
 
     Route::get('/dashboard/customers', [DashboardController::class, 'customers'])
         ->name('customers')
@@ -342,8 +254,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/dashboard/customers/view/{id}', [DashboardController::class, 'customerView'])
         ->name('customer_view')
         ->middleware('permission:view customer');
-    Route::post('/dashboard/customers/delete/{id}', [DashboardController::class, 'customerDelete'])
-        ->name('customer_delete')
+    Route::post('/dashboard/customers/toggle/{id}', [DashboardController::class, 'customerToggleStatus'])
+        ->name('customer_toggle_status')
         ->middleware('permission:delete customers');
 
     Route::get('/dashboard/reviews', [DashboardController::class, 'reviews'])
@@ -355,6 +267,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('/dashboard/reviews/delete/{id}', [DashboardController::class, 'reviewDelete'])
         ->name('review_delete')
         ->middleware('permission:delete reviews');
+    Route::post('/dashboard/reviews/{id}/reply', [DashboardController::class, 'reviewReplyStore'])
+        ->name('review_reply_store')
+        ->middleware('permission:view reviews');
 
     Route::get('/dashboard/reports', [DashboardController::class, 'reports'])
         ->name('reports')
@@ -405,6 +320,15 @@ Route::post('/cart/remove/{product}', [WebsiteController::class, 'removeFromCart
 Route::get('/checkout', [WebsiteController::class, 'checkout']);
 Route::post('/checkout', [WebsiteController::class, 'placeOrder']);
 
+Route::middleware('auth')->group(function () {
+    Route::post('/favorites/toggle/{type}/{id}', [WebsiteController::class, 'toggleFavorite'])
+        ->whereIn('type', ['farmer', 'product'])
+        ->name('favorite.toggle');
+
+    Route::post('/products/{product}/review', [WebsiteController::class, 'reviewProduct'])
+        ->name('products.review.store');
+});
+
 Route::get('/about', [WebsiteController::class, 'about']);
 
 Route::get('/contact', [WebsiteController::class, 'contact']);
@@ -429,6 +353,18 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/orders/{order}', [WebsiteController::class, 'orderDetail'])
             ->name('customer_order_detail');
+
+        Route::post('/orders/{order}/review', [WebsiteController::class, 'reviewFarmer'])
+            ->name('customer_order_review');
+
+        Route::post('/orders/{order}/cancel', [WebsiteController::class, 'cancelOrder'])
+            ->name('customer_order_cancel');
+
+        Route::post('/orders/{order}/pickup-slot', [WebsiteController::class, 'updateOrderPickupSlot'])
+            ->name('customer_order_update_slot');
+
+        Route::post('/orders/{order}/reorder', [WebsiteController::class, 'reorder'])
+            ->name('customer_order_reorder');
 
         Route::get('/reviews', [WebsiteController::class, 'reviews'])
             ->name('customer_reviews');
