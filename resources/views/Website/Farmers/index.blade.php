@@ -1,105 +1,118 @@
 @extends('Website._master')
 
-@section('page_title', 'Browse Farmers')
+@section('page_title', 'Farmers')
 
 @section('body')
 
-<div class="ml-container">
-    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <span class="active">Farmers</span></nav>
-</div>
-
-<section class="pb-4">
-    <div class="ml-container">
-        <div class="ml-hero">
-            <span class="ml-eyebrow"><i class="fa-solid fa-tractor"></i> Verified Regional Growers</span>
-            <h1 class="display-6">Meet Our Local Farmers</h1>
-            <p class="text-muted mt-2">Browse verified grower profiles, review harvest history and explore their weekly stock before you reserve.</p>
-            <form class="d-flex flex-column flex-md-row gap-2 mt-4" action="{{ url('/farmers') }}" method="GET">
-                <div class="flex-grow-1 position-relative">
-                    <i class="fa-solid fa-magnifying-glass position-absolute" style="left:16px; top:14px; color:var(--ml-text-muted);"></i>
-                    <input type="text" name="q" value="{{ request('q') }}" class="form-control ps-5" placeholder="Search farmers, stalls or produce...">
-                </div>
-                <button type="submit" class="btn ml-btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-            </form>
-        </div>
-    </div>
-</section>
-
-<section class="ml-section pt-2">
+<section class="ml-section pt-4">
     <div class="ml-container">
         <div class="row g-4">
             <div class="col-lg-3">
                 <div class="ml-filter-panel">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="mb-0"><i class="fa-solid fa-sliders"></i> Filter Farmers</h6>
-                        <a href="{{ url('/farmers') }}" class="small ml-btn-link">Clear All</a>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="mb-0"><i class="fa-solid fa-sliders me-2"></i>Filter Farmers</h5>
+                        <a href="{{ url('/farmers') }}" class="ml-btn-link">Clear All</a>
                     </div>
+
                     <form action="{{ url('/farmers') }}" method="GET">
-                        <input type="hidden" name="q" value="{{ request('q') }}">
+                        @if(request('q'))
+                            <input type="hidden" name="q" value="{{ request('q') }}">
+                        @endif
 
-                        <div class="ml-form-label">Location</div>
-                        <select class="form-select mb-4" name="city">
-                            <option value="">All Cities</option>
-                            @foreach($cities as $city)
-                                <option value="{{ $city }}" {{ request('city') == $city ? 'selected' : '' }}>{{ $city }}</option>
-                            @endforeach
-                        </select>
+                        <div class="mb-4">
+                            <label class="ml-form-label mb-2">Location</label>
+                            <select name="city" class="form-select">
+                                <option value="">All Cities</option>
+                                @foreach($cities as $city)
+                                    <option value="{{ $city }}" {{ request('city') == $city ? 'selected' : '' }}>{{ $city }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                        <div class="ml-form-label">Sort By</div>
-                        <select class="form-select mb-4" name="sort">
-                            <option value="top_rated" {{ request('sort', 'top_rated') == 'top_rated' ? 'selected' : '' }}>Top Rated</option>
-                            <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest</option>
-                            <option value="most_products" {{ request('sort') == 'most_products' ? 'selected' : '' }}>Most Products</option>
-                        </select>
+                        <div class="mb-4">
+                            <label class="ml-form-label mb-2">Sort By</label>
+                            <select name="sort" class="form-select">
+                                <option value="top_rated" {{ request('sort', 'top_rated') == 'top_rated' ? 'selected' : '' }}>Top Rated</option>
+                                <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest</option>
+                                <option value="most_products" {{ request('sort') == 'most_products' ? 'selected' : '' }}>Most Products</option>
+                                <option value="name" {{ request('sort') == 'name' ? 'selected' : '' }}>Name</option>
+                            </select>
+                        </div>
 
-                        <button type="submit" class="btn ml-btn-primary ml-btn-block"><i class="fa-solid fa-filter"></i> Apply Filters</button>
+                        <button type="submit" class="btn ml-btn-primary w-100">
+                            <i class="fa-solid fa-filter me-2"></i>Apply Filters
+                        </button>
                     </form>
                 </div>
             </div>
 
             <div class="col-lg-9">
-                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                    <strong>{{ $farmers->total() }} Farmers Found</strong>
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h5 class="mb-0">{{ $farmers->total() }} Farmers Found</h5>
                 </div>
 
                 <div class="row g-4">
                     @forelse($farmers as $farmer)
-                    <div class="col-md-6 col-xl-4">
-                        <div class="ml-media-card">
-                            <div class="ml-media-card__image">
-                                <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=700&q=60" alt="{{ $farmer->stall_name }}">
-                                <button class="ml-favorite-btn ml-image-fav" type="button" aria-label="Save farmer"><i class="fa-regular fa-heart"></i></button>
-                            </div>
-                            <div class="ml-media-card__body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <h5>{{ $farmer->stall_name ?? $farmer->business_name }}</h5>
-                                    @if($farmer->reviews_avg_rating)
-                                    <span class="ml-rating small"><i class="fa-solid fa-star"></i> {{ number_format($farmer->reviews_avg_rating, 1) }} ({{ $farmer->reviews_count }})</span>
-                                    @endif
+                        <div class="col-md-6 col-xl-4">
+                            <div class="ml-media-card h-100">
+                                <div class="ml-media-card__image position-relative" style="height:260px;">
+                                    <img
+                                        src="{{ $farmer->farmer_image ? asset('farmer_images/' . $farmer->farmer_image) : 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=700&q=80' }}"
+                                        alt="{{ $farmer->stall_name ?? $farmer->business_name }}"
+                                        style="width:100%;height:100%;object-fit:cover;"
+                                    >
+                                    <button type="button" class="ml-favorite-btn ml-image-fav" aria-label="Save farmer">
+                                        <i class="fa-regular fa-heart"></i>
+                                    </button>
                                 </div>
-                                <span class="text-muted small"><i class="fa-solid fa-user"></i> {{ $farmer->user->name ?? '' }}</span>
-                                <span class="text-muted small"><i class="fa-solid fa-location-dot"></i> {{ $farmer->city }}, {{ $farmer->state }}</span>
-                                <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <span class="small text-muted">{{ $farmer->products_count }} Products</span>
-                                    <a href="{{ url('/farmers/'.$farmer->id) }}" class="btn ml-btn-primary ml-btn-sm">View Farmer</a>
+
+                                <div class="ml-media-card__body">
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <h4 class="mb-1">{{ $farmer->stall_name ?? $farmer->business_name }}</h4>
+                                        @if($farmer->reviews_count > 0)
+                                            <span class="ml-rating">
+                                                <i class="fa-solid fa-star"></i>
+                                                {{ number_format($farmer->reviews_avg_rating ?? 0, 1) }}
+                                                <span>({{ $farmer->reviews_count }})</span>
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    <div class="text-muted mb-2">
+                                        <i class="fa-solid fa-user me-2"></i>{{ $farmer->user->name ?? 'Farmer' }}
+                                    </div>
+
+                                    <div class="text-muted mb-4">
+                                        <i class="fa-solid fa-location-dot me-2"></i>
+                                        {{ $farmer->city ?: 'Location not added' }}@if($farmer->state), {{ $farmer->state }}@endif
+                                    </div>
+
+                                    <div class="d-flex align-items-center justify-content-between gap-2">
+                                        <span class="text-muted">
+                                            {{ $farmer->products_count }} {{ $farmer->products_count == 1 ? 'Product' : 'Products' }}
+                                        </span>
+                                        <a href="{{ url('/farmers/' . $farmer->id) }}" class="btn ml-btn-primary ml-btn-sm">View Farmer</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
                     @empty
-                    <div class="col-12">
-                        @include('Website.Partials.empty-state', [
-                            'icon' => 'fa-tractor',
-                            'title' => 'No Farmers Found',
-                            'message' => 'Try adjusting your search query or clearing filters.',
-                            'actionUrl' => url('/farmers'),
-                            'actionLabel' => 'Reset Search Filters',
-                        ])
-                    </div>
+                        <div class="col-12">
+                            <div class="ml-card text-center py-5">
+                                <i class="fa-solid fa-tractor fs-1 text-success mb-3"></i>
+                                <h4>No Farmers Found</h4>
+                                <p class="text-muted">Try changing your filters.</p>
+                                <a href="{{ url('/farmers') }}" class="btn ml-btn-primary">Clear Filters</a>
+                            </div>
+                        </div>
                     @endforelse
                 </div>
 
-                @include('Website.Partials.pagination', ['paginator' => $farmers])
+                @if($farmers->hasPages())
+                    <div class="mt-5">
+                        {{ $farmers->links() }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>
