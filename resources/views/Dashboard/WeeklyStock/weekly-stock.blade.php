@@ -19,9 +19,14 @@ active
 
         <div class="panel-tools">
 
-            <form class="search-box">
+            <form class="search-box" method="GET" action="{{ route('stock') }}">
                 <i class="bi bi-search"></i>
-                <input type="text" name="q" placeholder="Search…" />
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Search…" />
+                @if (request('q'))
+                    <a href="{{ route('stock') }}" class="search-clear" title="Clear search">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                @endif
             </form>
 
             <a class="btn-primary" href="{{ route('stock_add') }}">

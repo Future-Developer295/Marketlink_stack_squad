@@ -46,33 +46,40 @@
                     </a>
                 @endcan
 
-                @can('view profile')
+                @role('farmer')
                     <div class="nav-group-label">ACCOUNT</div>
-                    <a class="nav-link-custom @yield('nav_profile')" href="{{ route('my_profile') }}">
-                        <i class="bi bi-person-badge-fill"></i> My Profile
-                    </a>
-                @endcan
 
-                @canany(['view markets', 'join markets'])
-                    <details class="nav-dropdown">
-                        <summary>
-                            <i class="bi bi-shop-window nav-ic"></i> My Markets
-                            <i class="bi bi-chevron-down chevron"></i>
-                        </summary>
-                        <div class="nav-sub">
-                            @can('view markets')
-                                <a class="nav-sublink @yield('nav_my_markets_list')" href="{{ route('my_markets') }}">
-                                    <i class="bi bi-list-ul"></i> Market Listing
-                                </a>
-                            @endcan
-                            @can('join markets')
-                                <a class="nav-sublink @yield('nav_my_markets_add')" href="{{ route('my_markets_join') }}">
-                                    <i class="bi bi-plus-lg"></i> Join Market
-                                </a>
-                            @endcan
-                        </div>
-                    </details>
-                @endcanany
+                    @can('view profile')
+                        <a class="nav-link-custom @yield('nav_profile')" href="{{ route('my_profile') }}">
+                            <i class="bi bi-person-badge-fill"></i> My Profile
+                        </a>
+                    @endcan
+
+                    @canany(['view markets', 'join markets'])
+                        <details class="nav-dropdown">
+                            <summary>
+                                <i class="bi bi-shop-window nav-ic"></i> My Markets
+                                <i class="bi bi-chevron-down chevron"></i>
+                            </summary>
+
+                            <div class="nav-sub">
+
+                                @can('view markets')
+                                    <a class="nav-sublink @yield('nav_my_markets_list')" href="{{ route('my_markets') }}">
+                                        <i class="bi bi-list-ul"></i> Market Listing
+                                    </a>
+                                @endcan
+
+                                @can('join markets')
+                                    <a class="nav-sublink @yield('nav_my_markets_add')" href="{{ route('my_markets_join') }}">
+                                        <i class="bi bi-plus-lg"></i> Join Market
+                                    </a>
+                                @endcan
+
+                            </div>
+                        </details>
+                    @endcanany
+                @endrole
 
                 @canany(['view categories', 'view products'])
                     <div class="nav-group-label">CATALOG</div>
@@ -148,6 +155,12 @@
                 @can('view orders')
                     <a class="nav-link-custom @yield('nav_orders')" href="{{ route('orders') }}">
                         <i class="bi bi-cart-check-fill"></i> Orders
+                    </a>
+                @endcan
+
+                @can('view product sales analytics')
+                    <a class="nav-link-custom @yield('nav_product_sales_analytics')" href="{{ route('product_sales_analytics') }}">
+                        <i class="bi bi-graph-up-arrow"></i> Product Sales Analytics
                     </a>
                 @endcan
 
@@ -268,9 +281,21 @@
                     </a>
                 @endcan
 
+                @can('view farmer leaderboard')
+                    <a class="nav-link-custom @yield('nav_farmer_leaderboard')" href="{{ route('farmer_leaderboard') }}">
+                        <i class="bi bi-trophy-fill"></i> Farmer Leaderboard
+                    </a>
+                @endcan
+
                 @can('view customers')
                     <a class="nav-link-custom @yield('nav_customers')" href="{{ route('customers') }}">
                         <i class="bi bi-person-lines-fill"></i> Customers
+                    </a>
+                @endcan
+
+                @can('view low stock alerts')
+                    <a class="nav-link-custom @yield('nav_low_stock')" href="{{ route('low_stock_alerts') }}">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Low Stock Alerts
                     </a>
                 @endcan
 
@@ -308,6 +333,18 @@
                 @can('view reports')
                     <a class="nav-link-custom @yield('nav_reports')" href="{{ route('reports') }}">
                         <i class="bi bi-bar-chart-line-fill"></i> Reports
+                    </a>
+                @endcan
+
+                @can('view activity log')
+                    <a class="nav-link-custom @yield('nav_activity_log')" href="{{ route('activity_log') }}">
+                        <i class="bi bi-clock-history"></i> Activity Log
+                    </a>
+                @endcan
+
+                @can('view commission tracking')
+                    <a class="nav-link-custom @yield('nav_commission_tracking')" href="{{ route('commission_tracking') }}">
+                        <i class="bi bi-percent"></i> Commission Tracking
                     </a>
                 @endcan
 
@@ -374,6 +411,7 @@
         </div>
 
         <script src="{{ asset('Assets/Dashboard_Asset/js/theme-change.js') }}"></script>
+        <script src="{{ asset('Assets/Dashboard_Asset/js/ajax-search.js') }}"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
         <script>
             function toggleUserMenu() {

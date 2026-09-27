@@ -18,6 +18,7 @@ class Product extends Model
         'description',
         'price',
         'stock_quantity',
+        'low_stock_threshold',
         'unit',
         'image',
         'is_active',
@@ -28,8 +29,27 @@ class Product extends Model
         return [
             'price' => 'decimal:2',
             'stock_quantity' => 'integer',
+            'low_stock_threshold' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Scope: products whose stock has fallen to/below their threshold.
+     */
+    public function scopeLowStock($query)
+    {
+        return $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold');
+    }
+
+    public function getIsLowStockAttribute(): bool
+    {
+        return $this->stock_quantity <= $this->low_stock_threshold;
+    }
+
+    public function getIsOutOfStockAttribute(): bool
+    {
+        return $this->stock_quantity <= 0;
     }
 
     public function farmer(): BelongsTo

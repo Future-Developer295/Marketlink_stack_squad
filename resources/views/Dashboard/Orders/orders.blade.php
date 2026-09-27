@@ -16,6 +16,11 @@ active
     value="{{ request('q') }}"
     placeholder="Search…"
 />
+                    @if (request('q'))
+                        <a href="{{ route('orders') }}" class="search-clear" title="Clear search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    @endif
                 </form>
             </div>
         </div>
