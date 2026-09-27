@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Product;
 use Illuminate\Support\Collection;
-use Illuminate\Validation\ValidationException;
 
 class Cart
 {
@@ -14,16 +13,13 @@ class Cart
     {
         $product = Product::find($productId);
 
-        if (! $product || ! $product->is_active || $product->stock_quantity < 1) {
-            throw ValidationException::withMessages(['quantity' => 'This product is no longer available.']);
+        if (! $product) {
+            return;
         }
 
         $cart = $this->raw();
         $newQuantity = ($cart[$productId] ?? 0) + max($quantity, 1);
-        if ($newQuantity > $product->stock_quantity) {
-            throw ValidationException::withMessages(['quantity' => 'Only '.$product->stock_quantity.' units are available. Check your basket quantity.']);
-        }
-        $cart[$productId] = $newQuantity;
+        $cart[$productId] = min($newQuantity, max($product->stock_quantity, 0));
 
         if ($cart[$productId] <= 0) {
             unset($cart[$productId]);
@@ -37,13 +33,10 @@ class Cart
         $product = Product::find($productId);
         $cart = $this->raw();
 
-        if (! $product || ! $product->is_active || $product->stock_quantity < 1 || $quantity <= 0) {
+        if (! $product || $quantity <= 0) {
             unset($cart[$productId]);
         } else {
-            if ($quantity > $product->stock_quantity) {
-                throw ValidationException::withMessages(['quantity' => 'Only '.$product->stock_quantity.' units are available.']);
-            }
-            $cart[$productId] = $quantity;
+            $cart[$productId] = min($quantity, max($product->stock_quantity, 0));
         }
 
         $this->save($cart);
@@ -76,15 +69,13 @@ class Cart
         $raw = $this->raw();
         $products = Product::with('farmer.user')->whereIn('id', array_keys($raw))->get()->keyBy('id');
 
-        $items = collect($raw)
+        return collect($raw)
             ->map(function ($quantity, $productId) use ($products) {
                 $product = $products->get((int) $productId);
 
-                if (! $product || ! $product->is_active || $product->stock_quantity < 1) {
+                if (! $product) {
                     return null;
                 }
-
-                $quantity = min((int) $quantity, $product->stock_quantity);
 
                 return [
                     'product' => $product,
@@ -94,10 +85,6 @@ class Cart
             })
             ->filter()
             ->values();
-
-        $this->save($items->mapWithKeys(fn ($item) => [$item['product']->id => $item['quantity']])->all());
-
-        return $items;
     }
 
     public function groupedByFarmer(): Collection

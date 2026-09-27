@@ -339,12 +339,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders/{order}', [WebsiteController::class, 'orderDetail'])
             ->name('customer_order_detail');
 
-        Route::post('/orders/{order}/cancel', [WebsiteController::class, 'cancelOrder'])
-            ->name('customer_order_cancel');
-
-        Route::post('/reorder/{item}', [WebsiteController::class, 'reorderItem'])
-            ->name('customer_reorder');
-
         Route::get('/reviews', [WebsiteController::class, 'reviews'])
             ->name('customer_reviews');
 

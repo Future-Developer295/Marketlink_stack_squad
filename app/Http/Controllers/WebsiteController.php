@@ -4,23 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\FarmerProfile;
-use App\Models\Favorite;
 use App\Models\Market;
 use App\Models\MarketFarmer;
-use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PickupSlot;
 use App\Models\Product;
 use App\Models\Review;
+use App\Models\Favorite;
+use App\Models\Notification;
 use App\Services\Cart;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class WebsiteController extends Controller
@@ -238,7 +236,7 @@ class WebsiteController extends Controller
 
     public function productDetail(Request $request, string $product): View
     {
-        $product = Product::with(['farmer.user', 'category'])->where('is_active', true)->findOrFail($product);
+        $product = Product::with(['farmer.user', 'category'])->findOrFail($product);
 
         $reviews = $product->reviews()->where('is_active', true)->with(['user', 'reply'])->latest()->take(6)->get();
 
@@ -251,7 +249,7 @@ class WebsiteController extends Controller
                 $inner->where('farmer_id', $product->farmer_id)
                     ->orWhere('category_id', $product->category_id);
             })
-            ->with(['farmer.user', 'category'])
+            ->with(['farmer.user'])
             ->take(4)
             ->get();
 
@@ -266,7 +264,7 @@ class WebsiteController extends Controller
 
     public function cart(): View
     {
-        $cart = new Cart;
+        $cart = new Cart();
 
         $cartItems = $cart->items();
         $farmerGroups = $cart->groupedByFarmer();
@@ -275,62 +273,38 @@ class WebsiteController extends Controller
         return view('Website.Cart.index', compact('cartItems', 'farmerGroups', 'cartTotal'));
     }
 
-    public function addToCart(Request $request, string $product): RedirectResponse|JsonResponse
+    public function addToCart(Request $request, string $product): RedirectResponse
     {
         $request->validate([
             'quantity' => 'nullable|integer|min:1',
         ]);
 
-        (new Cart)->add((int) $product, (int) $request->input('quantity', 1));
-
-        if ($request->expectsJson()) {
-            return $this->cartResponse('Added to your basket.');
-        }
+        (new Cart())->add((int) $product, (int) $request->input('quantity', 1));
 
         return back()->with('success', 'Product added to your cart.');
     }
 
-    public function updateCartItem(Request $request, string $product): RedirectResponse|JsonResponse
+    public function updateCartItem(Request $request, string $product): RedirectResponse
     {
         $request->validate([
             'quantity' => 'required|integer|min:0',
         ]);
 
-        (new Cart)->update((int) $product, (int) $request->input('quantity'));
-
-        if ($request->expectsJson()) {
-            return $this->cartResponse('Basket updated.');
-        }
+        (new Cart())->update((int) $product, (int) $request->input('quantity'));
 
         return back()->with('success', 'Cart updated.');
     }
 
-    public function removeFromCart(Request $request, string $product): RedirectResponse|JsonResponse
+    public function removeFromCart(string $product): RedirectResponse
     {
-        (new Cart)->remove((int) $product);
-
-        if ($request->expectsJson()) {
-            return $this->cartResponse('Removed from your basket.');
-        }
+        (new Cart())->remove((int) $product);
 
         return back()->with('success', 'Product removed from your cart.');
     }
 
-    protected function cartResponse(string $message): JsonResponse
-    {
-        $cart = new Cart;
-        $items = $cart->items();
-
-        return response()->json([
-            'message' => $message,
-            'count' => $items->sum('quantity'),
-            'total' => $items->sum('subtotal'),
-        ]);
-    }
-
     public function checkout(): View
     {
-        $cart = new Cart;
+        $cart = new Cart();
 
         $cartItems = $cart->items();
         $farmerGroups = $cart->groupedByFarmer();
@@ -350,33 +324,14 @@ class WebsiteController extends Controller
 
     public function placeOrder(Request $request): RedirectResponse
     {
-        if (! Auth::check()) {
-            return redirect()->guest(route('login'));
-        }
-
         $validated = $request->validate([
             'notes' => 'nullable|string|max:1000',
             'pickup_slot' => 'nullable|array',
             'pickup_slot.*' => 'nullable|integer|exists:pickup_slots,id',
         ]);
 
-        $cart = new Cart;
+        $cart = new Cart();
         $itemsByFarmer = $cart->groupedByFarmer();
-
-        if ($itemsByFarmer->isEmpty()) {
-            return redirect('/cart')->with('warning', 'Your basket is empty. Add a fresh pick first.');
-        }
-
-        foreach ($itemsByFarmer as $farmerId => $items) {
-            $slot = PickupSlot::where('farmer_id', $farmerId)
-                ->where('is_available', true)
-                ->where('date', '>=', now()->toDateString())
-                ->find($validated['pickup_slot'][$farmerId] ?? null);
-
-            if (! $slot) {
-                throw ValidationException::withMessages(['pickup_slot.'.$farmerId => 'Choose an available pickup time for each grower.']);
-            }
-        }
 
         if (Auth::check() && $itemsByFarmer->isNotEmpty()) {
             DB::transaction(function () use ($itemsByFarmer, $validated) {
@@ -455,60 +410,13 @@ class WebsiteController extends Controller
             'favorites' => $user->favorites()->count(),
         ];
 
-        $activeOrders = $user->orders()
-            ->whereIn('status', $this->activeStatuses())
-            ->with(['farmer.user', 'pickupSlot.market', 'items.product'])
-            ->orderBy(PickupSlot::select('date')->whereColumn('pickup_slots.id', 'orders.pickup_slot_id')->limit(1))
-            ->orderBy(PickupSlot::select('start_time')->whereColumn('pickup_slots.id', 'orders.pickup_slot_id')->limit(1))
-            ->take(4)->get();
+        $recentOrders = $user->orders()
+            ->with(['farmer.user', 'items'])
+            ->latest('order_date')
+            ->take(5)
+            ->get();
 
-        $reorderItems = OrderItem::with('product.farmer')
-            ->whereHas('order', fn ($query) => $query->where('user_id', $user->id)->where('status', 'picked_up'))
-            ->whereHas('product', fn ($query) => $query->where('is_active', true))
-            ->latest('id')->take(40)->get()->unique('product_id')->take(8);
-
-        $savedFavorites = $user->favorites()->with([
-            'product.farmer',
-            'farmer' => fn ($query) => $query->withCount(['products as available_products_count' => fn ($products) => $products->where('is_active', true)->where('stock_quantity', '>', 0)]),
-        ])->latest()->take(8)->get();
-
-        $markets = Market::orderBy('city')->orderBy('name')->limit(50)->get();
-        $stalls = FarmerProfile::where('approval_status', 'approved')->orderBy('city')->orderBy('stall_name')->limit(50)->get();
-        $mapPlaces = $markets->map(fn ($market) => [
-            'name' => $market->name, 'kind' => 'Market', 'city' => $market->city,
-            'address' => $market->address, 'latitude' => $market->latitude, 'longitude' => $market->longitude,
-            'url' => url('/markets/'.$market->id),
-        ])->concat($stalls->map(fn ($stall) => [
-            'name' => $stall->stall_name ?: $stall->business_name, 'kind' => 'Farm stall', 'city' => $stall->city,
-            'address' => $stall->address, 'latitude' => $stall->latitude, 'longitude' => $stall->longitude,
-            'url' => url('/farmers/'.$stall->id),
-        ]))->filter(fn ($place) => is_numeric($place['latitude']) && is_numeric($place['longitude'])
-            && abs((float) $place['latitude']) <= 90 && abs((float) $place['longitude']) <= 180)->values();
-
-        $unreadUpdates = Notification::where('user_id', $user->id)->where('is_read', false)->latest()->take(3)->get();
-
-        return view('Website.Dashboard.index', compact('user', 'stats', 'activeOrders', 'reorderItems', 'savedFavorites', 'mapPlaces', 'unreadUpdates'));
-    }
-
-    public function cancelOrder(string $order): RedirectResponse
-    {
-        DB::transaction(function () use ($order): void {
-            $customerOrder = Auth::user()->orders()->with('pickupSlot')->lockForUpdate()->findOrFail($order);
-            if (! $customerOrder->canCancel()) {
-                throw ValidationException::withMessages(['order' => 'This pre-order can no longer be cancelled. Contact the grower for help.']);
-            }
-            $customerOrder->update(['status' => 'cancelled']);
-        });
-
-        return back()->with('success', 'Your pre-order has been cancelled.');
-    }
-
-    public function reorderItem(string $item, Cart $cart): RedirectResponse
-    {
-        $orderItem = OrderItem::whereHas('order', fn ($query) => $query->where('user_id', Auth::id())->where('status', 'picked_up'))->findOrFail($item);
-        $cart->add($orderItem->product_id, $orderItem->quantity);
-
-        return back()->with('success', 'Added to your basket at the current price. Choose a new pickup time at checkout.');
+        return view('Website.Dashboard.index', compact('user', 'stats', 'recentOrders'));
     }
 
     public function profile(): View

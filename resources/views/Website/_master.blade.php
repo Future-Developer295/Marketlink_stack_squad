@@ -10,20 +10,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('Assets/Website_Asset/css/dashboard.css') }}" rel="stylesheet">
-    @if(request()->is('products*', 'cart', 'checkout', 'dashboard/customer*'))
-        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    @endif
-    @if(request()->is('products*', 'cart', 'checkout'))
-        <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-        <link href="{{ asset('Assets/Website_Asset/css/shop.css') }}" rel="stylesheet">
-    @endif
-    @if(request()->is('dashboard/customer*'))
-        <link href="{{ asset('Assets/Website_Asset/css/customer-dashboard.css') }}" rel="stylesheet">
-    @endif
     @yield('page_styles')
 </head>
 
-<body class="{{ request()->is('products*', 'cart', 'checkout') ? 'harvest-shop' : '' }} {{ request()->is('dashboard/customer*') ? 'customer-area' : '' }}">
+<body>
 
     <nav class="navbar navbar-expand-lg ml-navbar">
         <div class="ml-container d-flex align-items-center justify-content-between w-100">
@@ -54,14 +44,16 @@
                 </ul>
 
                 <div class="ml-navbar-actions">
-                    <a class="ml-icon-btn" href="{{ url('/products').'#harvest' }}" aria-label="Search">
+                    <button class="ml-icon-btn" type="button" aria-label="Search">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                    </a>
+                    </button>
 
                     <a href="{{ url('/cart') }}" class="ml-icon-btn" aria-label="Cart">
                         <i class="fa-solid fa-cart-shopping"></i>
                         @php($cartCount = collect(session('cart', []))->sum())
-                        <span class="ml-cart-badge" data-cart-count>{{ $cartCount }}</span>
+                        @if($cartCount > 0)
+                            <span class="ml-cart-badge">{{ $cartCount }}</span>
+                        @endif
                     </a>
 
                     @auth
@@ -112,9 +104,6 @@
 
 
 
-    @if(request()->is('products*', 'cart', 'checkout'))
-        <div class="shop-mobile-head"><a href="{{ url('/products') }}"><i class="fa-solid fa-leaf"></i> MarketLink<span>THE LOCAL EDIT</span></a><a class="ml-icon-btn" href="{{ url('/cart') }}" aria-label="View basket"><i class="fa-solid fa-bag-shopping"></i><span class="ml-cart-badge" data-cart-count>{{ collect(session('cart', []))->sum() }}</span></a></div>
-    @endif
     <main>
         @yield('body')
     </main>
@@ -163,16 +152,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('Assets/Website_Asset/js/website.js') }}"></script>
-    @if(request()->is('products*', 'cart', 'checkout'))
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-        <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
-        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-        <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-        <script src="{{ asset('Assets/Website_Asset/js/shop.js') }}"></script>
-    @endif
-    @if(request()->is('dashboard/customer*'))
-        <script src="{{ asset('Assets/Website_Asset/js/customer-dashboard.js') }}" defer></script>
-    @endif
     @yield('page_scripts')
 </body>
 

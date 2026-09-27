@@ -1,45 +1,231 @@
 @extends('Website._master')
+
 @section('page_title', $product->name)
+
 @section('body')
-@php($farmer = $product->farmer)
-<div class="ml-container product-story">
-    <nav class="detail-breadcrumb" aria-label="Breadcrumb"><a href="{{ url('/products') }}">← The harvest</a><span>/</span><a href="{{ url('/products').'?category_id='.$product->category_id }}">{{ $product->category->name ?? 'Fresh picks' }}</a><span>/</span><span>{{ $product->name }}</span></nav>
-    @include('Website.Partials.alerts')
-    <section class="detail-stage" aria-labelledby="product-title">
-        <div class="detail-gallery">
-            <div class="shop-detail-visual"><img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}"><span class="detail-photo-label"><i class="fa-solid fa-seedling"></i> A little closer to the source</span></div>
-            <div class="detail-origin-strip"><i class="fa-solid fa-tractor"></i><div><span>FROM YOUR LOCAL GROWER</span><strong>{{ $farmer->stall_name ?? 'Local farm' }}</strong></div><a href="#meet-your-grower" aria-label="Meet this grower">↗</a></div>
-        </div>
-        <div class="detail-product-info">
-            <div class="detail-topline"><a class="detail-category" href="{{ url('/products').'?category_id='.$product->category_id }}"><i class="fa-solid fa-leaf"></i>{{ $product->category->name ?? 'Local harvest' }} <span>↗</span></a><a href="#product-reviews" class="detail-rating"><i class="fa-solid fa-star"></i> {{ $ratingCount ? $ratingAverage.' / 5' : 'New pick' }} <span>({{ $ratingCount }} reviews)</span></a></div>
-            <h1 id="product-title" class="shop-detail-title">{{ $product->name }}</h1>
-            <p class="detail-description">{{ $product->description }}</p>
-            <div class="detail-price"><strong>Rs. {{ number_format($product->price, 0) }}</strong><span>per {{ $product->unit }}</span><span class="detail-stock {{ $product->stock_quantity < 1 ? 'sold-out' : '' }}">● {{ $product->stock_quantity > 0 ? $product->stock_quantity.' '.$product->unit.' available' : 'Currently sold out' }}</span></div>
-            <form method="POST" class="shop-detail-purchase" id="choose-quantity" data-cart-form action="{{ url('/cart/add/'.$product->id) }}">@csrf
-                <div class="detail-quantity-row"><div><label for="product-quantity">Make it yours</label><div class="ml-quantity" data-quantity data-min="1" data-max="{{ max($product->stock_quantity, 1) }}"><button type="button" data-decrement aria-label="Decrease quantity">−</button><input id="product-quantity" type="text" name="quantity" value="1" aria-label="Quantity" readonly><button type="button" aria-label="Increase quantity">+</button></div></div><div class="detail-subtotal"><span>Your subtotal</span><strong class="shop-detail-subtotal" data-unit-price="{{ $product->price }}">Rs. {{ number_format($product->price, 0) }}</strong></div></div>
-                <div class="detail-purchase-actions"><button type="submit" class="shop-pill detail-add" @disabled($product->stock_quantity < 1)><i class="fa-solid fa-basket-shopping"></i>{{ $product->stock_quantity > 0 ? 'Add to basket' : 'Out of stock' }}<span>↗</span></button><a class="shop-outline" href="{{ url('/cart') }}">View basket <i class="fa-solid fa-arrow-right"></i></a></div>
-                <p class="detail-payment-note"><i class="fa-solid fa-circle-check"></i> Reserve online. Pay in person at pickup.</p>
-            </form>
-            <div class="detail-promises"><div><i class="fa-solid fa-store"></i><span>Market collection<strong>No delivery fees</strong></span></div><div><i class="fa-regular fa-handshake"></i><span>Direct from growers<strong>A more personal shop</strong></span></div></div>
-        </div>
-    </section>
-    <section class="grower-story" id="meet-your-grower" aria-labelledby="grower-heading" data-aos="fade-up">
-        <div class="grower-story-profile"><span class="shop-kicker">THE PEOPLE BEHIND YOUR PRODUCE</span><h2 id="grower-heading">Good food has<br><em>a familiar face.</em></h2><div class="grower-identity">
-            @if($farmer?->farmer_image && is_file(public_path('farmer_images/'.basename($farmer->farmer_image))))<img src="{{ asset('farmer_images/'.basename($farmer->farmer_image)) }}" alt="{{ $farmer->user->name ?? 'Your grower' }}">@else<span class="grower-avatar" aria-hidden="true">{{ mb_substr($farmer->user->name ?? 'G', 0, 1) }}</span>@endif
-            <div><strong>{{ $farmer->user->name ?? 'Your local grower' }}</strong><span>{{ $farmer->stall_name ?? '' }}</span>@if($farmer?->approval_status === 'approved')<small><i class="fa-solid fa-circle-check"></i> Approved MarketLink grower</small>@endif</div>
-        </div><p>{{ $farmer->description ?? 'Get to know the grower behind your next market basket.' }}</p><a class="shop-outline" href="{{ url('/farmers/'.$product->farmer_id) }}">Explore this farm <i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>
-        <div class="grower-pickup"><div class="pickup-illustration" aria-hidden="true"><div class="pickup-hill hill-one"></div><div class="pickup-hill hill-two"></div><i class="fa-solid fa-location-dot"></i><span>YOUR NEXT MARKET STOP</span></div><div class="pickup-info"><span class="shop-kicker">WE'LL SEE YOU HERE</span><h3>{{ $farmer->city ?? 'Market' }} pickup</h3><p>{{ $farmer->address ?? 'Ask your grower for pickup details.' }}@if($farmer?->state), {{ $farmer->state }}@endif</p><div class="pickup-schedule"><i class="fa-regular fa-clock"></i><div><strong>{{ $farmer->operating_days ?? 'Check with your grower' }}</strong><span>{{ $farmer?->start_time?->format('H:i') }} – {{ $farmer?->end_time?->format('H:i') }}</span></div></div>
-            @if($farmer?->address)<a class="pickup-directions" href="https://www.google.com/maps/search/?api=1&amp;query={{ urlencode($farmer->address.', '.$farmer->city.', '.$farmer->country) }}" target="_blank" rel="noopener noreferrer">Get directions <i class="fa-solid fa-arrow-up-right-from-square"></i></a>@endif
-        </div></div>
-    </section>
-    @if($pickupSlots->isNotEmpty())
-    <section class="detail-pickup-dates"><div><span class="shop-kicker">PLAN A LITTLE FRESH AIR</span><h2>Your next pickup.</h2><p>Choose a time at checkout.</p></div><div class="pickup-date-list">@foreach($pickupSlots->take(4) as $slot)<div class="pickup-date"><span>{{ $slot->date->format('D') }}</span><strong>{{ $slot->date->format('d') }}</strong><span>{{ $slot->date->format('M') }}</span><small>{{ substr($slot->start_time, 0, 5) }} – {{ substr($slot->end_time, 0, 5) }}</small></div>@endforeach</div></section>
-    @endif
-    <section class="detail-reviews" id="product-reviews" aria-labelledby="reviews-heading">
-        <div class="shop-section-heading"><div><span class="shop-kicker">FROM OUR MARKET COMMUNITY</span><h2 id="reviews-heading">Honest food. Honest words.</h2></div><a class="shop-outline" href="{{ auth()->check() ? route('customer_reviews') : url('/login') }}">{{ auth()->check() ? 'My reviews' : 'Sign in to your account' }} <i class="fa-solid fa-arrow-right"></i></a></div>
-        <div class="review-layout"><aside class="review-score"><span class="review-score-value">{{ $ratingCount ? $ratingAverage : '—' }}<small>/ 5</small></span><div class="review-stars" aria-label="{{ $ratingCount ? $ratingAverage.' out of 5 stars' : 'No ratings yet' }}">@for($i = 1; $i <= 5; $i++)<i class="{{ $i <= round($ratingAverage) ? 'fa-solid' : 'fa-regular' }} fa-star"></i>@endfor</div><strong>{{ $ratingCount }} {{ \Illuminate\Support\Str::plural('customer review', $ratingCount) }}</strong><p>Real experiences from people who shop local.</p></aside>
-        <div class="review-list">@forelse($reviews as $review)<article class="community-review"><header><span class="review-avatar">{{ mb_substr($review->user->name ?? 'C', 0, 1) }}</span><div><strong>{{ $review->user->name ?? 'Customer' }}</strong><span>{{ $review->created_at->format('d M Y') }}</span></div><span class="review-rating"><i class="fa-solid fa-star"></i> {{ $review->rating }} / 5</span></header><p>{{ $review->comment }}</p>@if($review->reply)<div class="grower-reply"><strong>A note from your grower</strong><p>{{ $review->reply->response }}</p></div>@endif</article>@empty<div class="review-empty"><i class="fa-regular fa-comments"></i><h3>A fresh pick. A story to come.</h3><p>No reviews yet. Your experience can help the next shopper after pickup.</p><a href="#choose-quantity" class="shop-outline">Make your first pick <i class="fa-solid fa-arrow-up"></i></a></div>@endforelse</div></div>
-    </section>
-    <section class="detail-related"><div class="shop-section-heading"><div><span class="shop-kicker">GOOD COMPANY FOR YOUR BASKET</span><h2>Keep the goodness going.</h2></div><a href="{{ url('/products') }}" class="shop-outline">Shop the harvest <i class="fa-solid fa-arrow-right"></i></a></div><div class="shop-related" tabindex="0" aria-label="Related products">@forelse($relatedProducts as $related)@include('Website.Partials.shop-product', ['product' => $related])@empty<p>More fresh picks are on their way.</p>@endforelse</div></section>
+
+<div class="ml-container">
+    <div class="d-flex justify-content-between align-items-center">
+        <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ url('/products') }}">Products</a> / <span class="active">{{ $product->name }}</span></nav>
+        <a href="{{ url('/products') }}" class="ml-btn-link small"><i class="fa-solid fa-arrow-left"></i> Back to Products</a>
+    </div>
 </div>
+
+<section class="pb-5">
+    <div class="ml-container">
+        <div class="row g-5">
+            <div class="col-lg-6">
+                <div class="ml-media-card__image rounded-4" style="aspect-ratio:1/1;">
+                    <img src="{{ $product->image ? asset('product_images/' . $product->image) : 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&w=900&q=70' }}" alt="{{ $product->name }}">
+                    @if($product->category)
+                    <span class="ml-badge ml-badge-mint ml-image-tag">{{ $product->category->name }}</span>
+                    @endif
+                    <button class="ml-favorite-btn ml-image-fav" type="button" aria-label="Save product"><i class="fa-regular fa-heart"></i></button>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <h1 class="mt-2">{{ $product->name }}</h1>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <a href="{{ url('/farmers/'.$product->farmer_id) }}" class="small text-muted"><i class="fa-solid fa-tractor"></i> {{ $product->farmer->stall_name ?? $product->farmer->business_name ?? '' }} &middot; {{ $product->farmer->city ?? '' }}</a>
+                    @if($ratingCount > 0)
+                    <span class="ml-rating small"><i class="fa-solid fa-star"></i> {{ $ratingAverage }} ({{ $ratingCount }} Reviews)</span>
+                    @endif
+                </div>
+
+                <div class="d-flex align-items-end gap-2 mt-4">
+                    <h2 class="text-success mb-0">Rs. {{ number_format($product->price, 0) }}</h2>
+                    <span class="text-muted">/ {{ $product->unit }} &middot; Market Stall Fair Rate</span>
+                </div>
+                <p class="text-muted mt-3">{{ $product->description }}</p>
+
+                <form method="POST" action="{{ url('/cart/add/'.$product->id) }}">
+                @csrf
+                <div class="ml-card mt-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="ml-form-label mb-1">Quantity ({{ $product->unit }})</span>
+                            <div class="ml-quantity" data-quantity data-min="1" data-max="{{ max($product->stock_quantity, 1) }}">
+                                <button type="button" data-decrement>&minus;</button>
+                                <input type="text" name="quantity" value="1" readonly>
+                                <button type="button">+</button>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="small text-muted d-block">Available: {{ $product->stock_quantity }} {{ $product->unit }}</span>
+                            <strong>Subtotal</strong>
+                            <h4 class="text-success mb-0">Rs. {{ number_format($product->price, 0) }}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                @if($product->stock_quantity > 0)
+                <div class="d-flex gap-3 mt-3">
+                    <button type="submit" class="btn ml-btn-primary flex-grow-1"><i class="fa-solid fa-cart-plus"></i> Add to Cart <span class="small d-block fw-normal">Reserve for pickup</span></button>
+                    <button type="button" class="btn ml-btn-secondary"><i class="fa-regular fa-heart"></i> Save to Favorites</button>
+                </div>
+                @else
+                <button type="button" class="btn ml-btn-secondary flex-grow-1 mt-3" disabled>Currently Out of Stock</button>
+                @endif
+                </form>
+                <p class="small text-muted mt-3"><i class="fa-solid fa-circle-check text-success"></i> Pickup Only &middot; Reserve online and inspect your produce directly at stall before settling payment in person.</p>
+
+                <div class="row g-3 mt-3">
+                    <div class="col-6">
+                        <div class="ml-card">
+                            <span class="small text-muted d-block">Category</span><strong>{{ $product->category->name ?? '—' }}</strong>
+                            <span class="small text-muted d-block mt-2">Available Stock</span><strong>{{ $product->stock_quantity }} {{ $product->unit }}</strong>
+                            <span class="small text-muted d-block mt-2">Farmer &amp; Producer</span><strong>{{ $product->farmer->stall_name ?? $product->farmer->business_name ?? '' }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="ml-card">
+                            <span class="small text-muted d-block">Price &amp; Unit</span><strong>Rs. {{ number_format($product->price, 0) }} / {{ $product->unit }}</strong>
+                            <span class="small text-muted d-block mt-2">Status</span><strong>{{ $product->is_active ? 'Active Listing' : 'Inactive Listing' }}</strong>
+                            <span class="small text-muted d-block mt-2">Field Origin</span><strong>{{ $product->farmer->city ?? '' }}, {{ $product->farmer->state ?? '' }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                @if($pickupSlots->isNotEmpty())
+                <div class="ml-card mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong><i class="fa-regular fa-calendar"></i> Upcoming Pickup Slots</strong>
+                    </div>
+                    <div class="row g-2 small">
+                        @foreach($pickupSlots as $slot)
+                        <div class="col-6">
+                            <div class="ml-card py-2">
+                                <strong class="d-block">{{ \Illuminate\Support\Carbon::parse($slot->date)->format('D, d M') }}</strong>
+                                <span class="text-muted">{{ $slot->start_time }} - {{ $slot->end_time }}</span>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ml-section">
+    <div class="ml-container">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="ml-card h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <strong><i class="fa-solid fa-tractor text-success"></i> Sold By Producer</strong>
+                        @if($product->farmer && $product->farmer->approval_status === 'approved')
+                        <span class="ml-badge ml-badge-mint">Verified</span>
+                        @endif
+                    </div>
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="ml-avatar-lg d-flex align-items-center justify-content-center bg-light">
+                            <i class="fa-solid fa-tractor text-success fs-3"></i>
+                        </div>
+                        <div>
+                            <strong>{{ $product->farmer->user->name ?? '' }}</strong>
+                            <span class="small text-muted d-block">{{ $product->farmer->stall_name ?? $product->farmer->business_name ?? '' }}</span>
+                            <span class="small text-muted d-block">{{ $product->farmer->city ?? '' }}, {{ $product->farmer->state ?? '' }}</span>
+                        </div>
+                    </div>
+                    <div class="row small text-muted mt-3">
+                        <div class="col-6"><span class="d-block">Operating Days</span><strong class="text-dark">{{ $product->farmer->operating_days ?? '' }}</strong></div>
+                        <div class="col-6"><span class="d-block">Pickup Window</span><strong class="text-dark">{{ $product->farmer->start_time ?? '' }} - {{ $product->farmer->end_time ?? '' }}</strong></div>
+                    </div>
+                    <a href="{{ url('/farmers/'.$product->farmer_id) }}" class="btn ml-btn-secondary ml-btn-block mt-3">View Farmer Profile</a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="ml-card h-100">
+                    <strong><i class="fa-solid fa-map-pin text-success"></i> Pickup Address</strong>
+                    <h5 class="mt-2">{{ $product->farmer->stall_name ?? $product->farmer->business_name ?? '' }}</h5>
+                    <span class="small text-muted"><i class="fa-solid fa-location-dot"></i> {{ $product->farmer->address ?? '' }}, {{ $product->farmer->city ?? '' }}</span>
+                    <div class="ml-map mt-3" style="min-height:140px;">
+                        <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=700&q=60" alt="Stall floor map">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ml-section ml-section--muted">
+    <div class="ml-container">
+        <div class="row g-4">
+            <div class="col-lg-3 text-center">
+                <h1 class="display-4">{{ $ratingCount > 0 ? $ratingAverage : '—' }}</h1>
+                <div class="ml-rating justify-content-center mb-2">
+                    @for($i = 1; $i <= 5; $i++)
+                        <i class="fa-solid fa-star {{ $i > round($ratingAverage) ? 'text-muted' : '' }}"></i>
+                    @endfor
+                </div>
+                <p class="text-muted small">Based on {{ $ratingCount }} verified market pickup reviews</p>
+            </div>
+            <div class="col-lg-9">
+                @forelse($reviews as $review)
+                @if($loop->first)
+                <div class="row g-3">
+                @endif
+                    <div class="col-md-4">
+                        <div class="ml-card h-100">
+                            <div class="ml-rating small mb-2">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <i class="fa-solid fa-star {{ $i > $review->rating ? 'text-muted' : '' }}"></i>
+                                @endfor
+                            </div>
+                            <p class="small text-muted">{{ $review->comment }}</p>
+                            <strong class="d-block small mt-2">{{ $review->user->name ?? 'Verified Buyer' }}</strong>
+                            <span class="small text-muted">{{ $review->created_at->diffForHumans() }}</span>
+                        </div>
+                    </div>
+                @if($loop->last)
+                </div>
+                @endif
+                @empty
+                @include('Website.Partials.empty-state', [
+                    'icon' => 'fa-comment-slash',
+                    'title' => 'No Reviews Yet',
+                    'message' => 'Be the first to review this product after your pickup.',
+                ])
+                @endforelse
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ml-section">
+    <div class="ml-container">
+        <div class="d-flex justify-content-between align-items-end ml-heading-block mb-4">
+            <div>
+                <h2>You May Also Like</h2>
+                <p>Fresh seasonal picks from the same farm &amp; category.</p>
+            </div>
+            <a href="{{ url('/products') }}" class="ml-link-more">Explore All Fresh Produce <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        <div class="row g-4">
+            @forelse($relatedProducts as $related)
+            <div class="col-6 col-lg-3">
+                <div class="ml-media-card">
+                    <div class="ml-media-card__image">
+                        <img src="{{ $related->image ?? 'https://images.unsplash.com/photo-1583119022894-919a68a3d0e3?auto=format&fit=crop&w=500&q=60' }}" alt="{{ $related->name }}">
+                    </div>
+                    <div class="ml-media-card__body">
+                        <span class="small text-muted">{{ $related->farmer->stall_name ?? $related->farmer->business_name ?? '' }}</span>
+                        <h6>{{ $related->name }}</h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong class="text-success">Rs. {{ number_format($related->price, 0) }} <span class="fw-normal text-muted small">/ {{ $related->unit }}</span></strong>
+                            <a href="{{ url('/products/'.$related->id) }}" class="btn ml-btn-primary ml-btn-sm"><i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @empty
+            <div class="col-12 text-center text-muted small">No related products to show right now.</div>
+            @endforelse
+        </div>
+    </div>
+</section>
+
 @endsection
