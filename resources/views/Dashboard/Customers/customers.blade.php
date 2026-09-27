@@ -28,15 +28,28 @@ active
                     </tr>
                 </thead>
                 <tbody>
-
+                    @forelse($customers as $customer)
                     <tr>
-                            <td><span class='id-chip'>1</span></td>
-                            <td><strong>Dummy Customer</strong></td>
-                            <td>customer@marketlink.test</td>
-                            <td>0300-0000000</td>
-                            <td><span class='qty-tag'>0</span></td>
-                            <td><div class='action-wrap'><a class='btn-ghost sm' href='{{ route("customer_view", 1) }}'><i class='bi bi-eye'></i></a><form action='{{ route("customer_delete", 1) }}' method='post'><button class='btn-ghost sm danger' type='submit'><i class='bi bi-trash'></i></button></form></div></td>
+                            <td><span class='id-chip'>{{ $customer->id }}</span></td>
+                            <td><strong>{{ $customer->name }}</strong></td>
+                            <td>{{ $customer->email }}</td>
+                            <td>{{ $customer->phone ?? '—' }}</td>
+                            <td><span class='qty-tag'>{{ $customer->orders_count }}</span></td>
+                            <td><div class='action-wrap'>
+                                <a class='btn-ghost sm' href='{{ route("customer_view", $customer->id) }}'><i class='bi bi-eye'></i></a>
+                                <form action='{{ route("customer_toggle_status", $customer->id) }}' method='post'>
+                                    @csrf
+                                    <button class='btn-ghost sm {{ $customer->is_active ? "danger" : "" }}' type='submit' title='{{ $customer->is_active ? "Deactivate" : "Activate" }}'>
+                                        <i class='bi {{ $customer->is_active ? "bi-slash-circle" : "bi-check-circle" }}'></i>
+                                    </button>
+                                </form>
+                            </div></td>
                     </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:var(--muted); padding:20px;">No customers found.</td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

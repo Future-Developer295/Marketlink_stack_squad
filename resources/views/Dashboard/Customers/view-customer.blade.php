@@ -11,12 +11,13 @@ active
         </div>
         <div style="padding:22px">
             <div class="detail-grid">
-                <div class="detail-cell"><span class="dl">Name</span><span class="dv">Dummy Customer</span></div>
-                <div class="detail-cell"><span class="dl">Email</span><span class="dv">customer@marketlink.test</span></div>
-                <div class="detail-cell"><span class="dl">Phone</span><span class="dv">0300-0000000</span></div>
-                <div class="detail-cell"><span class="dl">Address</span><span class="dv">—</span></div>
-                <div class="detail-cell"><span class="dl">Joined</span><span class="dv">—</span></div>
-                <div class="detail-cell"><span class="dl">Total Orders</span><span class="dv">0</span></div>
+                <div class="detail-cell"><span class="dl">Name</span><span class="dv">{{ $customer->name }}</span></div>
+                <div class="detail-cell"><span class="dl">Email</span><span class="dv">{{ $customer->email }}</span></div>
+                <div class="detail-cell"><span class="dl">Phone</span><span class="dv">{{ $customer->phone ?? '—' }}</span></div>
+                <div class="detail-cell"><span class="dl">Address</span><span class="dv">{{ $customer->address ?? '—' }}</span></div>
+                <div class="detail-cell"><span class="dl">Joined</span><span class="dv">{{ $customer->created_at?->format('d M Y') ?? '—' }}</span></div>
+                <div class="detail-cell"><span class="dl">Total Orders</span><span class="dv">{{ $customer->orders->count() }}</span></div>
+                <div class="detail-cell"><span class="dl">Status</span><span class="dv">{{ $customer->is_active ? 'Active' : 'Inactive' }}</span></div>
             </div>
         </div>
     </div>

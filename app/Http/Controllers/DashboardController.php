@@ -7,12 +7,14 @@ use App\Models\Category;
 use App\Models\FarmerProfile;
 use App\Models\Market;
 use App\Models\MarketFarmer;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PickupSlot;
 use App\Models\Product;
 use App\Models\Report;
 use App\Models\Review;
+use App\Models\ReviewReply;
 use App\Models\User;
 use App\Models\WeeklyStockTemplate;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -203,497 +205,6 @@ class DashboardController extends Controller
             'topProductLabels',
             'topProductData'
         ));
-    }
-
-    public function farmerProfile()
-    {
-        $farmer = FarmerProfile::where('user_id', Auth::id())->first();
-
-        return view('Dashboard.Farmer.Profile.profile', compact('farmer'));
-    }
-
-    public function farmerProfileUpdate(Request $request)
-    {
-        $validated = $request->validate([
-            'stall_name' => 'required|string|max:200',
-            'business_name' => 'required|string|max:150',
-            'description' => 'required|string',
-            'address' => 'required|string',
-            'city' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
-            'country' => 'required|string|max:100',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'operating_days' => 'required|array|min:1',
-            'operating_days.*' => 'required|in:Mon,Tue,Wed,Thu,Fri,Sat,Sun',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'farmer_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
-
-        $farmer = FarmerProfile::firstOrNew(['user_id' => Auth::id()]);
-        $farmer->stall_name = $validated['stall_name'];
-        $farmer->business_name = $validated['business_name'];
-        $farmer->description = $validated['description'];
-        $farmer->address = $validated['address'];
-        $farmer->city = $validated['city'];
-        $farmer->state = $validated['state'];
-        $farmer->country = $validated['country'];
-        $farmer->latitude = $validated['latitude'];
-        $farmer->longitude = $validated['longitude'];
-        $farmer->operating_days = implode(', ', $validated['operating_days']);
-        $farmer->start_time = $validated['start_time'];
-        $farmer->end_time = $validated['end_time'];
-
-        if (! $farmer->exists) {
-            $farmer->approval_status = 'pending';
-        }
-
-        if ($request->hasFile('farmer_image')) {
-            $this->deletePublicImage($farmer->farmer_image, 'farmer_images');
-            $farmer->farmer_image = $this->savePublicImage($request->file('farmer_image'), 'farmer_images');
-        }
-
-        $farmer->save();
-
-        return redirect()->route('farmer.profile')->with('success', 'Profile updated successfully.');
-    }
-
-    public function farmerMarkets(Request $request)
-    {
-        $query = MarketFarmer::with('market')->where('farmer_id', Auth::id());
-
-        if ($request->filled('q')) {
-            $search = $request->input('q');
-            $query->whereHas('market', function ($marketQuery) use ($search) {
-                $marketQuery->where('name', 'like', "%{$search}%")
-                    ->orWhere('city', 'like', "%{$search}%");
-            });
-        }
-
-        $myMarkets = $query->latest()->get();
-
-        return view('Dashboard.Farmer.Markets.my-markets', compact('myMarkets'));
-    }
-
-    public function farmerMarketCreate()
-    {
-        $joinedIds = MarketFarmer::where('farmer_id', Auth::id())->pluck('market_id');
-        $markets = Market::whereNotIn('id', $joinedIds)->orderBy('name')->get();
-
-        return view('Dashboard.Farmer.Markets.join-market', compact('markets'));
-    }
-
-    public function farmerMarketStore(Request $request)
-    {
-        $validated = $request->validate([
-            'market_id' => 'required|exists:markets,id',
-        ]);
-
-        MarketFarmer::updateOrCreate(
-            [
-                'market_id' => $validated['market_id'],
-                'farmer_id' => Auth::id(),
-            ],
-            [
-                'is_active' => false,
-            ]
-        );
-
-        return redirect()->route('farmer.markets.index')->with('success', 'Join request sent successfully.');
-    }
-
-    public function farmerMarketLeave($id)
-    {
-        $marketFarmer = MarketFarmer::where('farmer_id', Auth::id())->findOrFail($id);
-        $marketFarmer->delete();
-
-        return redirect()->route('farmer.markets.index')->with('success', 'Market removed successfully.');
-    }
-
-    public function farmerProducts(Request $request)
-    {
-        $farmer = $this->currentFarmer();
-        $query = Product::with('category')->where('farmer_id', $farmer->id);
-
-        if ($request->filled('q')) {
-            $search = $request->input('q');
-            $query->where(function ($productQuery) use ($search) {
-                $productQuery->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        $products = $query->latest()->get();
-
-        return view('Dashboard.Farmer.Products.products', compact('products'));
-    }
-
-    public function farmerProductCreate()
-    {
-        $categories = Category::orderBy('name')->get();
-
-        return view('Dashboard.Farmer.Products.add-product', compact('categories'));
-    }
-
-    public function farmerProductStore(Request $request)
-    {
-        $farmer = $this->currentFarmer();
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:100',
-            'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
-            'unit' => 'required|string|max:500',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
-
-        $imageName = $request->hasFile('image')
-            ? $this->savePublicImage($request->file('image'), 'product_images')
-            : null;
-
-        Product::create([
-            'farmer_id' => $farmer->id,
-            'category_id' => $validated['category_id'],
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'price' => $validated['price'],
-            'stock_quantity' => $validated['stock_quantity'],
-            'unit' => $validated['unit'],
-            'image' => $imageName,
-            'is_active' => $request->boolean('is_active'),
-        ]);
-
-        return redirect()->route('farmer.products.index')->with('success', 'Product added successfully.');
-    }
-
-    public function farmerProductShow($id)
-    {
-        $farmer = $this->currentFarmer();
-        $product = Product::with('category')
-            ->where('farmer_id', $farmer->id)
-            ->findOrFail($id);
-
-        return view('Dashboard.Farmer.Products.view-product', compact('product'));
-    }
-
-    public function farmerProductEdit($id)
-    {
-        $farmer = $this->currentFarmer();
-        $product = Product::where('farmer_id', $farmer->id)->findOrFail($id);
-        $categories = Category::orderBy('name')->get();
-
-        return view('Dashboard.Farmer.Products.edit-product', compact('product', 'categories'));
-    }
-
-    public function farmerProductUpdate(Request $request, $id)
-    {
-        $farmer = $this->currentFarmer();
-        $product = Product::where('farmer_id', $farmer->id)->findOrFail($id);
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:100',
-            'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
-            'unit' => 'required|string|max:500',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
-
-        $imageName = $product->image;
-
-        if ($request->hasFile('image')) {
-            $this->deletePublicImage($product->image, 'product_images');
-            $imageName = $this->savePublicImage($request->file('image'), 'product_images');
-        }
-
-        $product->update([
-            'category_id' => $validated['category_id'],
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'price' => $validated['price'],
-            'stock_quantity' => $validated['stock_quantity'],
-            'unit' => $validated['unit'],
-            'image' => $imageName,
-            'is_active' => $request->boolean('is_active'),
-        ]);
-
-        return redirect()->route('farmer.products.index')->with('success', 'Product updated successfully.');
-    }
-
-    public function farmerProductDestroy($id)
-    {
-        $farmer = $this->currentFarmer();
-        $product = Product::where('farmer_id', $farmer->id)->findOrFail($id);
-        $this->deletePublicImage($product->image, 'product_images');
-        $product->delete();
-
-        return redirect()->route('farmer.products.index')->with('success', 'Product deleted successfully.');
-    }
-
-    public function farmerStock(Request $request)
-    {
-        $farmer = $this->currentFarmer();
-        $query = WeeklyStockTemplate::with('product')->where('farmer_id', $farmer->id);
-
-        if ($request->filled('q')) {
-            $search = $request->input('q');
-            $query->whereHas('product', function ($productQuery) use ($search) {
-                $productQuery->where('name', 'like', "%{$search}%");
-            });
-        }
-
-        $weeklyStock = $query->orderBy('day_of_week')->latest('id')->get();
-
-        return view('Dashboard.Farmer.WeeklyStock.weekly-stock', compact('weeklyStock'));
-    }
-
-    public function farmerStockCreate()
-    {
-        $farmer = $this->currentFarmer();
-        $products = Product::where('farmer_id', $farmer->id)->orderBy('name')->get();
-
-        return view('Dashboard.Farmer.WeeklyStock.add-stock', compact('products'));
-    }
-
-    public function farmerStockStore(Request $request)
-    {
-        $farmer = $this->currentFarmer();
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'day_of_week' => 'required|in:Mon,Tue,Wed,Thu,Fri,Sat,Sun',
-            'quantity' => 'required|integer|min:0',
-            'unit' => 'required|string|max:50',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
-
-        $product = Product::where('farmer_id', $farmer->id)->findOrFail($validated['product_id']);
-
-        WeeklyStockTemplate::create([
-            'farmer_id' => $farmer->id,
-            'product_id' => $product->id,
-            'day_of_week' => $validated['day_of_week'],
-            'quantity' => $validated['quantity'],
-            'unit' => $validated['unit'],
-            'start_date' => $validated['start_date'] ?? null,
-            'end_date' => $validated['end_date'] ?? null,
-            'is_active' => $request->boolean('is_active'),
-        ]);
-
-        return redirect()->route('farmer.stock.index')->with('success', 'Weekly stock added successfully.');
-    }
-
-    public function farmerStockEdit($id)
-    {
-        $farmer = $this->currentFarmer();
-        $stock = WeeklyStockTemplate::where('farmer_id', $farmer->id)->findOrFail($id);
-        $products = Product::where('farmer_id', $farmer->id)->orderBy('name')->get();
-
-        return view('Dashboard.Farmer.WeeklyStock.edit-stock', compact('stock', 'products'));
-    }
-
-    public function farmerStockUpdate(Request $request, $id)
-    {
-        $farmer = $this->currentFarmer();
-        $stock = WeeklyStockTemplate::where('farmer_id', $farmer->id)->findOrFail($id);
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'day_of_week' => 'required|in:Mon,Tue,Wed,Thu,Fri,Sat,Sun',
-            'quantity' => 'required|integer|min:0',
-            'unit' => 'required|string|max:50',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
-
-        $product = Product::where('farmer_id', $farmer->id)->findOrFail($validated['product_id']);
-
-        $stock->update([
-            'product_id' => $product->id,
-            'day_of_week' => $validated['day_of_week'],
-            'quantity' => $validated['quantity'],
-            'unit' => $validated['unit'],
-            'start_date' => $validated['start_date'] ?? null,
-            'end_date' => $validated['end_date'] ?? null,
-            'is_active' => $request->boolean('is_active'),
-        ]);
-
-        return redirect()->route('farmer.stock.index')->with('success', 'Weekly stock updated successfully.');
-    }
-
-    public function farmerStockDestroy($id)
-    {
-        $farmer = $this->currentFarmer();
-        $stock = WeeklyStockTemplate::where('farmer_id', $farmer->id)->findOrFail($id);
-        $stock->delete();
-
-        return redirect()->route('farmer.stock.index')->with('success', 'Weekly stock deleted successfully.');
-    }
-
-    public function farmerOrders(Request $request)
-    {
-        $farmer = $this->currentFarmer();
-        $query = Order::with(['user', 'pickupSlot', 'items.product'])
-            ->where('farmer_id', $farmer->id);
-
-        if ($request->filled('q')) {
-            $search = $request->input('q');
-            $query->whereHas('user', function ($userQuery) use ($search) {
-                $userQuery->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        $orders = $query->latest('order_date')->get();
-
-        return view('Dashboard.Farmer.Orders.orders', compact('orders'));
-    }
-
-    public function farmerOrderShow($id)
-    {
-        $farmer = $this->currentFarmer();
-        $order = Order::with(['user', 'pickupSlot.market', 'items.product'])
-            ->where('farmer_id', $farmer->id)
-            ->findOrFail($id);
-
-        return view('Dashboard.Farmer.Orders.view-order', compact('order'));
-    }
-
-    public function farmerOrderUpdateStatus(Request $request, $id)
-    {
-        $farmer = $this->currentFarmer();
-        $validated = $request->validate([
-            'status' => 'required|in:pending,confirmed,ready,picked_up,cancelled',
-        ]);
-
-        $order = Order::where('farmer_id', $farmer->id)->findOrFail($id);
-        $order->status = $validated['status'];
-        $order->save();
-
-        return redirect()->route('farmer.orders.show', $order->id)->with('success', 'Order status updated successfully.');
-    }
-
-    public function farmerSlots(Request $request)
-    {
-        $farmer = $this->currentFarmer();
-        $query = PickupSlot::with('market')->where('farmer_id', $farmer->id);
-
-        if ($request->filled('q')) {
-            $search = $request->input('q');
-            $query->whereHas('market', function ($marketQuery) use ($search) {
-                $marketQuery->where('name', 'like', "%{$search}%")
-                    ->orWhere('city', 'like', "%{$search}%");
-            });
-        }
-
-        $slots = $query->orderByDesc('date')->orderBy('start_time')->get();
-
-        return view('Dashboard.Farmer.PickupSlots.pickup-slots', compact('slots'));
-    }
-
-    public function farmerSlotCreate()
-    {
-        $marketIds = MarketFarmer::where('farmer_id', Auth::id())
-            ->where('is_active', true)
-            ->pluck('market_id');
-        $markets = Market::whereIn('id', $marketIds)->orderBy('name')->get();
-
-        return view('Dashboard.Farmer.PickupSlots.add-slot', compact('markets'));
-    }
-
-    public function farmerSlotStore(Request $request)
-    {
-        $farmer = $this->currentFarmer();
-        $validated = $request->validate([
-            'market_id' => 'required|exists:markets,id',
-            'date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'capacity' => 'required|integer|min:1',
-        ]);
-
-        MarketFarmer::where('farmer_id', Auth::id())
-            ->where('market_id', $validated['market_id'])
-            ->where('is_active', true)
-            ->firstOrFail();
-
-        PickupSlot::create([
-            'farmer_id' => $farmer->id,
-            'market_id' => $validated['market_id'],
-            'date' => $validated['date'],
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
-            'capacity' => $validated['capacity'],
-            'is_available' => $request->boolean('is_available'),
-        ]);
-
-        return redirect()->route('farmer.slots.index')->with('success', 'Pickup slot added successfully.');
-    }
-
-    public function farmerSlotEdit($id)
-    {
-        $farmer = $this->currentFarmer();
-        $slot = PickupSlot::where('farmer_id', $farmer->id)->findOrFail($id);
-        $marketIds = MarketFarmer::where('farmer_id', Auth::id())
-            ->where('is_active', true)
-            ->pluck('market_id');
-        $markets = Market::whereIn('id', $marketIds)->orderBy('name')->get();
-
-        return view('Dashboard.Farmer.PickupSlots.edit-slot', compact('slot', 'markets'));
-    }
-
-    public function farmerSlotUpdate(Request $request, $id)
-    {
-        $farmer = $this->currentFarmer();
-        $slot = PickupSlot::where('farmer_id', $farmer->id)->findOrFail($id);
-        $validated = $request->validate([
-            'market_id' => 'required|exists:markets,id',
-            'date' => 'required|date',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'capacity' => 'required|integer|min:1',
-        ]);
-
-        MarketFarmer::where('farmer_id', Auth::id())
-            ->where('market_id', $validated['market_id'])
-            ->where('is_active', true)
-            ->firstOrFail();
-
-        $slot->update([
-            'market_id' => $validated['market_id'],
-            'date' => $validated['date'],
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
-            'capacity' => $validated['capacity'],
-            'is_available' => $request->boolean('is_available'),
-        ]);
-
-        return redirect()->route('farmer.slots.index')->with('success', 'Pickup slot updated successfully.');
-    }
-
-    public function farmerSlotDestroy($id)
-    {
-        $farmer = $this->currentFarmer();
-        $slot = PickupSlot::where('farmer_id', $farmer->id)->findOrFail($id);
-        $slot->delete();
-
-        return redirect()->route('farmer.slots.index')->with('success', 'Pickup slot deleted successfully.');
-    }
-
-    public function farmerReviews()
-    {
-        $farmer = $this->currentFarmer();
-        $reviews = Review::with(['user', 'product', 'reply'])
-            ->where('farmer_id', $farmer->id)
-            ->latest()
-            ->get();
-
-        return view('Dashboard.Farmer.Reviews.reviews', compact('reviews'));
     }
 
     public function roles()
@@ -907,6 +418,10 @@ class DashboardController extends Controller
             true
         )->count();
 
+        $totalFarmers = User::where('role', 'farmer')->count();
+        $totalCustomers = User::where('role', 'customer')->count();
+        $totalOrders = Order::count();
+
         $pendingFarmerList = FarmerProfile::with('user')
             ->where('approval_status', 'pending')
             ->latest()
@@ -1005,6 +520,9 @@ class DashboardController extends Controller
             'activeMarkets',
             'totalProducts',
             'flaggedReviews',
+            'totalFarmers',
+            'totalCustomers',
+            'totalOrders',
             'pendingFarmerList',
             'revenueTrendLabels',
             'revenueTrendData',
@@ -1910,6 +1428,16 @@ class DashboardController extends Controller
 
         $order->save();
 
+        if ($request->status === 'ready') {
+            Notification::create([
+                'user_id' => $order->user_id,
+                'type' => 'ready_for_pickup',
+                'title' => 'Order Ready for Pickup',
+                'message' => 'Your order #'.$order->id.' is ready for pickup.',
+                'is_read' => false,
+            ]);
+        }
+
         return redirect()
             ->route('orders')
             ->with(
@@ -2152,9 +1680,20 @@ class DashboardController extends Controller
 
     public function marketStore(Request $request)
     {
-        Market::create(
-            $request->all()
-        );
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'address' => ['required', 'string'],
+            'city' => ['required', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'country' => ['required', 'string', 'max:100'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'operating_days' => ['nullable', 'string', 'max:255'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i'],
+        ]);
+
+        Market::create($validated);
 
         return redirect()
             ->route('markets');
@@ -2176,9 +1715,20 @@ class DashboardController extends Controller
     ) {
         $market = Market::findOrFail($id);
 
-        $market->update(
-            $request->all()
-        );
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'address' => ['required', 'string'],
+            'city' => ['required', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'country' => ['required', 'string', 'max:100'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'operating_days' => ['nullable', 'string', 'max:255'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i'],
+        ]);
+
+        $market->update($validated);
 
         return redirect()
             ->route('markets');
@@ -2347,10 +1897,40 @@ class DashboardController extends Controller
             'market',
         ])->get();
 
+        $pendingFarmerApplications = FarmerProfile::where('approval_status', 'pending')
+            ->with('user')
+            ->get();
+
         return view(
             'Dashboard.Farmers.farmers',
-            compact('farmers')
+            compact('farmers', 'pendingFarmerApplications')
         );
+    }
+
+    public function farmerApprove($id)
+    {
+        $profile = FarmerProfile::findOrFail($id);
+
+        $profile->approval_status = 'approved';
+        $profile->approved_by = Auth::id();
+        $profile->approved_at = now();
+        $profile->save();
+
+        return redirect()
+            ->route('farmers')
+            ->with('success', 'Farmer application approved.');
+    }
+
+    public function farmerReject($id)
+    {
+        $profile = FarmerProfile::findOrFail($id);
+
+        $profile->approval_status = 'rejected';
+        $profile->save();
+
+        return redirect()
+            ->route('farmers')
+            ->with('success', 'Farmer application rejected.');
     }
 
     public function farmerEdit($id)
@@ -2457,6 +2037,7 @@ class DashboardController extends Controller
             'role',
             'customer'
         )
+            ->withCount('orders')
             ->latest()
             ->get();
 
@@ -2485,20 +2066,23 @@ class DashboardController extends Controller
         );
     }
 
-    public function customerDelete($id)
+    public function customerToggleStatus($id)
     {
         $customer = User::where(
             'role',
             'customer'
         )->findOrFail($id);
 
-        $customer->delete();
+        $customer->is_active = ! $customer->is_active;
+        $customer->save();
 
         return redirect()
             ->route('customers')
             ->with(
                 'success',
-                'Customer deleted successfully.'
+                $customer->is_active
+                    ? 'Customer activated successfully.'
+                    : 'Customer deactivated successfully.'
             );
     }
 
@@ -2508,6 +2092,7 @@ class DashboardController extends Controller
             'user',
             'farmer.user',
             'product',
+            'reply',
         ]);
 
         if (auth()->user()->hasRole('farmer')) {
@@ -2527,6 +2112,38 @@ class DashboardController extends Controller
             'Dashboard.Reviews.reviews',
             compact('reviews')
         );
+    }
+
+    public function reviewReplyStore(Request $request, $id)
+    {
+        $request->validate([
+            'response' => ['required', 'string'],
+        ]);
+
+        $query = Review::query();
+
+        if (auth()->user()->hasRole('farmer')) {
+            $farmer = $this->currentFarmer();
+
+            $query->where(
+                'farmer_id',
+                $farmer->id
+            );
+        }
+
+        $review = $query->findOrFail($id);
+
+        ReviewReply::updateOrCreate(
+            ['review_id' => $review->id],
+            ['response' => $request->response]
+        );
+
+        return redirect()
+            ->route('reviews')
+            ->with(
+                'success',
+                'Reply saved.'
+            );
     }
 
     public function reviewFlag($id)

@@ -1,10 +1,9 @@
-@extends('Dashboard._master')
-@section('nav_dashboard_admin')
+<?php $__env->startSection('nav_dashboard_admin'); ?>
 active
-@endsection
-@section('page_title', 'Admin Dashboard')
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('page_title', 'Admin Dashboard'); ?>
 
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .chart-grid { display: grid; gap: 16px; margin-bottom: 16px; }
     .chart-grid.g-2-1 { grid-template-columns: 2fr 1fr; }
@@ -53,44 +52,44 @@ active
         .chart-grid.g-2-1, .chart-grid.g-1-1-1 { grid-template-columns: 1fr; }
     }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('body')
+<?php $__env->startSection('body'); ?>
 
     <div class="stats-row">
         <div class="stat-card sc-indigo">
             <div class="stat-icon-wrap"><i class="bi bi-person-badge-fill"></i></div>
-            <div class="stat-num">{{ $totalFarmers }}</div>
+            <div class="stat-num"><?php echo e($totalFarmers); ?></div>
             <div class="stat-label">Total Farmers</div>
             <div class="stat-trend up"><i class="bi bi-arrow-up-right"></i> Registered farmers</div>
         </div>
         <div class="stat-card sc-emerald">
             <div class="stat-icon-wrap"><i class="bi bi-person-workspace"></i></div>
-            <div class="stat-num">{{ $pendingFarmers }}</div>
+            <div class="stat-num"><?php echo e($pendingFarmers); ?></div>
             <div class="stat-label">Pending Farmers</div>
             <div class="stat-trend up"><i class="bi bi-arrow-up-right"></i> Awaiting approval</div>
         </div>
         <div class="stat-card sc-amber">
             <div class="stat-icon-wrap"><i class="bi bi-people-fill"></i></div>
-            <div class="stat-num">{{ $totalCustomers }}</div>
+            <div class="stat-num"><?php echo e($totalCustomers); ?></div>
             <div class="stat-label">Total Customers</div>
             <div class="stat-trend up"><i class="bi bi-arrow-up-right"></i> Registered customers</div>
         </div>
         <div class="stat-card sc-rose">
             <div class="stat-icon-wrap"><i class="bi bi-bag-check-fill"></i></div>
-            <div class="stat-num">{{ $totalOrders }}</div>
+            <div class="stat-num"><?php echo e($totalOrders); ?></div>
             <div class="stat-label">Total Orders</div>
             <div class="stat-trend down"><i class="bi bi-arrow-down-right"></i> All time</div>
         </div>
         <div class="stat-card sc-purple">
             <div class="stat-icon-wrap"><i class="bi bi-flag-fill"></i></div>
-            <div class="stat-num">{{ $flaggedReviews }}</div>
+            <div class="stat-num"><?php echo e($flaggedReviews); ?></div>
             <div class="stat-label">Flagged Reviews</div>
             <div class="stat-trend up"><i class="bi bi-arrow-up-right"></i> Needs moderation</div>
         </div>
     </div>
 
-    {{-- Charts row 1: Platform revenue trend + Order status --}}
+    
     <div class="chart-grid g-2-1">
 
         <div class="chart-panel">
@@ -110,20 +109,20 @@ active
                 <span class="panel-title"><i class="bi bi-pie-chart-fill"></i> Order Status</span>
             </div>
             <div class="chart-body">
-                @if(array_sum($orderStatusData) > 0)
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(array_sum($orderStatusData) > 0): ?>
                     <div class="chart-canvas-wrap short">
                         <canvas id="adminOrderStatusChart"></canvas>
                     </div>
                     <div class="legend-list" id="adminOrderStatusLegend"></div>
-                @else
+                <?php else: ?>
                     <div class="empty-chart-note">No orders on the platform yet.</div>
-                @endif
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
         </div>
 
     </div>
 
-    {{-- Charts row 2: Top markets + Users by role + Approval rate gauge --}}
+    
     <div class="chart-grid g-1-1-1">
 
         <div class="chart-panel">
@@ -131,13 +130,13 @@ active
                 <span class="panel-title"><i class="bi bi-bar-chart-fill"></i> Top Markets by Farmers</span>
             </div>
             <div class="chart-body">
-                @if(count($topMarketData) > 0)
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($topMarketData) > 0): ?>
                     <div class="chart-canvas-wrap short">
                         <canvas id="topMarketsChart"></canvas>
                     </div>
-                @else
+                <?php else: ?>
                     <div class="empty-chart-note">No active farmer-market links yet.</div>
-                @endif
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
         </div>
 
@@ -161,12 +160,12 @@ active
                 <div class="gauge-wrap">
                     <canvas id="approvalGaugeChart"></canvas>
                     <div class="gauge-center">
-                        <div class="gauge-value">{{ $approvalRate }}%</div>
+                        <div class="gauge-value"><?php echo e($approvalRate); ?>%</div>
                         <div class="gauge-caption">approved</div>
                     </div>
                 </div>
             </div>
-            <div class="gauge-foot"><strong>{{ $pendingFarmers }}</strong> pending review</div>
+            <div class="gauge-foot"><strong><?php echo e($pendingFarmers); ?></strong> pending review</div>
         </div>
 
     </div>
@@ -174,7 +173,7 @@ active
     <div class="panel">
         <div class="panel-header">
             <span class="panel-title"><i class="bi bi-person-workspace"></i> Pending Farmer Approvals</span>
-            <a class="btn-ghost" href="{{ route('farmers') }}">View all <i class="bi bi-arrow-right"></i></a>
+            <a class="btn-ghost" href="<?php echo e(route('farmers')); ?>">View all <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="tbl-wrap">
             <table class="dtable">
@@ -182,26 +181,26 @@ active
                     <tr><th>#ID</th><th>Stall Name</th><th>Owner</th><th>Submitted</th><th>Status</th></tr>
                 </thead>
                 <tbody>
-                    @forelse ($pendingFarmerList as $fp)
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $pendingFarmerList; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $fp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <tr>
-                        <td><span class="id-chip">{{ $loop->iteration }}</span></td>
-                        <td><strong>{{ $fp->stall_name }}</strong></td>
-                        <td>{{ $fp->user?->name ?? 'N/A' }}</td>
-                        <td>{{ $fp->created_at?->format('Y-m-d') }}</td>
+                        <td><span class="id-chip"><?php echo e($loop->iteration); ?></span></td>
+                        <td><strong><?php echo e($fp->stall_name); ?></strong></td>
+                        <td><?php echo e($fp->user?->name ?? 'N/A'); ?></td>
+                        <td><?php echo e($fp->created_at?->format('Y-m-d')); ?></td>
                         <td><span class="badge-status bs-in"><i class="bi bi-circle-fill"></i> Pending</span></td>
                     </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <tr>
                         <td colspan="5" style="text-align:center; color:var(--muted); padding:20px">No pending farmer approvals.</td>
                     </tr>
-                    @endforelse
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var css = getComputedStyle(document.documentElement);
@@ -222,12 +221,12 @@ document.addEventListener('DOMContentLoaded', function () {
         new Chart(revenueEl, {
             type: 'bar',
             data: {
-                labels: @json($revenueTrendLabels),
+                labels: <?php echo json_encode($revenueTrendLabels, 15, 512) ?>,
                 datasets: [
                     {
                         type: 'bar',
                         label: 'Revenue (PKR)',
-                        data: @json($revenueTrendData),
+                        data: <?php echo json_encode($revenueTrendData, 15, 512) ?>,
                         backgroundColor: cGreen,
                         borderRadius: 6,
                         maxBarThickness: 28,
@@ -237,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     {
                         type: 'line',
                         label: 'Orders',
-                        data: @json($ordersTrendData),
+                        data: <?php echo json_encode($ordersTrendData, 15, 512) ?>,
                         borderColor: cPrimary,
                         backgroundColor: cPrimary,
                         tension: 0.35,
@@ -265,8 +264,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Order status donut
     var statusEl = document.getElementById('adminOrderStatusChart');
     if (statusEl) {
-        var statusLabels = @json($orderStatusLabels);
-        var statusData = @json($orderStatusData);
+        var statusLabels = <?php echo json_encode($orderStatusLabels, 15, 512) ?>;
+        var statusData = <?php echo json_encode($orderStatusData, 15, 512) ?>;
         var statusColors = [cAmber, cInfo, cPrimary, cGreen, cRose];
 
         new Chart(statusEl, {
@@ -291,10 +290,10 @@ document.addEventListener('DOMContentLoaded', function () {
         new Chart(topMarketsEl, {
             type: 'bar',
             data: {
-                labels: @json($topMarketLabels),
+                labels: <?php echo json_encode($topMarketLabels, 15, 512) ?>,
                 datasets: [{
                     label: 'Farmers',
-                    data: @json($topMarketData),
+                    data: <?php echo json_encode($topMarketData, 15, 512) ?>,
                     backgroundColor: cPrimary,
                     borderRadius: 6,
                     maxBarThickness: 24
@@ -316,8 +315,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Users by role donut
     var roleEl = document.getElementById('usersByRoleChart');
     if (roleEl) {
-        var roleLabels = @json($userRoleLabels);
-        var roleData = @json($userRoleData);
+        var roleLabels = <?php echo json_encode($userRoleLabels, 15, 512) ?>;
+        var roleData = <?php echo json_encode($userRoleData, 15, 512) ?>;
         var roleColors = [cRose, cGreen, cInfo];
 
         new Chart(roleEl, {
@@ -339,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Farmer approval rate gauge
     var approvalEl = document.getElementById('approvalGaugeChart');
     if (approvalEl) {
-        var rate = {{ (float) $approvalRate }};
+        var rate = <?php echo e((float) $approvalRate); ?>;
 
         new Chart(approvalEl, {
             type: 'doughnut',
@@ -356,4 +355,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('Dashboard._master', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\MarketLink2\resources\views/Dashboard/admin-dashboard.blade.php ENDPATH**/ ?>

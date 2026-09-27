@@ -25,6 +25,7 @@ active
                     <th>Rating</th>
                     <th>Comment</th>
                     <th>Flagged</th>
+                    <th>Farmer Reply</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -60,6 +61,24 @@ active
                     </td>
 
                     <td>
+                        @if ($review->reply)
+                            <p class="small mb-1">{{ $review->reply->response }}</p>
+                        @endif
+
+                        @if (auth()->user()->hasRole('farmer'))
+                            <form action="{{ route('review_reply_store', $review->id) }}" method="post" class="d-flex gap-1">
+                                @csrf
+                                <textarea name="response" rows="2" class="form-control form-control-sm" placeholder="Write a reply...">{{ old('response', optional($review->reply)->response) }}</textarea>
+                                <button class="btn-ghost sm" type="submit" title="{{ $review->reply ? 'Update reply' : 'Add reply' }}">
+                                    <i class="bi bi-reply-fill"></i>
+                                </button>
+                            </form>
+                        @elseif (! $review->reply)
+                            <span class="small text-muted">No reply yet.</span>
+                        @endif
+                    </td>
+
+                    <td>
                         <div class="action-wrap">
                             <form action="{{ route('review_flag', $review->id) }}" method="post">
                                 @csrf
@@ -80,7 +99,7 @@ active
 
                 @empty
                 <tr>
-                    <td colspan="8" style="text-align:center; color:var(--muted); padding:20px">
+                    <td colspan="9" style="text-align:center; color:var(--muted); padding:20px">
                         No reviews yet.
                     </td>
                 </tr>

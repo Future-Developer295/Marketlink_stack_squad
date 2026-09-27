@@ -21,7 +21,7 @@
                         <strong class="fs-5">Order #{{ $order->id }}</strong>
                         <span class="small text-muted d-block">Placed {{ $order->order_date?->format('d M Y, h:i A') }}</span>
                     </div>
-                    <span class="ml-badge ml-badge-mint">{{ ucfirst($order->status) }}</span>
+                    <span class="ml-badge ml-badge-mint">{{ $order->statusLabel() }}</span>
                 </div>
 
                 <div class="row g-4">
@@ -83,6 +83,52 @@
                             @if($order->pickupSlot->market)
                             <span class="small text-muted d-block">{{ $order->pickupSlot->market->name }}</span>
                             @endif
+                        </div>
+                        @endif
+
+                        @if($order->isCancellable())
+                        <div class="ml-card mt-3">
+                            <strong>Change Pickup Slot</strong>
+                            <form method="POST" action="{{ route('customer_order_update_slot', $order->id) }}" class="mt-2">
+                                @csrf
+                                <select name="pickup_slot_id" class="form-select mb-2" required>
+                                    <option value="">Choose a slot&hellip;</option>
+                                    @foreach($alternativeSlots as $slot)
+                                    <option value="{{ $slot->id }}" {{ $order->pickup_slot_id == $slot->id ? 'selected' : '' }}>
+                                        {{ \Illuminate\Support\Carbon::parse($slot->date)->format('D, d M') }} &middot; {{ $slot->start_time }} - {{ $slot->end_time }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                                <button type="submit" class="btn ml-btn-secondary ml-btn-block">Update Slot</button>
+                            </form>
+                        </div>
+
+                        <form method="POST" action="{{ route('customer_order_cancel', $order->id) }}" class="mt-3" onsubmit="return confirm('Cancel this order?');">
+                            @csrf
+                            <button type="submit" class="btn ml-btn-secondary ml-btn-block">Cancel Order</button>
+                        </form>
+                        @endif
+
+                        @if($order->status === 'picked_up')
+                        <form method="POST" action="{{ route('customer_order_reorder', $order->id) }}" class="mt-3">
+                            @csrf
+                            <button type="submit" class="btn ml-btn-primary ml-btn-block"><i class="fa-solid fa-rotate"></i> Reorder</button>
+                        </form>
+
+                        <div class="ml-card mt-3">
+                            <h6 class="mb-3">{{ $myFarmerReview ? 'Update Your Review' : 'Rate This Farmer' }}</h6>
+                            <form method="POST" action="{{ route('customer_order_review', $order->id) }}">
+                                @csrf
+                                <div class="ml-form-label">Rating</div>
+                                <select name="rating" class="form-select mb-3" required>
+                                    @for($i = 5; $i >= 1; $i--)
+                                        <option value="{{ $i }}" {{ optional($myFarmerReview)->rating == $i ? 'selected' : '' }}>{{ $i }} Star{{ $i > 1 ? 's' : '' }}</option>
+                                    @endfor
+                                </select>
+                                <div class="ml-form-label">Comment</div>
+                                <textarea name="comment" class="form-control mb-3" rows="3" placeholder="Share your experience with this farmer">{{ optional($myFarmerReview)->comment }}</textarea>
+                                <button type="submit" class="btn ml-btn-primary">{{ $myFarmerReview ? 'Update Review' : 'Submit Review' }}</button>
+                            </form>
                         </div>
                         @endif
                     </div>

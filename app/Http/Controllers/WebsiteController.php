@@ -67,20 +67,34 @@ class WebsiteController extends Controller
             ->take(4)
             ->get();
 
+        $favoritedFarmerIds = Auth::check()
+            ? Auth::user()->favorites()->whereNotNull('farmer_id')->pluck('farmer_id')
+            : collect();
+
+        $favoritedProductIds = Auth::check()
+            ? Auth::user()->favorites()->whereNotNull('product_id')->pluck('product_id')
+            : collect();
+
         return view(
             'Website.Home.index',
             compact(
                 'stats',
                 'markets',
                 'farmers',
-                'products'
+                'products',
+                'favoritedFarmerIds',
+                'favoritedProductIds'
             )
         );
     }
 
     public function markets(Request $request): View
     {
-        $query = Market::withCount('marketFarmers');
+        $query = Market::withCount([
+            'marketFarmers' => function ($query) {
+                $query->where('is_active', true);
+            }
+        ]);
 
         if ($request->filled('q')) {
             $search = $request->input('q');
@@ -94,6 +108,12 @@ class WebsiteController extends Controller
 
         if ($request->filled('city')) {
             $query->where('city', $request->input('city'));
+        }
+
+        if ($request->filled('day')) {
+            $day = $request->input('day');
+
+            $query->where('operating_days', 'like', "%{$day}%");
         }
 
         $sort = $request->input('sort', 'newest');
@@ -114,16 +134,29 @@ class WebsiteController extends Controller
             ->orderBy('city')
             ->pluck('city');
 
+        $days = [
+            'Mon',
+            'Tue',
+            'Wed',
+            'Thu',
+            'Fri',
+            'Sat',
+            'Sun',
+        ];
+
         return view(
             'Website.Markets.index',
-            compact('markets', 'cities')
+            compact('markets', 'cities', 'days')
         );
     }
 
-    public function marketDetail(Request $request, string $market): View
+    public function marketDetail(string $market): View
     {
-        $market = Market::withCount('marketFarmers')
-            ->findOrFail($market);
+        $market = Market::withCount([
+            'marketFarmers' => function ($query) {
+                $query->where('is_active', true);
+            }
+        ])->findOrFail($market);
 
         $farmerUserIds = $market->marketFarmers()
             ->where('is_active', true)
@@ -245,9 +278,13 @@ class WebsiteController extends Controller
             ->orderBy('city')
             ->pluck('city');
 
+        $favoritedFarmerIds = Auth::check()
+            ? Auth::user()->favorites()->whereNotNull('farmer_id')->pluck('farmer_id')
+            : collect();
+
         return view(
             'Website.Farmers.index',
-            compact('farmers', 'cities')
+            compact('farmers', 'cities', 'favoritedFarmerIds')
         );
     }
 
@@ -273,12 +310,18 @@ class WebsiteController extends Controller
         $ratingAverage = round((float) ($farmer->reviews_avg_rating ?? 0), 1);
         $ratingCount = (int) ($farmer->reviews_count ?? 0);
 
+        $isFavorited = Auth::check()
+            && Favorite::where('user_id', Auth::id())
+                ->where('farmer_id', $farmer->id)
+                ->exists();
+
         return view(
             'Website.Farmers.view',
             compact(
                 'farmer',
                 'ratingAverage',
-                'ratingCount'
+                'ratingCount',
+                'isFavorited'
             )
         );
     }
@@ -331,6 +374,30 @@ class WebsiteController extends Controller
             );
         }
 
+        if ($request->filled('farmer')) {
+            $query->where('farmer_id', $request->input('farmer'));
+        }
+
+        if ($request->filled('market_id')) {
+            $marketId = $request->input('market_id');
+
+            $query->whereHas('farmer.marketFarmers', function ($inner) use ($marketId) {
+                $inner->where('market_id', $marketId)
+                    ->where('is_active', true);
+            });
+        }
+
+        if ($request->filled('market_day')) {
+            $day = $request->input('market_day');
+
+            $query->whereHas('farmer.marketFarmers', function ($inner) use ($day) {
+                $inner->where('is_active', true)
+                    ->whereHas('market', function ($marketQuery) use ($day) {
+                        $marketQuery->where('operating_days', 'like', "%{$day}%");
+                    });
+            });
+        }
+
         if ($request->filled('max_price')) {
             $query->where(
                 'price',
@@ -370,11 +437,30 @@ class WebsiteController extends Controller
             }
         ])->get();
 
+        $markets = Market::orderBy('name')->get();
+
+        $days = [
+            'Mon',
+            'Tue',
+            'Wed',
+            'Thu',
+            'Fri',
+            'Sat',
+            'Sun',
+        ];
+
+        $favoritedProductIds = Auth::check()
+            ? Auth::user()->favorites()->whereNotNull('product_id')->pluck('product_id')
+            : collect();
+
         return view(
             'Website.Products.index',
             compact(
                 'products',
-                'categories'
+                'categories',
+                'markets',
+                'days',
+                'favoritedProductIds'
             )
         );
     }
@@ -460,6 +546,25 @@ class WebsiteController extends Controller
             ->orderBy('date')
             ->get();
 
+        $isFavorited = Auth::check()
+            && Favorite::where('user_id', Auth::id())
+                ->where('product_id', $product->id)
+                ->exists();
+
+        $canReviewProduct = Auth::check()
+            && OrderItem::where('product_id', $product->id)
+                ->whereHas('order', function ($orderQuery) {
+                    $orderQuery->where('user_id', Auth::id())
+                        ->where('status', 'picked_up');
+                })
+                ->exists();
+
+        $myProductReview = Auth::check()
+            ? Review::where('user_id', Auth::id())
+                ->where('product_id', $product->id)
+                ->first()
+            : null;
+
         return view(
             'Website.Products.view',
             compact(
@@ -468,7 +573,10 @@ class WebsiteController extends Controller
                 'ratingAverage',
                 'ratingCount',
                 'relatedProducts',
-                'pickupSlots'
+                'pickupSlots',
+                'isFavorited',
+                'canReviewProduct',
+                'myProductReview'
             )
         );
     }
@@ -613,6 +721,7 @@ class WebsiteController extends Controller
             )
             ->orderBy('date')
             ->get()
+            ->filter(fn (PickupSlot $slot) => $slot->hasCapacity())
             ->groupBy('farmer_id');
 
         $customer = Auth::user();
@@ -632,21 +741,15 @@ class WebsiteController extends Controller
     public function placeOrder(
         Request $request
     ): RedirectResponse {
-        $validated = $request->validate([
-            'notes' => 'nullable|string|max:1000',
-            'pickup_slot' => 'nullable|array',
-            'pickup_slot.*' => 'nullable|integer|exists:pickup_slots,id',
-        ]);
+        if (!Auth::check()) {
+            return redirect()
+                ->route('login');
+        }
 
         $cart = new Cart();
 
         $itemsByFarmer = $cart
             ->groupedByFarmer();
-
-        if (!Auth::check()) {
-            return redirect()
-                ->route('login');
-        }
 
         if ($itemsByFarmer->isEmpty()) {
             return redirect()
@@ -657,51 +760,127 @@ class WebsiteController extends Controller
                 );
         }
 
-        DB::transaction(
-            function () use (
-                $itemsByFarmer,
-                $validated
-            ) {
-                foreach (
-                    $itemsByFarmer as
-                    $farmerId => $items
-                ) {
-                    $totalAmount = $items->sum(
-                        'subtotal'
-                    );
+        $validated = $request->validate([
+            'notes' => 'nullable|string|max:1000',
+            'pickup_slot' => 'required|array',
+            'pickup_slot.*' => 'required|integer|exists:pickup_slots,id',
+        ], [
+            'pickup_slot.required' => 'Please select a pickup date and time slot for every farmer in your cart.',
+            'pickup_slot.*.required' => 'Please select a pickup date and time slot for every farmer in your cart.',
+        ]);
 
-                    $order = Order::create([
-                        'user_id' => Auth::id(),
-                        'farmer_id' => $farmerId,
-                        'pickup_slot_id' =>
-                            $validated['pickup_slot'][$farmerId]
-                            ?? null,
-                        'total_amount' => $totalAmount,
-                        'status' => 'pending',
-                        'order_date' => now(),
-                        'notes' =>
-                            $validated['notes']
-                            ?? null,
-                    ]);
+        foreach ($itemsByFarmer as $farmerId => $items) {
+            if (empty($validated['pickup_slot'][$farmerId])) {
+                return redirect()
+                    ->route('cart')
+                    ->with(
+                        'error',
+                        'Please select a pickup slot for every farmer before checking out.'
+                    );
+            }
+        }
+
+        try {
+            $createdOrders = DB::transaction(
+                function () use (
+                    $itemsByFarmer,
+                    $validated
+                ) {
+                    $orders = collect();
 
                     foreach (
-                        $items as $item
+                        $itemsByFarmer as
+                        $farmerId => $items
                     ) {
-                        OrderItem::create([
-                            'order_id' => $order->id,
-                            'product_id' =>
-                                $item['product']->id,
-                            'quantity' =>
-                                $item['quantity'],
-                            'price' =>
-                                $item['product']->price,
-                            'subtotal' =>
-                                $item['subtotal'],
+                        $pickupSlotId = $validated['pickup_slot'][$farmerId];
+
+                        $pickupSlot = PickupSlot::where('id', $pickupSlotId)
+                            ->where('farmer_id', $farmerId)
+                            ->lockForUpdate()
+                            ->firstOrFail();
+
+                        if (!$pickupSlot->is_available || $pickupSlot->date->isBefore(now()->toDateString())) {
+                            throw new \RuntimeException('The selected pickup slot is no longer available.');
+                        }
+
+                        $bookedCount = Order::where('pickup_slot_id', $pickupSlot->id)
+                            ->whereNotIn('status', ['cancelled'])
+                            ->count();
+
+                        if ($bookedCount >= $pickupSlot->capacity) {
+                            throw new \RuntimeException('The selected pickup slot is fully booked. Please choose another slot.');
+                        }
+
+                        $totalAmount = 0;
+
+                        $lockedProducts = [];
+
+                        foreach ($items as $item) {
+                            $product = Product::where('id', $item['product']->id)
+                                ->lockForUpdate()
+                                ->firstOrFail();
+
+                            if (!$product->is_active) {
+                                throw new \RuntimeException("{$product->name} is no longer available.");
+                            }
+
+                            if ($item['quantity'] < 1) {
+                                throw new \RuntimeException('Invalid quantity requested.');
+                            }
+
+                            if ($item['quantity'] > $product->stock_quantity) {
+                                throw new \RuntimeException("Only {$product->stock_quantity} {$product->unit} of {$product->name} left in stock.");
+                            }
+
+                            $lockedProducts[] = $product;
+                            $totalAmount += $product->price * $item['quantity'];
+                        }
+
+                        $order = Order::create([
+                            'user_id' => Auth::id(),
+                            'farmer_id' => $farmerId,
+                            'pickup_slot_id' => $pickupSlot->id,
+                            'total_amount' => $totalAmount,
+                            'status' => 'pending',
+                            'order_date' => now(),
+                            'notes' => $validated['notes'] ?? null,
                         ]);
+
+                        foreach ($items as $index => $item) {
+                            $product = $lockedProducts[$index];
+
+                            OrderItem::create([
+                                'order_id' => $order->id,
+                                'product_id' => $product->id,
+                                'quantity' => $item['quantity'],
+                                'price' => $product->price,
+                                'subtotal' => $product->price * $item['quantity'],
+                            ]);
+
+                            $product->decrement('stock_quantity', $item['quantity']);
+                        }
+
+                        $orders->push($order);
                     }
+
+                    return $orders;
                 }
-            }
-        );
+            );
+        } catch (\RuntimeException $exception) {
+            return redirect()
+                ->route('cart')
+                ->with('error', $exception->getMessage());
+        }
+
+        foreach ($createdOrders as $order) {
+            Notification::create([
+                'user_id' => $order->user_id,
+                'type' => 'order_confirmation',
+                'title' => 'Order Placed',
+                'message' => "Your order #{$order->id} has been placed and is awaiting farmer confirmation.",
+                'is_read' => false,
+            ]);
+        }
 
         $cart->clear();
 
@@ -749,13 +928,13 @@ class WebsiteController extends Controller
     ): RedirectResponse {
         $request->validate([
             'full_name' =>
-                'required|string|max:255',
+            'required|string|max:255',
             'email' =>
-                'required|email|max:255',
+            'required|email|max:255',
             'subject' =>
-                'required|string|max:255',
+            'required|string|max:255',
             'message' =>
-                'required|string|max:2000',
+            'required|string|max:2000',
         ]);
 
         return redirect()
@@ -772,26 +951,26 @@ class WebsiteController extends Controller
 
         $stats = [
             'total_orders' =>
-                $user->orders()->count(),
+            $user->orders()->count(),
 
             'active_orders' =>
-                $user->orders()
-                    ->whereIn(
-                        'status',
-                        $this->activeStatuses()
-                    )
-                    ->count(),
+            $user->orders()
+                ->whereIn(
+                    'status',
+                    $this->activeStatuses()
+                )
+                ->count(),
 
             'completed_orders' =>
-                $user->orders()
-                    ->whereIn(
-                        'status',
-                        $this->completedStatuses()
-                    )
-                    ->count(),
+            $user->orders()
+                ->whereIn(
+                    'status',
+                    $this->completedStatuses()
+                )
+                ->count(),
 
             'favorites' =>
-                $user->favorites()->count(),
+            $user->favorites()->count(),
         ];
 
         $recentOrders = $user->orders()
@@ -834,26 +1013,26 @@ class WebsiteController extends Controller
 
         $validated = $request->validate([
             'name' =>
-                'required|string|max:255',
+            'required|string|max:255',
 
             'email' =>
-                'required|email|max:255|unique:users,email,' .
+            'required|email|max:255|unique:users,email,' .
                 $user->id,
 
             'phone' =>
-                'nullable|string|max:20',
+            'nullable|string|max:20',
 
             'address' =>
-                'required|string|max:500',
+            'required|string|max:500',
 
             'profile_photo' =>
-                'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
 
             'current_password' =>
-                'nullable|string',
+            'nullable|string',
 
             'password' =>
-                'nullable|string|min:8|confirmed',
+            'nullable|string|min:8|confirmed',
         ]);
 
         if ($request->filled('password')) {
@@ -871,7 +1050,7 @@ class WebsiteController extends Controller
                 return back()
                     ->withErrors([
                         'current_password' =>
-                            'Your current password is incorrect.'
+                        'Your current password is incorrect.'
                     ])
                     ->withInput();
             }
@@ -977,9 +1156,20 @@ class WebsiteController extends Controller
             ])
             ->findOrFail($order);
 
+        $alternativeSlots = PickupSlot::where('farmer_id', $order->farmer_id)
+            ->where('is_available', true)
+            ->where('date', '>=', now()->toDateString())
+            ->get()
+            ->filter(fn ($slot) => $slot->hasCapacity());
+
+        $myFarmerReview = Review::where('user_id', Auth::id())
+            ->where('farmer_id', $order->farmer_id)
+            ->whereNull('product_id')
+            ->first();
+
         return view(
             'Website.Dashboard.order-detail',
-            compact('order')
+            compact('order', 'alternativeSlots', 'myFarmerReview')
         );
     }
 
@@ -1068,6 +1258,182 @@ class WebsiteController extends Controller
             ]);
 
         return back();
+    }
+
+    public function toggleFavorite(
+        Request $request,
+        string $type,
+        string $id
+    ): RedirectResponse {
+        $column = $type === 'farmer' ? 'farmer_id' : 'product_id';
+
+        $existing = Favorite::where('user_id', Auth::id())
+            ->where($column, $id)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+
+            return back()->with('success', ucfirst($type).' removed from your favorites.');
+        }
+
+        Favorite::create([
+            'user_id' => Auth::id(),
+            $column => $id,
+        ]);
+
+        return back()->with('success', ucfirst($type).' added to your favorites.');
+    }
+
+    public function reviewFarmer(
+        Request $request,
+        Order $order
+    ): RedirectResponse {
+        abort_unless($order->user_id === Auth::id(), 404);
+        abort_unless($order->status === 'picked_up', 403);
+
+        $validated = $request->validate([
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'comment' => ['required', 'string'],
+        ]);
+
+        Review::updateOrCreate(
+            [
+                'user_id' => Auth::id(),
+                'farmer_id' => $order->farmer_id,
+                'product_id' => null,
+            ],
+            [
+                'rating' => $validated['rating'],
+                'comment' => $validated['comment'],
+            ]
+        );
+
+        return redirect()
+            ->route('customer_order_detail', $order->id)
+            ->with('success', 'Thanks for your review!');
+    }
+
+    public function reviewProduct(
+        Request $request,
+        Product $product
+    ): RedirectResponse {
+        $eligible = OrderItem::where('product_id', $product->id)
+            ->whereHas('order', function ($orderQuery) {
+                $orderQuery->where('user_id', Auth::id())
+                    ->where('status', 'picked_up');
+            })
+            ->exists();
+
+        abort_unless($eligible, 403);
+
+        $validated = $request->validate([
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'comment' => ['required', 'string'],
+        ]);
+
+        Review::updateOrCreate(
+            [
+                'user_id' => Auth::id(),
+                'farmer_id' => $product->farmer_id,
+                'product_id' => $product->id,
+            ],
+            [
+                'rating' => $validated['rating'],
+                'comment' => $validated['comment'],
+            ]
+        );
+
+        return back()->with('success', 'Thanks for your review!');
+    }
+
+    public function cancelOrder(
+        Order $order
+    ): RedirectResponse {
+        abort_unless($order->user_id === Auth::id(), 404);
+
+        if (! $order->isCancellable()) {
+            return back()->with('error', 'This order can no longer be cancelled.');
+        }
+
+        $order->status = 'cancelled';
+        $order->save();
+
+        return back()->with('success', 'Order cancelled.');
+    }
+
+    public function updateOrderPickupSlot(
+        Request $request,
+        Order $order
+    ): RedirectResponse {
+        abort_unless($order->user_id === Auth::id(), 404);
+
+        if (! $order->isCancellable()) {
+            return back()->with('error', 'This order can no longer be changed.');
+        }
+
+        $validated = $request->validate([
+            'pickup_slot_id' => ['required', 'exists:pickup_slots,id'],
+        ]);
+
+        $slot = PickupSlot::findOrFail($validated['pickup_slot_id']);
+
+        if (
+            $slot->farmer_id !== $order->farmer_id
+            || ! $slot->is_available
+            || $slot->date->toDateString() < now()->toDateString()
+            || ! $slot->hasCapacity()
+        ) {
+            return back()->with('error', 'That pickup slot is not available.');
+        }
+
+        $order->pickup_slot_id = $slot->id;
+        $order->save();
+
+        return redirect()
+            ->route('customer_order_detail', $order->id)
+            ->with('success', 'Pickup slot updated.');
+    }
+
+    public function reorder(
+        Order $order
+    ): RedirectResponse {
+        abort_unless($order->user_id === Auth::id(), 404);
+        abort_unless(in_array($order->status, $this->completedStatuses(), true), 403);
+
+        $order->load('items.product');
+
+        $cart = new Cart();
+        $unavailable = [];
+        $reduced = [];
+
+        foreach ($order->items as $item) {
+            $product = $item->product;
+
+            if (! $product || ! $product->is_active || $product->stock_quantity <= 0) {
+                $unavailable[] = $product?->name ?? 'an item';
+
+                continue;
+            }
+
+            $cart->add($product->id, $item->quantity);
+
+            if ($item->quantity > $product->stock_quantity) {
+                $reduced[] = $product->name;
+            }
+        }
+
+        $message = 'Reordered.';
+
+        if ($reduced) {
+            $message .= ' Note: '.implode(', ', $reduced).' had limited stock, so quantity was reduced.';
+        }
+
+        if ($unavailable) {
+            $message .= ' Not added (no longer available): '.implode(', ', $unavailable).'.';
+        }
+
+        return redirect('/cart')->with('success', $message);
     }
 
     protected function activeStatuses(): array

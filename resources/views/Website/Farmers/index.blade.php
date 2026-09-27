@@ -61,9 +61,16 @@
                                         alt="{{ $farmer->stall_name ?? $farmer->business_name }}"
                                         style="width:100%;height:100%;object-fit:cover;"
                                     >
-                                    <button type="button" class="ml-favorite-btn ml-image-fav" aria-label="Save farmer">
-                                        <i class="fa-regular fa-heart"></i>
-                                    </button>
+                                    @auth
+                                        <form action="{{ route('favorite.toggle', ['type' => 'farmer', 'id' => $farmer->id]) }}" method="POST" class="ml-image-fav">
+                                            @csrf
+                                            <button type="submit" class="ml-favorite-btn" aria-label="{{ $favoritedFarmerIds->contains($farmer->id) ? 'Remove from favorites' : 'Save farmer' }}">
+                                                <i class="fa-{{ $favoritedFarmerIds->contains($farmer->id) ? 'solid' : 'regular' }} fa-heart"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('login') }}" class="ml-favorite-btn ml-image-fav" aria-label="Save farmer"><i class="fa-regular fa-heart"></i></a>
+                                    @endauth
                                 </div>
 
                                 <div class="ml-media-card__body">

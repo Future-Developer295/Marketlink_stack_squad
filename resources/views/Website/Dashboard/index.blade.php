@@ -44,7 +44,7 @@
                             <span class="small text-muted">{{ $order->order_date?->format('d M Y') }}</span>
                         </div>
                         <div class="text-end">
-                            <span class="ml-badge ml-badge-mint">{{ ucfirst($order->status) }}</span>
+                            <span class="ml-badge ml-badge-mint">{{ $order->statusLabel() }}</span>
                             <strong class="d-block mt-1">Rs. {{ number_format($order->total_amount, 0) }}</strong>
                         </div>
                         <a href="{{ route('customer_order_detail', $order->id) }}" class="ml-btn-link small">Details</a>
