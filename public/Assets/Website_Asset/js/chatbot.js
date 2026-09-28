@@ -14,7 +14,7 @@
     var endpoint = root.dataset.endpoint || '';
     var greeted = false;
 
-    /* ---------- Built-in answers (edit freely) ---------- */
+
     var KB = [
         { keys: ['pay', 'payment', 'cash', 'card', 'price'],
           text: 'You pay in person at the farmer\'s stall when you pick up your order. MarketLink does not take online payments.',
@@ -53,7 +53,6 @@
         links: [['Contact us', '/contact']]
     };
 
-    /* ---------- UI helpers ---------- */
     function scrollDown() { log.scrollTop = log.scrollHeight; }
 
     function addMsg(who, text, links) {
@@ -99,7 +98,6 @@
         });
     }
 
-    /* ---------- Reply logic ---------- */
     function localReply(q) {
         var s = q.toLowerCase();
         for (var i = 0; i < KB.length; i++) {
@@ -110,7 +108,6 @@
         return FALLBACK;
     }
 
-    // Optional backend: POST { message } to data-endpoint, expect { reply, links?: [[label, url], ...] }
     function remoteReply(q) {
         var tokenEl = document.querySelector('meta[name="csrf-token"]');
         return fetch(endpoint, {
@@ -145,7 +142,6 @@
         });
     }
 
-    /* ---------- Open / close ---------- */
     function open() {
         panel.hidden = false;
         fab.setAttribute('aria-expanded', 'true');

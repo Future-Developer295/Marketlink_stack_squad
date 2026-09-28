@@ -14,7 +14,6 @@
       <div class="basket-wrapper" id="basketWrapper">
         <div class="motion-trail"></div>
 
-        <!-- LAYER 1: BACK FRAME & WHEELS -->
         <svg class="basket-svg-layer layer-back" viewBox="0 0 220 180" fill="none">
           <path d="M60 52 L195 58 L182 118 L76 124 Z" fill="rgba(0,0,0,0.03)" stroke="none"/>
           <rect x="26" y="14" width="24" height="32" rx="9" transform="rotate(-22 26 14)" fill="var(--cart-handle)"/>

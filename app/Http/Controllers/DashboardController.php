@@ -522,19 +522,19 @@ class DashboardController extends Controller
 
         if ($marketFarmer) {
             $marketFarmer->update([
-                'is_active' => false,
+                'is_active' => true,
             ]);
         } else {
             MarketFarmer::create([
                 'market_id' => $request->market_id,
                 'farmer_id' => auth()->id(),
-                'is_active' => false,
+                'is_active' => true,
             ]);
         }
 
         return redirect()
             ->route('my_markets')
-            ->with('success', 'Join request sent. Waiting for admin approval.');
+            ->with('success', 'Market joined successfully.');
     }
 
     public function myMarketsLeave($id)
