@@ -27,7 +27,9 @@ class CreateNewUser implements CreatesNewUsers
             'address' => ['required', 'string', 'max:500'],
             'role' => ['required', 'in:farmer,customer'],
             'password' => $this->passwordRules(),
-            'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
+            'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature()
+                ? ['accepted', 'required']
+                : '',
         ])->validate();
 
         $user = User::create([
@@ -37,9 +39,14 @@ class CreateNewUser implements CreatesNewUsers
             'address' => $input['address'],
             'role' => $input['role'],
             'password' => Hash::make($input['password']),
+            'is_active' => $input['role'] === 'farmer' ? 0 : 1,
         ]);
 
-        Role::firstOrCreate(['name' => $input['role'], 'guard_name' => 'web']);
+        Role::firstOrCreate([
+            'name' => $input['role'],
+            'guard_name' => 'web'
+        ]);
+
         $user->assignRole($input['role']);
 
         return $user;

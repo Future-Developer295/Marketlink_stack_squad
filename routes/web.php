@@ -9,7 +9,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('index');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
-
+Route::get('/farmer/pending', [WebsiteController::class, 'farmerPending'])
+    ->name('farmer_pending');
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
 
     Route::get('/dashboard/farmer', [DashboardController::class, 'farmerDashboard'])
@@ -335,16 +336,8 @@ Route::get('/about', [WebsiteController::class, 'about']);
 Route::get('/contact', [WebsiteController::class, 'contact']);
 Route::post('/contact', [WebsiteController::class, 'submitContact']);
 
-// /login, /register and /logout are intentionally NOT defined here.
-// Laravel Fortify already registers them (named 'login', 'register', 'logout')
-// and was winning the route match anyway, making duplicate routes here dead
-// code. See app/Providers/FortifyServiceProvider.php for the custom
-// loginView()/registerView() that make Fortify render this app's own
-// Website.Auth.login / Website.Auth.register Blade views.
 
 Route::middleware('auth')->group(function () {
-
-    // Customer Dashboard
     Route::prefix('dashboard/customer')->group(function () {
         Route::get('/', [WebsiteController::class, 'index'])
             ->name('customer_dashboard');

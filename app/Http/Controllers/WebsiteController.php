@@ -46,6 +46,10 @@ class WebsiteController extends Controller
         return view('Website.Home.index', compact('categories', 'markets', 'reviews', 'products'));
     }
 
+    public function farmerPending(): View
+    {
+        return view('Website.Auth.farmer-pending');
+    }
     public function markets(Request $request): View
     {
         $request->validate(['q' => 'nullable|string|max:120', 'city' => 'nullable|string|max:100', 'day' => 'nullable|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday']);
