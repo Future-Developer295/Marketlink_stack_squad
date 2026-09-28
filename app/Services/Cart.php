@@ -15,14 +15,21 @@ class Cart
         $product = Product::find($productId);
 
         if (! $product || ! $product->is_active || $product->stock_quantity < 1) {
-            throw ValidationException::withMessages(['quantity' => 'This product is no longer available.']);
+            throw ValidationException::withMessages([
+                'quantity' => 'This product is no longer available.'
+            ]);
         }
 
         $cart = $this->raw();
+
         $newQuantity = ($cart[$productId] ?? 0) + max($quantity, 1);
+
         if ($newQuantity > $product->stock_quantity) {
-            throw ValidationException::withMessages(['quantity' => 'Only '.$product->stock_quantity.' units are available. Check your basket quantity.']);
+            throw ValidationException::withMessages([
+                'quantity' => 'Only ' . $product->stock_quantity . ' units are available. Check your basket quantity.'
+            ]);
         }
+
         $cart[$productId] = $newQuantity;
 
         if ($cart[$productId] <= 0) {
@@ -41,8 +48,11 @@ class Cart
             unset($cart[$productId]);
         } else {
             if ($quantity > $product->stock_quantity) {
-                throw ValidationException::withMessages(['quantity' => 'Only '.$product->stock_quantity.' units are available.']);
+                throw ValidationException::withMessages([
+                    'quantity' => 'Only ' . $product->stock_quantity . ' units are available.'
+                ]);
             }
+
             $cart[$productId] = $quantity;
         }
 
@@ -52,7 +62,9 @@ class Cart
     public function remove(int $productId): void
     {
         $cart = $this->raw();
+
         unset($cart[$productId]);
+
         $this->save($cart);
     }
 
@@ -68,13 +80,17 @@ class Cart
 
     public function count(): int
     {
-        return array_sum($this->raw());
+        return count($this->raw());
     }
 
     public function items(): Collection
     {
         $raw = $this->raw();
-        $products = Product::with('farmer.user')->whereIn('id', array_keys($raw))->get()->keyBy('id');
+
+        $products = Product::with('farmer.user')
+            ->whereIn('id', array_keys($raw))
+            ->get()
+            ->keyBy('id');
 
         $items = collect($raw)
             ->map(function ($quantity, $productId) use ($products) {
@@ -95,14 +111,21 @@ class Cart
             ->filter()
             ->values();
 
-        $this->save($items->mapWithKeys(fn ($item) => [$item['product']->id => $item['quantity']])->all());
+        $this->save(
+            $items->mapWithKeys(
+                fn($item) => [
+                    $item['product']->id => $item['quantity']
+                ]
+            )->all()
+        );
 
         return $items;
     }
 
     public function groupedByFarmer(): Collection
     {
-        return $this->items()->groupBy(fn ($item) => $item['product']->farmer_id);
+        return $this->items()
+            ->groupBy(fn($item) => $item['product']->farmer_id);
     }
 
     public function total(): float
@@ -112,6 +135,8 @@ class Cart
 
     protected function save(array $cart): void
     {
-        session([$this->sessionKey => $cart]);
+        session([
+            $this->sessionKey => $cart
+        ]);
     }
 }

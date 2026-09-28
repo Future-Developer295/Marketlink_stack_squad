@@ -33,16 +33,16 @@
 
             </div>
         @else
-            <div class="basket-layout">
+            <div class="basket-layout" data-basket-layout>
 
-                <div>
+                <div data-basket-items>
 
                     @foreach ($farmerGroups as $farmerId => $items)
                         @php
                             $farmer = $items->first()['product']->farmer;
                         @endphp
 
-                        <section class="basket-grower">
+                        <section class="basket-grower" data-grower-section>
 
                             <header class="basket-grower-head">
 
@@ -62,6 +62,7 @@
 
                             </header>
 
+
                             @foreach ($items as $item)
                                 @php
                                     $product = $item['product'];
@@ -79,6 +80,7 @@
                                         </div>
                                     @endif
 
+
                                     <div>
 
                                         <div class="basket-row-title">
@@ -93,12 +95,15 @@
 
                                         </div>
 
+
                                         <small>
                                             Rs. {{ number_format($product->price, 0) }}
                                             / {{ $product->unit }}
                                         </small>
 
+
                                         <div class="basket-row-actions">
+
 
                                             <form method="POST" action="{{ url('/cart/update/' . $product->id) }}"
                                                 data-ajax-cart-form>
@@ -113,8 +118,11 @@
                                                         −
                                                     </button>
 
-                                                    <input type="text" value="{{ $quantity }}" readonly
+
+                                                    <input type="number" value="{{ $quantity }}" min="1"
+                                                        max="{{ $maxQuantity }}" step="1" inputmode="numeric"
                                                         data-ajax-value aria-label="{{ $product->name }} quantity">
+
 
                                                     <button type="button" data-ajax-plus
                                                         aria-label="Increase {{ $product->name }} quantity"
@@ -126,11 +134,13 @@
 
                                             </form>
 
-                                            <form method="POST" action="{{ url('/cart/remove/' . $product->id) }}">
+
+                                            <form method="POST" action="{{ url('/cart/remove/' . $product->id) }}"
+                                                data-ajax-remove-form>
 
                                                 @csrf
 
-                                                <button class="basket-remove" type="submit"
+                                                <button class="basket-remove" type="submit" data-ajax-remove
                                                     aria-label="Remove {{ $product->name }}">
                                                     Remove
                                                 </button>
@@ -147,11 +157,13 @@
                         </section>
                     @endforeach
 
+
                     <a class="basket-back" href="{{ url('/products') }}">
                         + A few more fresh finds
                     </a>
 
                 </div>
+
 
                 <aside class="basket-summary">
 
@@ -162,6 +174,7 @@
                     <h2 class="mt-3">
                         Your basket, at a glance.
                     </h2>
+
 
                     <dl>
 
@@ -175,6 +188,7 @@
 
                     </dl>
 
+
                     <dl>
 
                         <dt>
@@ -186,6 +200,7 @@
                         </dd>
 
                     </dl>
+
 
                     <div class="basket-total">
 
@@ -199,10 +214,12 @@
 
                     </div>
 
+
                     <a class="shop-pill" href="{{ url('/checkout') }}">
                         Choose your pickup
                         <span>↗</span>
                     </a>
+
 
                     <p>
                         <i class="fa-solid fa-leaf"></i>
@@ -219,153 +236,845 @@
 
 @endsection
 
+
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-            document.querySelectorAll('[data-ajax-cart-form]').forEach(function(form) {
+            const basketPage =
+                document.querySelector('[data-basket-page]');
 
-                const quantityBox = form.querySelector('[data-ajax-quantity]');
-                const input = form.querySelector('[data-ajax-value]');
-                const plus = form.querySelector('[data-ajax-plus]');
-                const minus = form.querySelector('[data-ajax-minus]');
-                const row = form.closest('[data-cart-row]');
+            if (!basketPage) {
+                return;
+            }
 
-                if (!quantityBox || !input || !plus || !minus || !row) {
+
+            function updateCartSummary(data) {
+
+                const count =
+                    basketPage.querySelector(
+                        '[data-ajax-cart-count]'
+                    );
+
+                const summary =
+                    basketPage.querySelector(
+                        '[data-ajax-cart-summary]'
+                    );
+
+                const total =
+                    basketPage.querySelector(
+                        '[data-ajax-cart-total]'
+                    );
+
+
+                if (count) {
+
+                    count.textContent =
+                        Number(data.cart_count || 0) + ' items';
+
+                }
+
+
+                if (summary) {
+
+                    summary.textContent =
+                        'Rs. ' +
+                        Number(
+                            data.cart_total || 0
+                        ).toLocaleString();
+
+                }
+
+
+                if (total) {
+
+                    total.textContent =
+                        'Rs. ' +
+                        Number(
+                            data.cart_total || 0
+                        ).toLocaleString();
+
+                }
+
+
+                if (data.count !== undefined) {
+
+                    document
+                        .querySelectorAll(
+                            '[data-cart-count], .ml-cart-badge'
+                        )
+                        .forEach(function(badge) {
+
+                            badge.textContent =
+                                data.count;
+
+                        });
+
+                }
+            }
+
+
+            function setQuantityButtons(
+                form,
+                quantity
+            ) {
+
+                const quantityBox =
+                    form.querySelector(
+                        '[data-ajax-quantity]'
+                    );
+
+                const plus =
+                    form.querySelector(
+                        '[data-ajax-plus]'
+                    );
+
+                const minus =
+                    form.querySelector(
+                        '[data-ajax-minus]'
+                    );
+
+                const input =
+                    form.querySelector(
+                        '[data-ajax-value]'
+                    );
+
+
+                if (
+                    !quantityBox ||
+                    !plus ||
+                    !minus ||
+                    !input
+                ) {
                     return;
                 }
 
-                const max = parseInt(quantityBox.dataset.max, 10) || 0;
 
-                let loading = false;
+                const max =
+                    parseInt(
+                        quantityBox.dataset.max,
+                        10
+                    ) || 1;
 
-                function updateButtons() {
 
-                    const quantity = parseInt(input.value, 10) || 1;
+                quantity =
+                    Math.min(
+                        max,
+                        Math.max(1, quantity)
+                    );
 
-                    minus.disabled = loading || quantity <= 1;
-                    plus.disabled = loading || quantity >= max;
+
+                input.value =
+                    quantity;
+
+
+                minus.disabled =
+                    quantity <= 1;
+
+
+                plus.disabled =
+                    quantity >= max;
+
+            }
+
+
+            async function updateQuantity(
+                form,
+                newQuantity
+            ) {
+
+                if (
+                    form.dataset.loading === '1'
+                ) {
+                    return;
                 }
 
-                async function changeQuantity(quantity) {
 
-                    if (loading) {
-                        return;
+                const quantityBox =
+                    form.querySelector(
+                        '[data-ajax-quantity]'
+                    );
+
+                const input =
+                    form.querySelector(
+                        '[data-ajax-value]'
+                    );
+
+                const plus =
+                    form.querySelector(
+                        '[data-ajax-plus]'
+                    );
+
+                const minus =
+                    form.querySelector(
+                        '[data-ajax-minus]'
+                    );
+
+                const row =
+                    form.closest(
+                        '[data-cart-row]'
+                    );
+
+
+                if (
+                    !quantityBox ||
+                    !input ||
+                    !plus ||
+                    !minus ||
+                    !row
+                ) {
+                    return;
+                }
+
+
+                const max =
+                    parseInt(
+                        quantityBox.dataset.max,
+                        10
+                    ) || 1;
+
+
+                let quantity =
+                    parseInt(
+                        newQuantity,
+                        10
+                    );
+
+
+                if (
+                    Number.isNaN(quantity)
+                ) {
+                    quantity = 1;
+                }
+
+
+                quantity =
+                    Math.min(
+                        max,
+                        Math.max(1, quantity)
+                    );
+
+
+                const currentQuantity =
+                    parseInt(
+                        input.value,
+                        10
+                    ) || 1;
+
+
+                if (
+                    quantity === currentQuantity
+                ) {
+
+                    setQuantityButtons(
+                        form,
+                        quantity
+                    );
+
+                    return;
+                }
+
+
+                const token =
+                    form.querySelector(
+                        'input[name="_token"]'
+                    )?.value;
+
+
+                if (!token) {
+                    return;
+                }
+
+
+                form.dataset.loading =
+                    '1';
+
+
+                input.disabled =
+                    true;
+
+                plus.disabled =
+                    true;
+
+                minus.disabled =
+                    true;
+
+
+                const formData =
+                    new FormData();
+
+
+                formData.append(
+                    '_token',
+                    token
+                );
+
+
+                formData.append(
+                    'quantity',
+                    quantity
+                );
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            form.action, {
+                                method: 'POST',
+                                body: formData,
+                                credentials: 'same-origin',
+
+                                headers: {
+                                    'Accept': 'application/json',
+
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            }
+                        );
+
+
+                    const contentType =
+                        response.headers.get(
+                            'content-type'
+                        ) || '';
+
+
+                    if (
+                        !contentType.includes(
+                            'application/json'
+                        )
+                    ) {
+
+                        throw new Error(
+                            'Could not update your basket. Please refresh and try again.'
+                        );
+
                     }
 
-                    const currentQuantity = parseInt(input.value, 10) || 1;
 
-                    if (quantity === currentQuantity) {
-                        return;
-                    }
+                    const data =
+                        await response.json();
 
-                    if (quantity < 1 || quantity > max) {
-                        return;
-                    }
 
-                    loading = true;
-                    updateButtons();
+                    if (
+                        !response.ok ||
+                        !data.success
+                    ) {
 
-                    const token = form.querySelector('input[name="_token"]').value;
-
-                    const body = new URLSearchParams();
-
-                    body.append('_token', token);
-                    body.append('quantity', quantity);
-
-                    try {
-
-                        const response = await fetch(form.action, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            body: body.toString()
-                        });
-
-                        const data = await response.json();
-
-                        if (!response.ok || !data.success) {
-                            throw new Error(data.message || 'Cart update failed.');
-                        }
-
-                        input.value = data.quantity;
-
-                        const subtotal = row.querySelector('[data-cart-subtotal]');
-
-                        if (subtotal) {
-                            subtotal.textContent =
-                                'Rs. ' + Number(data.subtotal).toLocaleString();
-                        }
-
-                        const cartCount =
-                            document.querySelector('[data-ajax-cart-count]');
-
-                        const cartSummary =
-                            document.querySelector('[data-ajax-cart-summary]');
-
-                        const cartTotal =
-                            document.querySelector('[data-ajax-cart-total]');
-
-                        if (cartCount) {
-                            cartCount.textContent =
-                                data.cart_count + ' items';
-                        }
-
-                        if (cartSummary) {
-                            cartSummary.textContent =
-                                'Rs. ' + Number(data.cart_total).toLocaleString();
-                        }
-
-                        if (cartTotal) {
-                            cartTotal.textContent =
-                                'Rs. ' + Number(data.cart_total).toLocaleString();
-                        }
-
-                    } catch (error) {
-
-                        console.error(error);
-
-                    } finally {
-
-                        loading = false;
-                        updateButtons();
+                        throw new Error(
+                            data.message ||
+                            'Could not update your basket.'
+                        );
 
                     }
+
+
+                    input.value =
+                        Number(
+                            data.quantity
+                        );
+
+
+                    const subtotal =
+                        row.querySelector(
+                            '[data-cart-subtotal]'
+                        );
+
+
+                    if (subtotal) {
+
+                        subtotal.textContent =
+                            'Rs. ' +
+                            Number(
+                                data.subtotal || 0
+                            ).toLocaleString();
+
+                    }
+
+
+                    updateCartSummary(
+                        data
+                    );
+
+
+                    setQuantityButtons(
+                        form,
+                        Number(data.quantity)
+                    );
+
+
+                } catch (error) {
+
+                    console.error(
+                        'CART UPDATE ERROR:',
+                        error
+                    );
+
+
+                    input.value =
+                        currentQuantity;
+
+
+                } finally {
+
+                    form.dataset.loading =
+                        '0';
+
+
+                    input.disabled =
+                        false;
+
+
+                    const finalQuantity =
+                        parseInt(
+                            input.value,
+                            10
+                        ) || 1;
+
+
+                    setQuantityButtons(
+                        form,
+                        finalQuantity
+                    );
 
                 }
 
-                plus.addEventListener('click', function(event) {
+            }
 
-                    event.preventDefault();
 
-                    const current =
-                        parseInt(input.value, 10) || 1;
+            document
+                .querySelectorAll(
+                    '[data-ajax-cart-form]'
+                )
+                .forEach(function(form) {
 
-                    if (current < max) {
-                        changeQuantity(current + 1);
+
+                    const input =
+                        form.querySelector(
+                            '[data-ajax-value]'
+                        );
+
+                    const plus =
+                        form.querySelector(
+                            '[data-ajax-plus]'
+                        );
+
+                    const minus =
+                        form.querySelector(
+                            '[data-ajax-minus]'
+                        );
+
+
+                    if (
+                        !input ||
+                        !plus ||
+                        !minus
+                    ) {
+                        return;
                     }
+
+
+                    plus.addEventListener(
+                        'click',
+                        function(event) {
+
+                            event.preventDefault();
+                            event.stopPropagation();
+
+
+                            const current =
+                                parseInt(
+                                    input.value,
+                                    10
+                                ) || 1;
+
+
+                            updateQuantity(
+                                form,
+                                current + 1
+                            );
+
+                        }
+                    );
+
+
+                    minus.addEventListener(
+                        'click',
+                        function(event) {
+
+                            event.preventDefault();
+                            event.stopPropagation();
+
+
+                            const current =
+                                parseInt(
+                                    input.value,
+                                    10
+                                ) || 1;
+
+
+                            updateQuantity(
+                                form,
+                                current - 1
+                            );
+
+                        }
+                    );
+
+
+                    input.addEventListener(
+                        'change',
+                        function() {
+
+                            let quantity =
+                                parseInt(
+                                    input.value,
+                                    10
+                                );
+
+
+                            if (
+                                Number.isNaN(quantity)
+                            ) {
+                                quantity = 1;
+                            }
+
+
+                            updateQuantity(
+                                form,
+                                quantity
+                            );
+
+                        }
+                    );
+
+
+                    input.addEventListener(
+                        'blur',
+                        function() {
+
+                            let quantity =
+                                parseInt(
+                                    input.value,
+                                    10
+                                );
+
+
+                            if (
+                                Number.isNaN(quantity)
+                            ) {
+                                quantity = 1;
+                            }
+
+
+                            updateQuantity(
+                                form,
+                                quantity
+                            );
+
+                        }
+                    );
+
+
+                    input.addEventListener(
+                        'keydown',
+                        function(event) {
+
+                            if (
+                                event.key === 'Enter'
+                            ) {
+
+                                event.preventDefault();
+
+                                input.blur();
+
+                            }
+
+                        }
+                    );
+
+
+                    input.addEventListener(
+                        'input',
+                        function() {
+
+                            let quantity =
+                                parseInt(
+                                    input.value,
+                                    10
+                                );
+
+
+                            if (
+                                Number.isNaN(quantity)
+                            ) {
+                                return;
+                            }
+
+
+                            const quantityBox =
+                                form.querySelector(
+                                    '[data-ajax-quantity]'
+                                );
+
+
+                            const max =
+                                parseInt(
+                                    quantityBox?.dataset.max,
+                                    10
+                                ) || 1;
+
+
+                            if (
+                                quantity > max
+                            ) {
+                                input.value = max;
+                            }
+
+
+                            if (
+                                quantity < 1
+                            ) {
+                                input.value = 1;
+                            }
+
+                        }
+                    );
+
+
+                    setQuantityButtons(
+                        form,
+                        parseInt(
+                            input.value,
+                            10
+                        ) || 1
+                    );
 
                 });
 
-                minus.addEventListener('click', function(event) {
 
-                    event.preventDefault();
+            document
+                .querySelectorAll(
+                    '[data-ajax-remove-form]'
+                )
+                .forEach(function(form) {
 
-                    const current =
-                        parseInt(input.value, 10) || 1;
 
-                    if (current > 1) {
-                        changeQuantity(current - 1);
-                    }
+                    form.addEventListener(
+                        'submit',
+                        async function(event) {
+
+                            event.preventDefault();
+                            event.stopPropagation();
+
+
+                            if (
+                                form.dataset.loading === '1'
+                            ) {
+                                return;
+                            }
+
+
+                            const button =
+                                form.querySelector(
+                                    '[data-ajax-remove]'
+                                );
+
+                            const row =
+                                form.closest(
+                                    '[data-cart-row]'
+                                );
+
+                            const grower =
+                                row?.closest(
+                                    '[data-grower-section]'
+                                );
+
+
+                            if (
+                                !button ||
+                                !row
+                            ) {
+                                return;
+                            }
+
+
+                            const token =
+                                form.querySelector(
+                                    'input[name="_token"]'
+                                )?.value;
+
+
+                            if (!token) {
+                                return;
+                            }
+
+
+                            form.dataset.loading =
+                                '1';
+
+                            button.disabled =
+                                true;
+
+
+                            const formData =
+                                new FormData();
+
+
+                            formData.append(
+                                '_token',
+                                token
+                            );
+
+
+                            try {
+
+                                const response =
+                                    await fetch(
+                                        form.action, {
+                                            method: 'POST',
+
+                                            body: formData,
+
+                                            credentials: 'same-origin',
+
+                                            headers: {
+                                                'Accept': 'application/json',
+
+                                                'X-Requested-With': 'XMLHttpRequest'
+                                            }
+                                        }
+                                    );
+
+
+                                const contentType =
+                                    response.headers.get(
+                                        'content-type'
+                                    ) || '';
+
+
+                                if (
+                                    !contentType.includes(
+                                        'application/json'
+                                    )
+                                ) {
+
+                                    throw new Error(
+                                        'Could not remove this product. Please refresh and try again.'
+                                    );
+
+                                }
+
+
+                                const data =
+                                    await response.json();
+
+
+                                if (
+                                    !response.ok ||
+                                    !data.success
+                                ) {
+
+                                    throw new Error(
+                                        data.message ||
+                                        'Could not remove this product.'
+                                    );
+
+                                }
+
+
+                                row.remove();
+
+
+                                if (
+                                    grower &&
+                                    !grower.querySelector(
+                                        '[data-cart-row]'
+                                    )
+                                ) {
+
+                                    grower.remove();
+
+                                }
+
+
+                                updateCartSummary(
+                                    data
+                                );
+
+
+                                const remaining =
+                                    basketPage.querySelectorAll(
+                                        '[data-cart-row]'
+                                    );
+
+
+                                if (
+                                    remaining.length === 0 ||
+                                    Number(
+                                        data.cart_count || 0
+                                    ) === 0
+                                ) {
+
+                                    const layout =
+                                        basketPage.querySelector(
+                                            '[data-basket-layout]'
+                                        );
+
+
+                                    if (layout) {
+
+                                        layout.innerHTML = `
+                                    <div class="shop-empty">
+
+                                        <i class="fa-solid fa-basket-shopping"></i>
+
+                                        <h2>
+                                            Good things grow from here.
+                                        </h2>
+
+                                        <p>
+                                            Your basket is empty. Find something fresh from a local grower.
+                                        </p>
+
+                                        <a
+                                            href="{{ url('/products') }}"
+                                            class="shop-pill"
+                                        >
+                                            Find your favourites ↗
+                                        </a>
+
+                                    </div>
+                                `;
+
+                                    }
+
+                                }
+
+
+                            } catch (error) {
+
+                                console.error(
+                                    'REMOVE CART ERROR:',
+                                    error
+                                );
+
+
+                                button.disabled =
+                                    false;
+
+                            } finally {
+
+                                form.dataset.loading =
+                                    '0';
+
+                            }
+
+                        }
+                    );
 
                 });
-
-                updateButtons();
-
-            });
 
         });
     </script>

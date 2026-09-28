@@ -11,7 +11,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [WebsiteController::class, 'dashboardRedirect'])
         ->name('dashboard');
 });
-// Old/legacy URL: send anyone hitting /password/reset to Fortify's forgot-password page.
 Route::redirect('/password/reset', '/forgot-password');
 Route::get('/farmer/pending', [WebsiteController::class, 'farmerPending'])
     ->name('farmer_pending');
