@@ -23,7 +23,7 @@ use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Mail;
-
+use App\Support\SimpleXlsxWriter;
 
 class DashboardController extends Controller
 {
@@ -1287,13 +1287,17 @@ class DashboardController extends Controller
 
 
 
-    public function reportDownload($id)
+    public function reportDownload(Request $request, $id)
     {
+        $request->validate([
+            'format' => 'required|in:pdf,xlsx',
+        ]);
+
         $report = Report::findOrFail($id);
 
         if ($report->report_type == 'sales' || $report->report_type == 'orders') {
 
-            $data = \App\Models\Order::with(['user', 'farmer', 'pickupSlot'])
+            $data = Order::with(['user', 'farmer', 'pickupSlot'])
                 ->whereBetween('order_date', [
                     $report->date_from . ' 00:00:00',
                     $report->date_to . ' 23:59:59'
@@ -1301,7 +1305,7 @@ class DashboardController extends Controller
                 ->get();
         } elseif ($report->report_type == 'farmers') {
 
-            $data = \App\Models\FarmerProfile::with('user')
+            $data = FarmerProfile::with('user')
                 ->whereBetween('created_at', [
                     $report->date_from . ' 00:00:00',
                     $report->date_to . ' 23:59:59'
@@ -1309,7 +1313,7 @@ class DashboardController extends Controller
                 ->get();
         } else {
 
-            $data = \App\Models\Product::with(['farmer', 'category'])
+            $data = Product::with(['farmer', 'category'])
                 ->whereBetween('created_at', [
                     $report->date_from . ' 00:00:00',
                     $report->date_to . ' 23:59:59'
@@ -1317,10 +1321,32 @@ class DashboardController extends Controller
                 ->get();
         }
 
-        $pdf = Pdf::loadView('Dashboard.Reports.download-pdf', [
-            'report' => $report,
-            'data' => $data,
-        ]);
+
+        if ($request->format === 'xlsx') {
+
+            return $this->reportsExportXlsx(
+                [
+                    $report->report_type => [
+                        'label' => ucfirst($report->report_type),
+                        'data' => $data,
+                    ],
+                ],
+                [
+                    'report_type' => $report->report_type,
+                    'date_from' => $report->date_from,
+                    'date_to' => $report->date_to,
+                ]
+            );
+        }
+
+
+        $pdf = Pdf::loadView(
+            'Dashboard.Reports.download-pdf',
+            [
+                'report' => $report,
+                'data' => $data,
+            ]
+        );
 
         return $pdf->download(
             'MarketLink_Report_' . $report->id . '_Download.pdf'
@@ -1328,6 +1354,420 @@ class DashboardController extends Controller
     }
 
 
+    public function reportsExport(Request $request)
+    {
+        $request->validate([
+            'format' => 'required|in:pdf,xlsx',
+            'report_type' => 'nullable|in:all,sales,orders,farmers,products',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
+        $type = $request->report_type ?: 'all';
+        $dateFrom = $request->date_from;
+        $dateTo = $request->date_to;
+
+        $sections = [];
+
+        if (in_array($type, ['all', 'sales', 'orders'])) {
+
+            $query = Order::with(['user', 'farmer', 'pickupSlot']);
+
+            if ($dateFrom) {
+                $query->where('order_date', '>=', $dateFrom . ' 00:00:00');
+            }
+
+            if ($dateTo) {
+                $query->where('order_date', '<=', $dateTo . ' 23:59:59');
+            }
+
+            $orders = $query->orderBy('order_date', 'asc')->get();
+
+            $sections['orders'] = [
+                'label' => $type === 'sales' ? 'Sales Summary' : 'Orders',
+                'data' => $orders,
+            ];
+        }
+
+        if (in_array($type, ['all', 'farmers'])) {
+
+            $query = FarmerProfile::with('user');
+
+            if ($dateFrom) {
+                $query->where('created_at', '>=', $dateFrom . ' 00:00:00');
+            }
+
+            if ($dateTo) {
+                $query->where('created_at', '<=', $dateTo . ' 23:59:59');
+            }
+
+            $farmers = $query->orderBy('created_at', 'asc')->get();
+
+            $sections['farmers'] = [
+                'label' => 'Farmer Activity',
+                'data' => $farmers,
+            ];
+        }
+
+        if (in_array($type, ['all', 'products'])) {
+
+            $query = Product::with(['farmer', 'category']);
+
+            if ($dateFrom) {
+                $query->where('created_at', '>=', $dateFrom . ' 00:00:00');
+            }
+
+            if ($dateTo) {
+                $query->where('created_at', '<=', $dateTo . ' 23:59:59');
+            }
+
+            $products = $query->orderBy('created_at', 'asc')->get();
+
+            $sections['products'] = [
+                'label' => 'Product Inventory',
+                'data' => $products,
+            ];
+        }
+
+        $filters = [
+            'report_type' => $type,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+        ];
+
+        if ($request->format === 'xlsx') {
+            return $this->reportsExportXlsx($sections, $filters);
+        }
+
+        $pdf = Pdf::loadView(
+            'Dashboard.Reports.reports-export-pdf',
+            [
+                'sections' => $sections,
+                'filters' => $filters,
+            ]
+        );
+
+        return $pdf->download(
+            'MarketLink_Reports_Export_' . now()->format('Ymd_His') . '.pdf'
+        );
+    }
+    public function reportsExportXlsx(array $sections, array $filters)
+    {
+        $fileName = 'MarketLink_Reports_Export_' . now()->format('Ymd_His') . '.xlsx';
+        $filePath = storage_path('app/' . $fileName);
+
+        $rows = [];
+
+        foreach ($sections as $section) {
+
+            $rows[] = [
+                'sheet' => $section['label'],
+                'data' => $section['data'],
+            ];
+        }
+
+        $zip = new \ZipArchive();
+
+        if ($zip->open($filePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            abort(500, 'Unable to create Excel file.');
+        }
+
+        $sheetNames = [];
+        $sheetIndex = 1;
+
+        $contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>';
+
+        $workbookSheets = '';
+        $workbookRels = '';
+
+        foreach ($rows as $index => $section) {
+
+            $sheetName = preg_replace('/[\\\\\/\?\*\[\]\:]/', '', $section['sheet']);
+            $sheetName = mb_substr($sheetName ?: 'Report', 0, 31);
+
+            $sheetNames[] = $sheetName;
+
+            $safeSheetName = htmlspecialchars($sheetName, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+
+            $workbookSheets .= '<sheet name="' . $safeSheetName . '" sheetId="' . $sheetIndex . '" r:id="rId' . $sheetIndex . '"/>';
+
+            $contentTypes .= '<Override PartName="/xl/worksheets/sheet' . $sheetIndex . '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+
+            $workbookRels .= '<Relationship Id="rId' . $sheetIndex . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' . $sheetIndex . '.xml"/>';
+
+            $sheetData = [];
+
+            if ($section['sheet'] === 'Sales Summary') {
+
+                $sheetData[] = [
+                    'Order ID',
+                    'Customer',
+                    'Farmer',
+                    'Pickup Slot',
+                    'Total Amount',
+                    'Status',
+                    'Order Date'
+                ];
+
+                foreach ($section['data'] as $order) {
+
+                    $farmerName = $order->farmer?->user?->name
+                        ?? $order->farmer?->name
+                        ?? 'N/A';
+
+                    $pickupSlot = $order->pickupSlot
+                        ? ($order->pickupSlot->date . ' ' . $order->pickupSlot->start_time . ' - ' . $order->pickupSlot->end_time)
+                        : 'N/A';
+
+                    $sheetData[] = [
+                        $order->id,
+                        $order->user?->name ?? 'N/A',
+                        $farmerName,
+                        $pickupSlot,
+                        $order->total_amount,
+                        ucfirst(str_replace('_', ' ', $order->status)),
+                        $order->order_date,
+                    ];
+                }
+            } elseif ($section['sheet'] === 'Orders') {
+
+                $sheetData[] = [
+                    'Order ID',
+                    'Customer',
+                    'Farmer',
+                    'Pickup Slot',
+                    'Total Amount',
+                    'Status',
+                    'Order Date'
+                ];
+
+                foreach ($section['data'] as $order) {
+
+                    $farmerName = $order->farmer?->user?->name
+                        ?? $order->farmer?->name
+                        ?? 'N/A';
+
+                    $pickupSlot = $order->pickupSlot
+                        ? ($order->pickupSlot->date . ' ' . $order->pickupSlot->start_time . ' - ' . $order->pickupSlot->end_time)
+                        : 'N/A';
+
+                    $sheetData[] = [
+                        $order->id,
+                        $order->user?->name ?? 'N/A',
+                        $farmerName,
+                        $pickupSlot,
+                        $order->total_amount,
+                        ucfirst(str_replace('_', ' ', $order->status)),
+                        $order->order_date,
+                    ];
+                }
+            } elseif ($section['sheet'] === 'Farmer Activity') {
+
+                $sheetData[] = [
+                    'Farmer ID',
+                    'Farmer Name',
+                    'Stall Name',
+                    'Business Name',
+                    'City',
+                    'Approval Status',
+                    'Created At'
+                ];
+
+                foreach ($section['data'] as $farmer) {
+
+                    $sheetData[] = [
+                        $farmer->id,
+                        $farmer->user?->name ?? 'N/A',
+                        $farmer->stall_name ?? 'N/A',
+                        $farmer->business_name ?? 'N/A',
+                        $farmer->city ?? 'N/A',
+                        ucfirst($farmer->approval_status ?? 'N/A'),
+                        $farmer->created_at,
+                    ];
+                }
+            } elseif ($section['sheet'] === 'Product Inventory') {
+
+                $sheetData[] = [
+                    'Product ID',
+                    'Product Name',
+                    'Farmer',
+                    'Category',
+                    'Price',
+                    'Stock Quantity',
+                    'Unit',
+                    'Active',
+                    'Created At'
+                ];
+
+                foreach ($section['data'] as $product) {
+
+                    $farmerName = $product->farmer?->user?->name
+                        ?? $product->farmer?->name
+                        ?? 'N/A';
+
+                    $sheetData[] = [
+                        $product->id,
+                        $product->name,
+                        $farmerName,
+                        $product->category?->name ?? 'N/A',
+                        $product->price,
+                        $product->stock_quantity,
+                        $product->unit,
+                        $product->is_active ? 'Yes' : 'No',
+                        $product->created_at,
+                    ];
+                }
+            }
+
+            $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<sheetData>';
+
+            $rowNumber = 1;
+
+            foreach ($sheetData as $row) {
+
+                $sheetXml .= '<row r="' . $rowNumber . '">';
+
+                $columnNumber = 1;
+
+                foreach ($row as $value) {
+
+                    $columnLetter = '';
+
+                    $number = $columnNumber;
+
+                    while ($number > 0) {
+                        $remainder = ($number - 1) % 26;
+                        $columnLetter = chr(65 + $remainder) . $columnLetter;
+                        $number = intdiv($number - 1, 26);
+                    }
+
+                    $cellReference = $columnLetter . $rowNumber;
+
+                    if (is_null($value)) {
+                        $value = '';
+                    }
+
+                    if ($value instanceof \Carbon\Carbon) {
+                        $value = $value->format('Y-m-d H:i:s');
+                    }
+
+                    $value = (string) $value;
+
+                    $escapedValue = htmlspecialchars(
+                        $value,
+                        ENT_XML1 | ENT_QUOTES,
+                        'UTF-8'
+                    );
+
+                    $sheetXml .= '<c r="' . $cellReference . '" t="inlineStr">
+                    <is><t>' . $escapedValue . '</t></is>
+                </c>';
+
+                    $columnNumber++;
+                }
+
+                $sheetXml .= '</row>';
+
+                $rowNumber++;
+            }
+
+            $sheetXml .= '</sheetData></worksheet>';
+
+            $zip->addFromString(
+                'xl/worksheets/sheet' . $sheetIndex . '.xml',
+                $sheetXml
+            );
+
+            $sheetIndex++;
+        }
+
+        $contentTypes .= '</Types>';
+
+        $workbookXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets>' . $workbookSheets . '</sheets>
+</workbook>';
+
+        $workbookRelsXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+' . $workbookRels . '
+</Relationships>';
+
+        $rootRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1"
+Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
+Target="xl/workbook.xml"/>
+</Relationships>';
+
+        $stylesXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<fonts count="1">
+<font>
+<sz val="11"/>
+<name val="Calibri"/>
+</font>
+</fonts>
+<fills count="2">
+<fill><patternFill patternType="none"/></fill>
+<fill><patternFill patternType="gray125"/></fill>
+</fills>
+<borders count="1">
+<border/>
+</borders>
+<cellStyleXfs count="1">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+</cellStyleXfs>
+<cellXfs count="1">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+</cellXfs>
+</styleSheet>';
+
+        $zip->addFromString(
+            '[Content_Types].xml',
+            $contentTypes
+        );
+
+        $zip->addFromString(
+            '_rels/.rels',
+            $rootRels
+        );
+
+        $zip->addFromString(
+            'xl/workbook.xml',
+            $workbookXml
+        );
+
+        $zip->addFromString(
+            'xl/_rels/workbook.xml.rels',
+            $workbookRelsXml
+        );
+
+        $zip->addFromString(
+            'xl/styles.xml',
+            $stylesXml
+        );
+
+        $zip->close();
+
+        return response()
+            ->download(
+                $filePath,
+                $fileName,
+                [
+                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                ]
+            )
+            ->deleteFileAfterSend(true);
+    }
 
     public function announcements()
     {
