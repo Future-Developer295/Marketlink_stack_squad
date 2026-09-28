@@ -74,7 +74,12 @@ img {
   max-width: 100%;
   display: block;
 }
-
+/* Favourites icon */
+.ml-fav-btn { position: relative; }
+.ml-fav-btn:hover i,
+.ml-fav-btn.is-active i,
+.ml-fav-btn .fa-solid { color: #b5533c; }
+.ml-fav-badge[hidden] { display: none; }
 .ml-container {
   width: 100%;
   max-width: var(--ml-container);

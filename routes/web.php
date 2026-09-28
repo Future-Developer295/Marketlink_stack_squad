@@ -4,6 +4,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailOtpController;
 use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ChatbotController;
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [WebsiteController::class, 'dashboardRedirect'])
@@ -300,6 +302,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     ->name('my_markets_store')
     ->middleware('permission:join markets');
 });
+    Route::get('/chatbot', [ChatbotController::class, 'reply'])
+  ->name('chatbot.reply');
 Route::get('/email/verify', [EmailOtpController::class, 'show'])
     ->name('verification.notice');
 Route::post('/email/verify', [EmailOtpController::class, 'verify'])
@@ -308,6 +312,8 @@ Route::post('/email/verify', [EmailOtpController::class, 'verify'])
 Route::post('/email/verify/resend', [EmailOtpController::class, 'resend'])
     ->middleware('throttle:5,1')
     ->name('verification.otp.resend');
+
+
 
 Route::get('/', [WebsiteController::class, 'home']);
 
@@ -378,3 +384,6 @@ Route::middleware('auth')->group(function () {
             ->name('customer_notification_read');
     });
 });
+
+// routes/web.php
+

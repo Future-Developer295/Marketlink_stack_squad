@@ -10,6 +10,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('Assets/Website_Asset/css/dashboard.css') }}" rel="stylesheet">
+    <link href="{{ asset('Assets/Website_Asset/css/chatbot.css') }}" rel="stylesheet">
+
+
     @if (request()->is(
             'products*',
             'cart',
@@ -75,7 +78,14 @@
                     <a class="ml-icon-btn" href="{{ url('/products') . '#harvest' }}" aria-label="Search">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </a>
-
+{{-- Favourites --}}
+@php($favCount = auth()->check() && method_exists(auth()->user(), 'favorites') ? auth()->user()->favorites()->count() : 0)
+<a href="{{ auth()->check() ? url('/dashboard/customer/favorites') : url('/login') }}"
+    class="ml-icon-btn ml-fav-btn {{ request()->is('dashboard/customer/favorites*') ? 'is-active' : '' }}"
+    aria-label="Favourites{{ $favCount ? ' (' . $favCount . ')' : '' }}">
+    <i class="{{ $favCount ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
+    <span class="ml-cart-badge ml-fav-badge" data-fav-count @if (!$favCount) hidden @endif>{{ $favCount }}</span>
+</a>
                     <a href="{{ url('/cart') }}" class="ml-icon-btn" aria-label="Cart">
                         <i class="fa-solid fa-cart-shopping"></i>
                         @php($cartCount = collect(session('cart', []))->sum())
@@ -200,6 +210,9 @@
 @if(request()->is('dashboard/customer*'))
     <script src="{{ asset('Assets/Website_Asset/js/customer-dashboard.js') }}" defer></script>
 @endif
+
+@include('Website.Partials.chatbot')
+<script src="{{ asset('Assets/Website_Asset/js/chatbot.js') }}" defer></script>
 
 @if(request()->is('markets*', 'farmers*'))
     <script src="{{ asset('Assets/Website_Asset/js/discovery.js') }}" defer></script>
