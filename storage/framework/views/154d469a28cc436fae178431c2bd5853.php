@@ -10,8 +10,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="<?php echo e(asset('Assets/Website_Asset/css/dashboard.css')); ?>" rel="stylesheet">
-    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/', 'dashboard/customer*')): ?>
-        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is(
+            'products*',
+            'cart',
+            'checkout',
+            'pickup-guidelines',
+            'markets*',
+            'farmers*',
+            'about',
+            '/',
+            'dashboard/customer*')): ?>
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet">
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/')): ?>
         <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
@@ -26,7 +37,8 @@
     <?php echo $__env->yieldContent('page_styles'); ?>
 </head>
 
-<body class="<?php echo e(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/') ? 'harvest-shop' : ''); ?> <?php echo e(request()->is('dashboard/customer*') ? 'customer-area' : ''); ?>">
+<body
+    class="<?php echo e(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/') ? 'harvest-shop' : ''); ?> <?php echo e(request()->is('dashboard/customer*') ? 'customer-area' : ''); ?>">
 
     <nav class="navbar navbar-expand-lg ml-navbar">
         <div class="ml-container d-flex align-items-center justify-content-between w-100">
@@ -45,19 +57,21 @@
                             href="<?php echo e(url('/')); ?>">Home</a></li>
                     <li class="nav-item"><a class="nav-link ml-nav-link <?php echo e(request()->is('markets*') ? 'active' : ''); ?>"
                             href="<?php echo e(url('/markets')); ?>">Markets</a></li>
-                    <li class="nav-item"><a class="nav-link ml-nav-link <?php echo e(request()->is('farmers*') ? 'active' : ''); ?>"
+                    <li class="nav-item"><a
+                            class="nav-link ml-nav-link <?php echo e(request()->is('farmers*') ? 'active' : ''); ?>"
                             href="<?php echo e(url('/farmers')); ?>">Farmers</a></li>
                     <li class="nav-item"><a
                             class="nav-link ml-nav-link <?php echo e(request()->is('products*') ? 'active' : ''); ?>"
                             href="<?php echo e(url('/products')); ?>">Products</a></li>
                     <li class="nav-item"><a class="nav-link ml-nav-link <?php echo e(request()->is('about*') ? 'active' : ''); ?>"
                             href="<?php echo e(url('/about')); ?>">About</a></li>
-                    <li class="nav-item"><a class="nav-link ml-nav-link <?php echo e(request()->is('contact*') ? 'active' : ''); ?>"
+                    <li class="nav-item"><a
+                            class="nav-link ml-nav-link <?php echo e(request()->is('contact*') ? 'active' : ''); ?>"
                             href="<?php echo e(url('/contact')); ?>">Contact</a></li>
                 </ul>
 
                 <div class="ml-navbar-actions">
-                    <a class="ml-icon-btn" href="<?php echo e(url('/products').'#harvest'); ?>" aria-label="Search">
+                    <a class="ml-icon-btn" href="<?php echo e(url('/products') . '#harvest'); ?>" aria-label="Search">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </a>
 
@@ -69,12 +83,12 @@
 
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->guard()->check()): ?>
                         <div class="dropdown d-inline-block">
-                          <button class="btn p-0 border-0 bg-transparent shadow-none dropdown-toggle-no-caret"
-        type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-    <span class="ml-avatar-circle">
-        <i class="fa-solid fa-user"></i>
-    </span>
-</button>
+                            <button class="btn p-0 border-0 bg-transparent shadow-none dropdown-toggle-no-caret"
+                                type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="ml-avatar-circle">
+                                    <i class="fa-solid fa-user"></i>
+                                </span>
+                            </button>
 
                             <ul class="dropdown-menu dropdown-menu-end ml-dropdown-menu" aria-labelledby="userMenuDropdown">
                                 <!-- User Profile Header -->
@@ -116,7 +130,10 @@
 
 
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/')): ?>
-        <div class="shop-mobile-head"><a href="<?php echo e(url('/products')); ?>"><i class="fa-solid fa-leaf"></i> MarketLink<span>THE LOCAL EDIT</span></a><a class="ml-icon-btn" href="<?php echo e(url('/cart')); ?>" aria-label="View basket"><i class="fa-solid fa-bag-shopping"></i><span class="ml-cart-badge" data-cart-count><?php echo e(collect(session('cart', []))->sum()); ?></span></a></div>
+        <div class="shop-mobile-head"><a href="<?php echo e(url('/products')); ?>"><i class="fa-solid fa-leaf"></i>
+                MarketLink<span>THE LOCAL EDIT</span></a><a class="ml-icon-btn" href="<?php echo e(url('/cart')); ?>"
+                aria-label="View basket"><i class="fa-solid fa-bag-shopping"></i><span class="ml-cart-badge"
+                    data-cart-count><?php echo e(collect(session('cart', []))->sum()); ?></span></a></div>
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     <main>
         <?php echo $__env->yieldContent('body'); ?>
@@ -164,23 +181,29 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="<?php echo e(asset('Assets/Website_Asset/js/website.js')); ?>"></script>
-    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/')): ?>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-        <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
-        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-        <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-        <script src="<?php echo e(asset('Assets/Website_Asset/js/shop.js')); ?>"></script>
-    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('dashboard/customer*')): ?>
-        <script src="<?php echo e(asset('Assets/Website_Asset/js/customer-dashboard.js')); ?>" defer></script>
-    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('markets*', 'farmers*')): ?>
-        <script src="<?php echo e(asset('Assets/Website_Asset/js/discovery.js')); ?>" defer></script>
-    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-    <?php echo $__env->yieldContent('page_scripts'); ?>
-</body>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-</html>
-<?php /**PATH C:\xampp\htdocs\Marketlink\resources\views/Website/_master.blade.php ENDPATH**/ ?>
+<script src="<?php echo e(asset('Assets/Website_Asset/js/website.js')); ?>"></script>
+
+<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/')): ?>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <script src="<?php echo e(asset('Assets/Website_Asset/js/shop.js')); ?>"></script>
+<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('dashboard/customer*')): ?>
+    <script src="<?php echo e(asset('Assets/Website_Asset/js/customer-dashboard.js')); ?>" defer></script>
+<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('markets*', 'farmers*')): ?>
+    <script src="<?php echo e(asset('Assets/Website_Asset/js/discovery.js')); ?>" defer></script>
+<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+<?php echo $__env->yieldContent('page_scripts'); ?>
+
+<?php echo $__env->yieldPushContent('scripts'); ?>
+
+</body>
+</html><?php /**PATH C:\xampp\htdocs\Marketlink\resources\views/Website/_master.blade.php ENDPATH**/ ?>
