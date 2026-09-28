@@ -31,7 +31,7 @@ active
         </div>
 
 
-        <form action="{{ route('my_markets_join_store') }}" method="POST">
+        <form action="{{ route('my_markets_store') }}" method="POST">
 
             @csrf
 

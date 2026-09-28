@@ -298,6 +298,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::post('/dashboard/announcements/delete/{id}', [DashboardController::class, 'announcementDelete'])
         ->name('announcement_delete')
         ->middleware('permission:delete announcements');
+       Route::post('/dashboard/my-markets/join', [DashboardController::class, 'myMarketsJoinStore'])
+    ->name('my_markets_store')
+    ->middleware('permission:join markets');
 });
 
 Route::get('/', [WebsiteController::class, 'home']);
