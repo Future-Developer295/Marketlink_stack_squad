@@ -230,15 +230,20 @@
                     <form method="POST" action="{{ url('/contact') }}" id="contactForm">
                         @csrf
 
+                        {{-- Honeypot (hidden from humans, catches bots) --}}
+                        <div style="position:absolute;left:-9999px;" aria-hidden="true">
+                            <label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+                        </div>
+
                         <div class="contact-grid-2">
                             <div class="contact-field">
                                 <label class="contact-label" for="cfName">Full name</label>
-                                <input type="text" id="cfName" name="full_name" value="{{ old('full_name') }}" class="contact-input @error('full_name') is-invalid @enderror" placeholder="e.g., Tariq Mahmood" autocomplete="name" required>
+                                <input type="text" id="cfName" name="full_name" value="{{ old('full_name', auth()->user()->name ?? '') }}" class="contact-input @error('full_name') is-invalid @enderror" placeholder="e.g., Tariq Mahmood" autocomplete="name" required>
                                 @error('full_name')<div class="contact-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="contact-field">
                                 <label class="contact-label" for="cfEmail">Email</label>
-                                <input type="email" id="cfEmail" name="email" value="{{ old('email') }}" class="contact-input @error('email') is-invalid @enderror" placeholder="you@example.com" autocomplete="email" required>
+                                <input type="email" id="cfEmail" name="email" value="{{ old('email', auth()->user()->email ?? '') }}" class="contact-input @error('email') is-invalid @enderror" placeholder="you@example.com" autocomplete="email" required>
                                 @error('email')<div class="contact-error">{{ $message }}</div>@enderror
                             </div>
                         </div>
@@ -263,7 +268,7 @@
 
                         <div class="contact-field">
                             <label class="contact-label" for="cfMessage">Message</label>
-                            <textarea id="cfMessage" name="message" rows="5" class="contact-input @error('message') is-invalid @enderror" placeholder="Write your message..." required>{{ old('message') }}</textarea>
+                            <textarea id="cfMessage" name="message" rows="5" minlength="10" maxlength="2000" class="contact-input @error('message') is-invalid @enderror" placeholder="Write your message..." required>{{ old('message') }}</textarea>
                             @error('message')<div class="contact-error">{{ $message }}</div>@enderror
                         </div>
 

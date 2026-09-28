@@ -2,9 +2,11 @@
 
 @section('page_title', 'Forgot Password')
 
+@section('hide_chrome', true)
+
 @section('page_styles')
 <style>
-.fp-page { min-height: 70vh; padding: 48px 16px; background: #f6f3ea; display: flex; align-items: center; justify-content: center; }
+.fp-page { min-height: 100vh; padding: 48px 16px; background: #f6f3ea; display: flex; align-items: center; justify-content: center; }
 .fp-card { width: 100%; max-width: 460px; background: #fff; box-shadow: 0 28px 80px rgba(23,57,35,.11); padding: 42px 38px; }
 .fp-icon { width: 58px; height: 58px; border-radius: 50%; background: #eaf2eb; color: #2f5d3a; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 18px; }
 .fp-card h1 { font-size: 28px; font-weight: 700; color: #18231c; margin: 0 0 10px; }

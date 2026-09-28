@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactMessageMail;
 use App\Models\Category;
+use App\Models\ContactMessage;
 use App\Models\FarmerProfile;
 use App\Models\Market;
 use App\Models\MarketFarmer;
@@ -20,8 +22,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class WebsiteController extends Controller
 {
@@ -437,14 +442,39 @@ class WebsiteController extends Controller
 
     public function submitContact(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'full_name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'subject' => 'required|string',
-            'message' => 'required|string',
+            'email' => 'required|email|max:255',
+            'subject' => ['required', 'string', Rule::in([
+                'Market & Pickup Questions',
+                'Farmer Onboarding',
+                'Platform Feedback',
+                'Other',
+            ])],
+            'message' => 'required|string|min:10|max:2000',
         ]);
 
-        return redirect('/contact')->with('success', 'Your message has been sent to the MarketLink team.');
+        $success = 'Thanks! Your message has been sent to the MarketLink team. We will reply by email soon.';
+
+        // Honeypot: real people never see or fill this field, bots do.
+        // Pretend it worked so the bot moves on, but store/send nothing.
+        if ($request->filled('website')) {
+            return redirect('/contact')->with('success', $success);
+        }
+
+        $contact = ContactMessage::create($validated + [
+            'user_id' => Auth::id(),
+            'ip_address' => $request->ip(),
+        ]);
+
+        // The message is already saved above, so a mail/SMTP hiccup never loses it.
+        try {
+            Mail::to(config('marketlink.contact_email'))->send(new ContactMessageMail($contact));
+        } catch (Throwable $e) {
+            report($e);
+        }
+
+        return redirect('/contact')->with('success', $success);
     }
 
     // NOTE: showLogin / login / showRegister / register / logout used to live here,

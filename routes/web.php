@@ -9,6 +9,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('index');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
+// Old/legacy URL: send anyone hitting /password/reset to Fortify's forgot-password page.
+Route::redirect('/password/reset', '/forgot-password');
 Route::get('/farmer/pending', [WebsiteController::class, 'farmerPending'])
     ->name('farmer_pending');
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
@@ -334,7 +336,7 @@ Route::view('/pickup-guidelines', 'Website.Checkout.pickup-guide');
 Route::get('/about', [WebsiteController::class, 'about']);
 
 Route::get('/contact', [WebsiteController::class, 'contact']);
-Route::post('/contact', [WebsiteController::class, 'submitContact']);
+Route::post('/contact', [WebsiteController::class, 'submitContact'])->middleware('throttle:5,1');
 
 
 Route::middleware('auth')->group(function () {
