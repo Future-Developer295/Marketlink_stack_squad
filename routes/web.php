@@ -33,14 +33,15 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->name('my_markets')
         ->middleware('permission:view markets');
     Route::get('/dashboard/my-markets/join', [DashboardController::class, 'myMarketsJoin'])
-        ->name('my_markets_join')
-        ->middleware('permission:join markets');
-    Route::post('/dashboard/my-markets/join/store', [DashboardController::class, 'myMarketsJoinStore'])
-        ->name('my_markets_join_store')
-        ->middleware('permission:join markets');
-    Route::post('/dashboard/my-markets/{id}/leave', [DashboardController::class, 'myMarketsLeave'])
-        ->name('my_markets_leave')
-        ->middleware('permission:leave markets');
+        ->middleware('permission:join markets')
+        ->name('my_markets_join');
+
+    Route::post('/dashboard/my-markets/join', [DashboardController::class, 'myMarketsStore'])
+        ->middleware('permission:join markets')
+        ->name('my_markets_store');
+    Route::post('/dashboard/my-markets/{market}/leave', [DashboardController::class, 'myMarketsLeave'])
+        ->middleware('permission:leave markets')
+        ->name('my_markets_leave');
 
     Route::get('/dashboard/categories', [DashboardController::class, 'categories'])
         ->name('categories')
@@ -274,6 +275,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('permission:generate reports');
     Route::get('/dashboard/reports/download/{id}', [DashboardController::class, 'reportDownload'])
         ->name('report_download')
+        ->middleware('permission:download reports');
+            Route::get('/dashboard/reports/export', [DashboardController::class, 'reportsExport'])
+        ->name('reports_export')
         ->middleware('permission:download reports');
 
     Route::get('/dashboard/announcements', [DashboardController::class, 'announcements'])
