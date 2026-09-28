@@ -13,30 +13,6 @@
     var base = (root.dataset.base || '').replace(/\/$/, '');
     var endpoint = root.dataset.endpoint || '';
 
-    /* ---------- Saved state (history survives page changes) ---------- */
-    var KEY = 'mlchat_state_v1';
-    var state = loadState();
-
-    function loadState() {
-        try {
-            var s = JSON.parse(sessionStorage.getItem(KEY));
-            if (s && Array.isArray(s.messages)) return s;
-        } catch (e) {}
-        return { open: false, greeted: false, messages: [] };
-    }
-
-    function saveState() {
-        try {
-            state.messages = state.messages.slice(-50);
-            sessionStorage.setItem(KEY, JSON.stringify(state));
-        } catch (e) {}
-    }
-
-    /* ---------- Built-in answers (edit freely) ----------
-       Keys: lowercase, no punctuation (hyphens and apostrophes are stripped
-       from the user's text before matching, so write 'pre order', not 'pre-order').
-       Phrases with more words score higher than single words.
-       Order no longer matters: the entry with the best score wins. */
     var KB = [
         /* --- Payment & cost --- */
         { keys: ['pay', 'payment', 'cash', 'card', 'price', 'prices', 'paise', 'qeemat', 'kitne', 'kitna', 'rate', 'online payment', 'easypaisa', 'jazzcash'],
@@ -154,7 +130,6 @@
         links: [['Contact us', '/contact']]
     };
 
-    /* ---------- UI helpers ---------- */
     function scrollDown() { log.scrollTop = log.scrollHeight; }
 
     // Accepts both [label, url] arrays and {label, url} objects
