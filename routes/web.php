@@ -83,6 +83,14 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->name('product_delete')
         ->middleware('permission:delete products');
 
+    Route::post('/dashboard/products/approve/{id}', [DashboardController::class, 'productApprove'])
+        ->name('product_approve')
+        ->middleware('permission:approve products');
+
+    Route::post('/dashboard/products/reject/{id}', [DashboardController::class, 'productReject'])
+        ->name('product_reject')
+        ->middleware('permission:reject products');
+
     Route::get('/dashboard/weekly-stock', [DashboardController::class, 'stock'])
         ->name('stock')
         ->middleware('permission:view weekly stock');

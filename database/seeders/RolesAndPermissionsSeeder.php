@@ -6,11 +6,14 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         $adminPermissions = [
             'view admin dashboard',
 
@@ -38,9 +41,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete categories',
 
             'view products',
-            'add products',
-            'edit products',
             'delete products',
+            'approve products',
+            'reject products',
 
             'view reviews',
             'flag reviews',
@@ -100,11 +103,13 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $customerPermissions = [];
 
-        foreach (array_merge(
-            $adminPermissions,
-            $farmerPermissions,
-            $customerPermissions
-        ) as $permission) {
+        $allPermissions = collect([
+            ...$adminPermissions,
+            ...$farmerPermissions,
+            ...$customerPermissions,
+        ])->unique()->values();
+
+        foreach ($allPermissions as $permission) {
             Permission::firstOrCreate([
                 'name' => $permission,
                 'guard_name' => 'web',
@@ -127,13 +132,15 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         $admin->syncPermissions($adminPermissions);
-
         $farmer->syncPermissions($farmerPermissions);
-
         $customer->syncPermissions($customerPermissions);
 
-        User::whereNotNull('role')->get()->each(function ($user) {
-            $user->syncRoles([$user->role]);
-        });
+        User::whereIn('role', ['admin', 'farmer', 'customer'])
+            ->get()
+            ->each(function ($user) {
+                $user->syncRoles([$user->role]);
+            });
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }
