@@ -12,7 +12,22 @@
     var input = root.querySelector('.mlchat-form input');
     var base = (root.dataset.base || '').replace(/\/$/, '');
     var endpoint = root.dataset.endpoint || '';
+    /* ---------- Saved state (page change par bhi chat bachi rahe) ---------- */
+    var STORE_KEY = 'mlchat_state';
+    var state = { open: false, greeted: false, messages: [] };
 
+    try {
+        var saved = JSON.parse(sessionStorage.getItem(STORE_KEY) || 'null');
+        if (saved && Array.isArray(saved.messages)) state = saved;
+    } catch (e) { /* storage blocked ya corrupt data: fresh state use hogi */ }
+
+    function saveState() {
+        try {
+            // sirf last 40 messages rakho
+            state.messages = state.messages.slice(-40);
+            sessionStorage.setItem(STORE_KEY, JSON.stringify(state));
+        } catch (e) { /* ignore */ }
+    }
     var KB = [
         /* --- Payment & cost --- */
         { keys: ['pay', 'payment', 'cash', 'card', 'price', 'prices', 'paise', 'qeemat', 'kitne', 'kitna', 'rate', 'online payment', 'easypaisa', 'jazzcash'],
