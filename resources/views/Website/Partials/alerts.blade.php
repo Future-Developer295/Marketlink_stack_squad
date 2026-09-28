@@ -1,7 +1,7 @@
-@if(session('success'))
+@if(session('success') || session('status'))
 <div class="ml-alert ml-alert-success mb-4">
     <i class="fa-solid fa-circle-check"></i>
-    <span>{{ session('success') }}</span>
+    <span>{{ session('success') ?? session('status') }}</span>
 </div>
 @endif
 

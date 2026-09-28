@@ -43,6 +43,8 @@ class FortifyServiceProvider extends ServiceProvider
         // show the MarketLink-branded forms in resources/views/Website/Auth/.
         Fortify::loginView(fn () => view('Website.Auth.login'));
         Fortify::registerView(fn () => view('Website.Auth.register'));
+        Fortify::requestPasswordResetLinkView(fn () => view('Website.Auth.forgot-password'));
+        Fortify::resetPasswordView(fn (Request $request) => view('Website.Auth.reset-password', ['request' => $request]));
 
         // Correct email + password but email not verified yet: do NOT log in.
         // Send a code (if there is no live one) and show the OTP page instead.
