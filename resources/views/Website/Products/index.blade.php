@@ -49,22 +49,6 @@
                         </div>
                         @endforeach
 
-                        <div class="ml-form-label mt-3">Market</div>
-                        <select class="form-select mb-3" name="market_id" onchange="this.form.submit()">
-                            <option value="">All Markets</option>
-                            @foreach($markets as $market)
-                                <option value="{{ $market->id }}" {{ request('market_id') == $market->id ? 'selected' : '' }}>{{ $market->name }}</option>
-                            @endforeach
-                        </select>
-
-                        <div class="ml-form-label">Market Day</div>
-                        <select class="form-select mb-4" name="market_day" onchange="this.form.submit()">
-                            <option value="">Any Day</option>
-                            @foreach($days as $day)
-                                <option value="{{ $day }}" {{ request('market_day') == $day ? 'selected' : '' }}>{{ $day }}</option>
-                            @endforeach
-                        </select>
-
                         <div class="ml-form-label mt-3">Max Price (Rs.)</div>
                         <input type="number" name="max_price" min="0" value="{{ request('max_price') }}" class="form-control mb-4" placeholder="No limit">
 
@@ -99,16 +83,7 @@
                             <div class="ml-media-card__image">
                                 <img src="{{ $product->image ? asset('product_images/' . $product->image) : 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&w=500&q=60' }}" alt="{{ $product->name }}">
                                 <span class="ml-badge {{ $product->stock_quantity <= 0 ? 'ml-badge-danger' : 'ml-badge-mint' }} ml-image-tag">{{ $product->stock_quantity <= 0 ? 'Out of Stock' : ($product->category->name ?? 'Fresh') }}</span>
-                                @auth
-                                    <form action="{{ route('favorite.toggle', ['type' => 'product', 'id' => $product->id]) }}" method="POST" class="ml-image-fav">
-                                        @csrf
-                                        <button class="ml-favorite-btn" type="submit" aria-label="{{ $favoritedProductIds->contains($product->id) ? 'Remove from favorites' : 'Save product' }}">
-                                            <i class="fa-{{ $favoritedProductIds->contains($product->id) ? 'solid' : 'regular' }} fa-heart"></i>
-                                        </button>
-                                    </form>
-                                @else
-                                    <a href="{{ route('login') }}" class="ml-favorite-btn ml-image-fav" aria-label="Save product"><i class="fa-regular fa-heart"></i></a>
-                                @endauth
+                                <button class="ml-favorite-btn ml-image-fav" type="button" aria-label="Save product"><i class="fa-regular fa-heart"></i></button>
                             </div>
                             <div class="ml-media-card__body">
                                 <span class="small text-muted d-flex justify-content-between"><span><i class="fa-solid fa-user"></i> {{ $product->farmer->stall_name ?? $product->farmer->business_name ?? '' }}</span><span>Available: {{ $product->stock_quantity }} {{ $product->unit }}</span></span>

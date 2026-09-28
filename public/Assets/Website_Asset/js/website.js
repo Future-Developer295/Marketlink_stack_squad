@@ -1,4 +1,16 @@
 document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".ml-favorite-btn").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      btn.classList.toggle("is-active");
+      var icon = btn.querySelector("i");
+      if (icon) {
+        icon.classList.toggle("fa-regular");
+        icon.classList.toggle("fa-solid");
+      }
+    });
+  });
+
   document.querySelectorAll("[data-quantity]").forEach(function (wrapper) {
     var input = wrapper.querySelector("input");
     var min = parseInt(wrapper.getAttribute("data-min") || "1", 10);
@@ -73,53 +85,4 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   });
-});
-
-function initMLMap(elementId, markerLabel) {
-    const mapElement = document.getElementById(elementId);
-
-    if (!mapElement) {
-        return;
-    }
-
-    const lat = Number(mapElement.dataset.lat);
-    const lng = Number(mapElement.dataset.lng);
-
-    if (!lat || !lng) {
-        return;
-    }
-
-    const map = L.map(elementId).setView([lat, lng], 14);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    L.marker([lat, lng])
-        .addTo(map)
-        .bindPopup('<strong>' + markerLabel + '</strong>')
-        .openPopup();
-
-    const farmers = JSON.parse(mapElement.dataset.farmers || '[]');
-
-    farmers.forEach(function (farmer) {
-        if (!farmer.latitude || !farmer.longitude) {
-            return;
-        }
-
-        L.marker([Number(farmer.latitude), Number(farmer.longitude)])
-            .addTo(map)
-            .bindPopup(
-                '<strong>' +
-                (farmer.name || 'Farmer') +
-                '</strong><br>' +
-                (farmer.stall_name || '')
-            );
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    initMLMap('marketMap', 'Market');
-    initMLMap('farmerMap', 'Pickup Location');
 });

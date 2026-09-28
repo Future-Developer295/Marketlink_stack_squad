@@ -20,16 +20,7 @@
                     @if($product->category)
                     <span class="ml-badge ml-badge-mint ml-image-tag">{{ $product->category->name }}</span>
                     @endif
-                    @auth
-                        <form action="{{ route('favorite.toggle', ['type' => 'product', 'id' => $product->id]) }}" method="POST" class="ml-image-fav">
-                            @csrf
-                            <button class="ml-favorite-btn" type="submit" aria-label="{{ $isFavorited ? 'Remove from favorites' : 'Save product' }}">
-                                <i class="fa-{{ $isFavorited ? 'solid' : 'regular' }} fa-heart"></i>
-                            </button>
-                        </form>
-                    @else
-                        <a href="{{ route('login') }}" class="ml-favorite-btn ml-image-fav" aria-label="Save product"><i class="fa-regular fa-heart"></i></a>
-                    @endauth
+                    <button class="ml-favorite-btn ml-image-fav" type="button" aria-label="Save product"><i class="fa-regular fa-heart"></i></button>
                 </div>
             </div>
 
@@ -201,28 +192,6 @@
                 @endforelse
             </div>
         </div>
-
-        @if($canReviewProduct)
-        <div class="row mt-4">
-            <div class="col-lg-6 mx-auto">
-                <div class="ml-card">
-                    <h6 class="mb-3">{{ $myProductReview ? 'Update Your Review' : 'Rate This Product' }}</h6>
-                    <form method="POST" action="{{ route('products.review.store', ['product' => $product->id]) }}">
-                        @csrf
-                        <div class="ml-form-label">Rating</div>
-                        <select name="rating" class="form-select mb-3" required>
-                            @for($i = 5; $i >= 1; $i--)
-                                <option value="{{ $i }}" {{ optional($myProductReview)->rating == $i ? 'selected' : '' }}>{{ $i }} Star{{ $i > 1 ? 's' : '' }}</option>
-                            @endfor
-                        </select>
-                        <div class="ml-form-label">Comment</div>
-                        <textarea name="comment" class="form-control mb-3" rows="3" placeholder="Share your experience with this product">{{ optional($myProductReview)->comment }}</textarea>
-                        <button type="submit" class="btn ml-btn-primary">{{ $myProductReview ? 'Update Review' : 'Submit Review' }}</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        @endif
     </div>
 </section>
 

@@ -40,19 +40,4 @@ class PickupSlot extends Model
     {
         return $this->belongsTo(Market::class, 'market_id');
     }
-
-    public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Order::class, 'pickup_slot_id');
-    }
-
-    public function bookedCount(): int
-    {
-        return $this->orders()->whereNotIn('status', ['cancelled'])->count();
-    }
-
-    public function hasCapacity(): bool
-    {
-        return $this->bookedCount() < $this->capacity;
-    }
 }

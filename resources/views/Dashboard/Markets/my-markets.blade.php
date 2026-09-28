@@ -27,12 +27,6 @@ active
                     value="{{ request('q') }}"
                     placeholder="Search…"
                 />
-
-                @if (request('q'))
-                    <a href="{{ route('my_markets') }}" class="search-clear" title="Clear search">
-                        <i class="bi bi-x-lg"></i>
-                    </a>
-                @endif
             </form>
 
             <a class="btn-primary" href="{{ route('my_markets_join') }}">

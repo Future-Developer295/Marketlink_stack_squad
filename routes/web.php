@@ -4,22 +4,19 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
 
-
+// Single entry point for "/dashboard": sends admin/farmer/customer to
+// their own dashboard. Registered under both names since different
+// layouts in the app reference either name to build the link.
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('index');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'role:farmer'])
-    ->prefix('dashboard/farmer')
-    ->as('farmer.')
-    ->group(function () {
-        Route::get('/', [DashboardController::class, 'farmerDashboard'])
-            ->name('dashboard')
-            ->middleware('permission:view dashboard');
-    });
-
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',])->group(function () {
+
+    Route::get('/dashboard/farmer', [DashboardController::class, 'farmerDashboard'])
+        ->name('farmer_dashboard')
+        ->middleware('permission:view dashboard');
 
     Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard'])
         ->name('admin_dashboard')
@@ -241,12 +238,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('/dashboard/farmers/delete/{id}', [DashboardController::class, 'farmerDelete'])
         ->name('farmer_delete')
         ->middleware('permission:delete farmers');
-    Route::post('/dashboard/farmers/{id}/approve', [DashboardController::class, 'farmerApprove'])
-        ->name('farmer_approve')
-        ->middleware('permission:edit farmers');
-    Route::post('/dashboard/farmers/{id}/reject', [DashboardController::class, 'farmerReject'])
-        ->name('farmer_reject')
-        ->middleware('permission:edit farmers');
 
     Route::get('/dashboard/customers', [DashboardController::class, 'customers'])
         ->name('customers')
@@ -254,32 +245,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/dashboard/customers/view/{id}', [DashboardController::class, 'customerView'])
         ->name('customer_view')
         ->middleware('permission:view customer');
-    Route::post('/dashboard/customers/toggle/{id}', [DashboardController::class, 'customerToggleStatus'])
-        ->name('customer_toggle_status')
+    Route::post('/dashboard/customers/delete/{id}', [DashboardController::class, 'customerDelete'])
+        ->name('customer_delete')
         ->middleware('permission:delete customers');
-
-    Route::get('/dashboard/farmer-leaderboard', [DashboardController::class, 'farmerLeaderboard'])
-        ->name('farmer_leaderboard')
-        ->middleware('permission:view farmer leaderboard');
-
-    Route::get('/dashboard/low-stock-alerts', [DashboardController::class, 'lowStockAlerts'])
-        ->name('low_stock_alerts')
-        ->middleware('permission:view low stock alerts');
-
-    Route::get('/dashboard/activity-log', [DashboardController::class, 'activityLog'])
-        ->name('activity_log')
-        ->middleware('permission:view activity log');
-
-    Route::get('/dashboard/commission-tracking', [DashboardController::class, 'commissionTracking'])
-        ->name('commission_tracking')
-        ->middleware('permission:view commission tracking');
-    Route::post('/dashboard/commission-tracking/{id}/rate', [DashboardController::class, 'commissionRateUpdate'])
-        ->name('commission_rate_update')
-        ->middleware('permission:edit commission rate');
-
-    Route::get('/dashboard/product-sales-analytics', [DashboardController::class, 'productSalesAnalytics'])
-        ->name('product_sales_analytics')
-        ->middleware('permission:view product sales analytics');
 
     Route::get('/dashboard/reviews', [DashboardController::class, 'reviews'])
         ->name('reviews')
@@ -290,9 +258,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('/dashboard/reviews/delete/{id}', [DashboardController::class, 'reviewDelete'])
         ->name('review_delete')
         ->middleware('permission:delete reviews');
-    Route::post('/dashboard/reviews/{id}/reply', [DashboardController::class, 'reviewReplyStore'])
-        ->name('review_reply_store')
-        ->middleware('permission:view reviews');
 
     Route::get('/dashboard/reports', [DashboardController::class, 'reports'])
         ->name('reports')
@@ -302,9 +267,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         ->middleware('permission:generate reports');
     Route::get('/dashboard/reports/download/{id}', [DashboardController::class, 'reportDownload'])
         ->name('report_download')
-        ->middleware('permission:download reports');
-    Route::get('/dashboard/reports/export', [DashboardController::class, 'reportsExport'])
-        ->name('reports_export')
         ->middleware('permission:download reports');
 
     Route::get('/dashboard/announcements', [DashboardController::class, 'announcements'])
@@ -346,24 +308,21 @@ Route::post('/cart/remove/{product}', [WebsiteController::class, 'removeFromCart
 Route::get('/checkout', [WebsiteController::class, 'checkout']);
 Route::post('/checkout', [WebsiteController::class, 'placeOrder']);
 
-Route::middleware('auth')->group(function () {
-    Route::post('/favorites/toggle/{type}/{id}', [WebsiteController::class, 'toggleFavorite'])
-        ->whereIn('type', ['farmer', 'product'])
-        ->name('favorite.toggle');
-
-    Route::post('/products/{product}/review', [WebsiteController::class, 'reviewProduct'])
-        ->name('products.review.store');
-});
-
 Route::get('/about', [WebsiteController::class, 'about']);
 
 Route::get('/contact', [WebsiteController::class, 'contact']);
 Route::post('/contact', [WebsiteController::class, 'submitContact']);
 
-
+// /login, /register and /logout are intentionally NOT defined here.
+// Laravel Fortify already registers them (named 'login', 'register', 'logout')
+// and was winning the route match anyway, making duplicate routes here dead
+// code. See app/Providers/FortifyServiceProvider.php for the custom
+// loginView()/registerView() that make Fortify render this app's own
+// Website.Auth.login / Website.Auth.register Blade views.
 
 Route::middleware('auth')->group(function () {
 
+    // Customer Dashboard
     Route::prefix('dashboard/customer')->group(function () {
         Route::get('/', [WebsiteController::class, 'index'])
             ->name('customer_dashboard');
@@ -379,18 +338,6 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/orders/{order}', [WebsiteController::class, 'orderDetail'])
             ->name('customer_order_detail');
-
-        Route::post('/orders/{order}/review', [WebsiteController::class, 'reviewFarmer'])
-            ->name('customer_order_review');
-
-        Route::post('/orders/{order}/cancel', [WebsiteController::class, 'cancelOrder'])
-            ->name('customer_order_cancel');
-
-        Route::post('/orders/{order}/pickup-slot', [WebsiteController::class, 'updateOrderPickupSlot'])
-            ->name('customer_order_update_slot');
-
-        Route::post('/orders/{order}/reorder', [WebsiteController::class, 'reorder'])
-            ->name('customer_order_reorder');
 
         Route::get('/reviews', [WebsiteController::class, 'reviews'])
             ->name('customer_reviews');
