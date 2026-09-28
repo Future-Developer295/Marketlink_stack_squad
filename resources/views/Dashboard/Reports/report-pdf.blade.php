@@ -409,7 +409,7 @@
                 </td>
 
                 <td class="status">
-                    {{ $order->statusLabel() }}
+                    {{ ucfirst($order->status) }}
                 </td>
 
                 <td>

@@ -1,322 +1,59 @@
 @extends('Website._master')
-
-@section('page_title', 'Home')
-
+@section('page_title', 'Good food, close to home')
+@section('page_styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@14.2.0/swiper-bundle.min.css">
+<link rel="stylesheet" href="{{ asset('Assets/Website_Asset/css/home.css') }}">
+@endsection
 @section('body')
+<div class="home-page">
+    <section class="home-hero" aria-labelledby="home-title">
+        <div class="ml-container home-hero-inner">
+            <div class="home-hero-heading"><span class="shop-kicker">THE NEIGHBOURHOOD HARVEST</span><h1 id="home-title">Fresh finds.<br><em>Closer connections.</em></h1><p>Your local growers. Their seasonal best.<br>A basket worth making a market morning for.</p></div>
+            <div class="home-stage" aria-hidden="true">
+                <span class="home-giant-word">FRESH</span><span class="home-orbit"></span>
+                <img class="home-basket" src="{{ asset('Assets/Website_Asset/images/home-harvest-basket.png') }}" alt="" width="1280" height="1280" fetchpriority="high">
+                <img class="home-ingredient ingredient-one" src="{{ asset('Assets/Website_Asset/images/home-floating-tomato.png') }}" alt="" width="1280" height="1280">
+                <img class="home-ingredient ingredient-two" src="{{ asset('Assets/Website_Asset/images/home-floating-tomato.png') }}" alt="" width="1280" height="1280">
+                <i class="fa-solid fa-leaf home-ingredient ingredient-leaf-one"></i><i class="fa-solid fa-leaf home-ingredient ingredient-leaf-two"></i>
+                <span class="home-handwritten">Good things<br>grow locally.</span><span class="home-stamp">PICK ONLINE<br><i class="fa-solid fa-basket-shopping"></i><br>PAY AT THE STALL</span>
+            </div>
+            <div class="home-hero-bottom"><div><a href="{{ url('/products') }}" class="shop-pill">Build your fresh basket <span>↗</span></a><a href="{{ url('/markets') }}" class="home-text-link">Find a local market <span>↗</span></a></div><p><i class="fa-solid fa-store" aria-hidden="true"></i> Pre-order. Meet your grower. Collect.</p><button type="button" class="home-motion-toggle" data-home-motion hidden aria-pressed="false"><i class="fa-solid fa-pause" aria-hidden="true"></i> Pause motion</button></div>
+        </div>
+    </section>
+    <div class="home-ribbon"><span><i class="fa-solid fa-seedling" aria-hidden="true"></i> Seasonal discoveries</span><span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Local market pickup</span><span><i class="fa-solid fa-handshake" aria-hidden="true"></i> Pay your grower in person</span></div>
 
-<section class="ml-section pb-4">
-    <div class="ml-container">
-        <div class="row align-items-center g-5">
-            <div class="col-lg-6">
-                <span class="ml-eyebrow"><i class="fa-solid fa-leaf"></i> Local Farmers &middot; Fresh Produce &middot; Better Communities</span>
-                <h1 class="display-5">Fresh Local Produce. <span class="text-success">Reserved Before Market Day.</span></h1>
-                <p class="text-muted mt-3 fs-5">Discover nearby farmers, check weekly stock and reserve your favourites for convenient market pickup. No delivery delays, 100% farm fresh.</p>
-                <div class="d-flex flex-wrap gap-3 mt-4">
-                    <a href="{{ url('/markets') }}" class="btn ml-btn-primary"><i class="fa-solid fa-store"></i> Explore Markets</a>
-                    <a href="{{ url('/register') }}" class="btn ml-btn-secondary"><i class="fa-solid fa-tractor"></i> Become a Farmer</a>
-                </div>
-                <div class="d-flex flex-wrap gap-4 mt-4 text-muted small">
-                    <span><i class="fa-solid fa-check text-success"></i> 100% Verified Local Growers</span>
-                    <span><i class="fa-solid fa-check text-success"></i> Direct Market Stalls</span>
-                    <span><i class="fa-solid fa-check text-success"></i> Pay Stallholder at Pickup</span>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="position-relative">
-                    <img src="{{asset('Assets/Website_Asset/home_img/ChatGPT Image Sep 27, 2026, 12_05_15 AM.png')}}" class="rounded-4 shadow" alt="Local farmer with fresh vegetables">
-                    @if($farmers->isNotEmpty())
-                    @php($spotlight = $farmers->first())
-                    <div class="ml-card position-absolute bottom-0 start-0 m-3 p-3 d-flex align-items-center gap-3">
-                        <div class="ml-avatar d-flex align-items-center justify-content-center bg-light">
-                            <i class="fa-solid fa-tractor text-success"></i>
-                        </div>
-                        <div>
-                            <strong class="d-block">{{ $spotlight->stall_name ?? $spotlight->business_name }}</strong>
-                            <span class="small text-muted">{{ $spotlight->user->name ?? 'Local Farmer' }} &middot; {{ $spotlight->city }}</span>
-                        </div>
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
+    <section class="home-section home-categories" aria-labelledby="home-categories-title">
+        <div class="ml-container home-heading centered"><span class="shop-kicker">LET YOUR APPETITE WANDER</span><h2 id="home-categories-title">A little of <em>what you love.</em></h2><p>Explore the season, one fresh discovery at a time.</p></div>
+        <div class="ml-container home-category-tabs">@foreach($categories as $category)<a href="{{ url('/products').'?category_id='.$category->id }}">{{ $category->name }}</a>@endforeach<a href="{{ url('/products') }}">All the goodness ↗</a></div>
+        <div class="swiper home-category-slider" aria-label="Explore product categories"><div class="swiper-wrapper">
+            @forelse($categories as $category)
+            @php($categoryPhoto = match (true) {
+                str_contains(strtolower($category->name), 'fruit') => 'fruits/Fresh-apple.png',
+                str_contains(strtolower($category->name), 'veget') => 'vegetables/carrot.jpg',
+                str_contains(strtolower($category->name), 'grain') => 'grains/rice.jpg',
+                default => 'vegetables/mix.jpg'
+            })
+            <a class="swiper-slide home-category-slide" href="{{ url('/products').'?category_id='.$category->id }}"><img src="{{ asset('Assets/Website_Asset/images/'.$categoryPhoto) }}" alt="" loading="lazy" width="600" height="600"><span class="home-category-caption"><small>{{ $category->products_count }} available picks</small><strong>{{ $category->name }}</strong><span aria-hidden="true">↗</span></span></a>
+            @empty<div class="swiper-slide home-category-slide"><img src="{{ asset('Assets/Website_Asset/images/vegetables/mix.jpg') }}" alt="Fresh seasonal vegetables" loading="lazy"><span class="home-category-caption"><strong>A new season is coming.</strong></span></div>@endforelse
+        </div></div>
+        <div class="home-slider-controls" data-category-controls hidden><button type="button" class="home-category-prev" aria-label="Previous category">←</button><span>FIND YOUR FRESH</span><button type="button" class="home-category-next" aria-label="Next category">→</button></div>
+    </section>
 
-        <div class="row g-4 mt-5">
-            <div class="col-6 col-lg-3"><div class="ml-stat"><strong>{{ $stats['markets'] }}+</strong><span>Local Markets</span></div></div>
-            <div class="col-6 col-lg-3"><div class="ml-stat"><strong>{{ $stats['farmers'] }}+</strong><span>Active Farmers</span></div></div>
-            <div class="col-6 col-lg-3"><div class="ml-stat"><strong>{{ $stats['products'] }}+</strong><span>Fresh Products</span></div></div>
-            <div class="col-6 col-lg-3"><div class="ml-stat"><strong>{{ $stats['orders'] }}+</strong><span>Successful Pickups</span></div></div>
-        </div>
-    </div>
-</section>
+    <section class="ml-container home-section home-products" aria-labelledby="home-products-title"><div class="home-heading"><div><span class="shop-kicker">THE CURRENT HARVEST</span><h2 id="home-products-title">Fresh picks.<br><em>Good days ahead.</em></h2></div><a href="{{ url('/products') }}" class="home-text-link">Shop the whole harvest <span>↗</span></a></div><div class="home-product-grid">@forelse($products as $product)@include('Website.Partials.shop-product',['product'=>$product])@empty<p>The growers are preparing their next harvest. Check back for fresh stock soon.</p>@endforelse</div></section>
 
-<section class="ml-section ml-section--muted">
-    <div class="ml-container">
-        <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 ml-heading-block mb-4">
-            <div>
-                <span class="ml-eyebrow">Weekend Community Stalls</span>
-                <h2>Find Local Markets Near You</h2>
-                <p>Discover nearby markets, explore registered local farmers and reserve freshly picked crops before market stalls open.</p>
-            </div>
-            <a href="{{ url('/markets') }}" class="ml-link-more">View All Market Hubs <i class="fa-solid fa-arrow-right"></i></a>
-        </div>
+    <section class="home-market-section"><div class="ml-container home-section home-market-layout"><div class="home-market-intro"><span class="shop-kicker">YOUR NEXT LOCAL STOP</span><h2>A place to meet.<br><em>A reason to return.</em></h2><p>Make a little time for market day. Find your local spot, meet the growers and bring home something good.</p><a href="{{ url('/markets') }}" class="shop-pill">Explore the markets <span>↗</span></a><div class="home-stall-art" aria-hidden="true"><i class="fa-solid fa-store"></i><span>See you<br><em>at the stall.</em></span></div></div><div class="home-market-list">@forelse($markets as $market)<a href="{{ url('/markets/'.$market->id) }}"><span class="home-market-number">0{{ $loop->iteration }}</span><div><small><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ $market->city }}</small><h3>{{ $market->name }}</h3><p>{{ $market->operating_days }}<br>{{ substr($market->start_time,0,5) }} – {{ substr($market->end_time,0,5) }}</p></div><span class="home-market-arrow" aria-hidden="true">↗</span></a>@empty<p>New market locations will appear here when they’re added.</p>@endforelse</div></div></section>
 
-        <div class="row g-4">
-            @forelse($markets as $market)
-            <div class="col-md-4">
-                <div class="ml-media-card">
-                    <div class="ml-media-card__image">
-                        <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=700&q=60" alt="{{ $market->name }}">
-                    </div>
-                    <div class="ml-media-card__body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <h5>{{ $market->name }}</h5>
-                        </div>
-                        <span class="text-muted small"><i class="fa-solid fa-location-dot"></i> {{ $market->city }}, {{ $market->state }}</span>
-                        <span class="text-muted small"><i class="fa-solid fa-users"></i> {{ $market->market_farmers_count }} Registered Farmers</span>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <span class="small text-muted">{{ $market->operating_days }}</span>
-                            <a href="{{ url('/markets/'.$market->id) }}" class="ml-btn-link">View Market <i class="fa-solid fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @empty
-            <div class="col-12">
-                @include('Website.Partials.empty-state', [
-                    'icon' => 'fa-store-slash',
-                    'title' => 'No Markets Yet',
-                    'message' => 'Markets will appear here as soon as they are added.',
-                ])
-            </div>
-            @endforelse
-        </div>
-    </div>
-</section>
+    <section class="ml-container home-section home-story"><div class="home-story-photo"><img src="{{ asset('Assets/Website_Asset/images/vegetables/mix.jpg') }}" alt="A colourful selection of vegetables at a local market" width="612" height="405" loading="lazy"><span>Small stalls.<br><em>Shared stories.</em></span></div><div><span class="shop-kicker">MORE THAN A BASKET</span><h2>Know your food.<br><em>Meet your people.</em></h2><p>MarketLink brings the local market online, while keeping its best part in person. Farmers share their stock. You plan your basket. The connection happens at the stall.</p><ol class="home-simple-steps"><li><b>01</b> Discover a grower & their harvest.</li><li><b>02</b> Pre-order & choose a pickup window.</li><li><b>03</b> Collect at the market & pay directly.</li></ol><a href="{{ url('/about') }}" class="home-text-link">A little more about us <span>↗</span></a></div></section>
 
-<section class="ml-section">
-    <div class="ml-container">
-        <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 ml-heading-block mb-4">
-            <div>
-                <span class="ml-eyebrow">Provenance &amp; Growers</span>
-                <h2>Fresh From Local Farmers</h2>
-                <p>Meet the regional growers who cultivate your seasonal food, inspect their harvest schedules, and support regenerative family agriculture.</p>
-            </div>
-            <a href="{{ url('/farmers') }}" class="ml-link-more">Explore All Farmers <i class="fa-solid fa-arrow-right"></i></a>
-        </div>
+    <section class="home-section home-reviews" aria-labelledby="home-reviews-title"><div class="ml-container home-heading centered"><span class="shop-kicker">WORDS FROM THE COMMUNITY</span><h2 id="home-reviews-title">Local food.<br><em>Lasting impressions.</em></h2><p>Recent published reviews, straight from our grower profiles.</p></div>
+        @if($reviews->isNotEmpty())<div class="swiper home-review-slider" aria-label="Community reviews"><div class="swiper-wrapper">@foreach($reviews as $review)<article class="swiper-slide home-review-slide"><i class="fa-solid fa-quote-left home-quote" aria-hidden="true"></i><blockquote>{{ $review->comment }}</blockquote><span class="home-review-stars" aria-label="{{ $review->rating }} out of 5 stars">@for($star=1;$star<=5;$star++)<i class="{{ $star <= $review->rating ? 'fa-solid' : 'fa-regular' }} fa-star" aria-hidden="true"></i>@endfor</span><div class="home-review-person"><span aria-hidden="true">{{ mb_substr($review->user->name,0,1) }}</span><div><strong>{{ $review->user->name }}</strong><a href="{{ url('/farmers/'.$review->farmer_id).'#grower-reviews' }}">{{ $review->farmer->stall_name }} ↗</a></div></div></article>@endforeach</div></div><div class="home-slider-controls" data-review-controls hidden><button type="button" class="home-review-prev" aria-label="Previous community review">←</button><button type="button" data-review-play aria-label="Play automatic reviews"><i class="fa-solid fa-play" aria-hidden="true"></i></button><button type="button" class="home-review-next" aria-label="Next community review">→</button></div>@else<p class="home-review-empty">Every market visit has a story. Community reviews will appear here when they’re published.</p>@endif
+    </section>
 
-        <div class="row g-4">
-            @forelse($farmers as $farmer)
-            <div class="col-md-4">
-                <div class="ml-media-card">
-                    <div class="ml-media-card__image">
-                        <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=700&q=60" alt="{{ $farmer->stall_name }}">
-                        @auth
-                            <form action="{{ route('favorite.toggle', ['type' => 'farmer', 'id' => $farmer->id]) }}" method="POST" class="ml-image-fav">
-                                @csrf
-                                <button type="submit" class="ml-favorite-btn" aria-label="{{ $favoritedFarmerIds->contains($farmer->id) ? 'Remove from favorites' : 'Save farmer' }}">
-                                    <i class="fa-{{ $favoritedFarmerIds->contains($farmer->id) ? 'solid' : 'regular' }} fa-heart"></i>
-                                </button>
-                            </form>
-                        @else
-                            <a href="{{ route('login') }}" class="ml-favorite-btn ml-image-fav" aria-label="Save farmer"><i class="fa-regular fa-heart"></i></a>
-                        @endauth
-                    </div>
-                    <div class="ml-media-card__body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <h5>{{ $farmer->stall_name ?? $farmer->business_name }}</h5>
-                            @if($farmer->reviews_avg_rating)
-                            <span class="ml-rating"><i class="fa-solid fa-star"></i> {{ number_format($farmer->reviews_avg_rating, 1) }}</span>
-                            @endif
-                        </div>
-                        <span class="text-muted small"><i class="fa-solid fa-location-dot"></i> {{ $farmer->city }}, {{ $farmer->state }}</span>
-                        <span class="ml-badge ml-badge-mint w-fit align-self-start">{{ $farmer->products_count }} Products</span>
-                        <a href="{{ url('/farmers/'.$farmer->id) }}" class="btn ml-btn-primary ml-btn-sm mt-2">View Products <i class="fa-solid fa-arrow-right"></i></a>
-                    </div>
-                </div>
-            </div>
-            @empty
-            <div class="col-12">
-                @include('Website.Partials.empty-state', [
-                    'icon' => 'fa-tractor',
-                    'title' => 'No Farmers Yet',
-                    'message' => 'Verified farmers will appear here once approved.',
-                ])
-            </div>
-            @endforelse
-        </div>
-    </div>
-</section>
-
-<section class="ml-section ml-section--muted">
-    <div class="ml-container">
-        <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 ml-heading-block mb-4">
-            <div>
-                <span class="ml-eyebrow">Seasonal Availability</span>
-                <h2>Fresh Produce, Ready to Reserve</h2>
-                <p>Browse live weekly harvests direct from local fields. Reserve early to lock in your portion before market morning.</p>
-            </div>
-            <a href="{{ url('/products') }}" class="ml-link-more">See Full Catalog <i class="fa-solid fa-arrow-right"></i></a>
-        </div>
-
-        <div class="row g-4">
-            @forelse($products as $product)
-            <div class="col-6 col-lg-3">
-                <div class="ml-media-card">
-                    <div class="ml-media-card__image">
-                        <img src="{{ $product->image ? asset('product_images/' . $product->image) : 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&w=500&q=60' }}" alt="{{ $product->name }}">
-                        <span class="ml-badge {{ $product->stock_quantity > 5 ? 'ml-badge-mint' : 'ml-badge-warning' }} ml-image-tag">{{ $product->stock_quantity > 5 ? 'In Stock' : 'Low Stock ('.$product->stock_quantity.' left)' }}</span>
-                        @auth
-                            <form action="{{ route('favorite.toggle', ['type' => 'product', 'id' => $product->id]) }}" method="POST" class="ml-image-fav">
-                                @csrf
-                                <button type="submit" class="ml-favorite-btn" aria-label="{{ $favoritedProductIds->contains($product->id) ? 'Remove from favorites' : 'Save product' }}">
-                                    <i class="fa-{{ $favoritedProductIds->contains($product->id) ? 'solid' : 'regular' }} fa-heart"></i>
-                                </button>
-                            </form>
-                        @else
-                            <a href="{{ route('login') }}" class="ml-favorite-btn ml-image-fav" aria-label="Save product"><i class="fa-regular fa-heart"></i></a>
-                        @endauth
-                    </div>
-                    <div class="ml-media-card__body">
-                        <span class="small text-muted">{{ $product->farmer->stall_name ?? $product->farmer->business_name ?? '' }}</span>
-                        <h6>{{ $product->name }}</h6>
-                        <strong class="text-success">Rs. {{ number_format($product->price, 0) }} <span class="fw-normal text-muted small">/ {{ $product->unit }}</span></strong>
-                        <a href="{{ url('/products/'.$product->id) }}" class="text-center small ml-btn-link justify-content-center mt-1">View Product</a>
-                    </div>
-                </div>
-            </div>
-            @empty
-            <div class="col-12">
-                @include('Website.Partials.empty-state', [
-                    'icon' => 'fa-carrot',
-                    'title' => 'No Products Yet',
-                    'message' => 'Fresh listings will appear here as farmers publish their weekly stock.',
-                ])
-            </div>
-            @endforelse
-        </div>
-    </div>
-</section>
-
-<section class="ml-section">
-    <div class="ml-container">
-        <div class="ml-heading-block mx-auto text-center">
-            <span class="ml-eyebrow">Effortless Field-to-Stall Process</span>
-            <h2>How MarketLink Works</h2>
-            <p class="mx-auto">A simple 4-step farmer-to-community reservation system. No couriers or delivery wait times, just fresh harvest packed for you.</p>
-        </div>
-        <div class="row g-4 text-center">
-            <div class="col-6 col-lg-3">
-                <div class="ml-step">
-                    <div class="ml-step__icon"><i class="fa-solid fa-magnifying-glass"></i></div>
-                    <h6>Discover</h6>
-                    <p class="text-muted small">Find nearby farmers markets and certified regional growers active in your neighbourhood.</p>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="ml-step">
-                    <div class="ml-step__icon"><i class="fa-solid fa-list-check"></i></div>
-                    <h6>Browse</h6>
-                    <p class="text-muted small">Explore live weekly product listings and real-time stocks as harvested before market day.</p>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="ml-step">
-                    <div class="ml-step__icon"><i class="fa-solid fa-bookmark"></i></div>
-                    <h6>Reserve</h6>
-                    <p class="text-muted small">Add seasonal produce to your reservation and select your preferred market day pickup.</p>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="ml-step">
-                    <div class="ml-step__icon"><i class="fa-solid fa-basket-shopping"></i></div>
-                    <h6>Pick Up</h6>
-                    <p class="text-muted small">Collect your packed box directly from the grower at their stall and pay them seamlessly in person.</p>
-                </div>
-            </div>
-        </div>
-        <div class="text-center mt-4">
-            <span class="ml-badge ml-badge-mint"><i class="fa-solid fa-circle-check"></i> Market pickup only &middot; Direct payment to farmers at the stall &middot; Zero middleman fees</span>
-        </div>
-    </div>
-</section>
-
-<section class="ml-section ml-section--muted">
-    <div class="ml-container">
-        <div class="ml-heading-block mb-4">
-            <span class="ml-eyebrow">Interactive Geographic Locator</span>
-            <h2>Find Markets &amp; Farmers Near You</h2>
-            <p>Locate authorized pickup stalls, check market schedules, and map out your next pickup route.</p>
-        </div>
-        <div class="row g-4">
-            <div class="col-lg-5">
-                <form class="ml-filter-panel mb-3" action="{{ url('/markets') }}" method="GET">
-                    <input type="text" name="q" class="form-control" placeholder="Search by area or market name...">
-                </form>
-                @forelse($markets as $market)
-                <div class="ml-card mb-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{{ $market->name }}</strong>
-                        <p class="small text-muted mt-1">{{ $market->market_farmers_count }} Active Farmers &middot; {{ $market->start_time }} - {{ $market->end_time }}</p>
-                    </div>
-                    <a href="{{ url('/markets/'.$market->id) }}" class="ml-btn-link">View</a>
-                </div>
-                @empty
-                <p class="text-muted small">No markets to show yet.</p>
-                @endforelse
-            </div>
-            <div class="col-lg-7">
-                <div class="ml-map">
-                    <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=60" alt="Map of markets">
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="ml-section">
-    <div class="ml-container">
-        <div class="ml-heading-block mx-auto text-center">
-            <span class="ml-eyebrow">Community Impact</span>
-            <h2>Why Choose MarketLink?</h2>
-            <p class="mx-auto">Eliminating industrial cold storage and food-miles in favor of transparent, nutritious harvest directly from nearby fields.</p>
-        </div>
-        <div class="row g-4 text-center">
-            <div class="col-6 col-lg-3">
-                <div class="ml-step__icon mx-auto"><i class="fa-solid fa-handshake"></i></div>
-                <h6 class="mt-3">Support Local Farmers</h6>
-                <p class="text-muted small">Help local growers connect directly with neighbourhood shoppers and retain more from their harvest.</p>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="ml-step__icon mx-auto"><i class="fa-solid fa-carrot"></i></div>
-                <h6 class="mt-3">Fresh Local Produce</h6>
-                <p class="text-muted small">Enjoy vegetables and fruit harvested just hours prior to market pickup, preserving flavor and nutrients.</p>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="ml-step__icon mx-auto"><i class="fa-regular fa-bookmark"></i></div>
-                <h6 class="mt-3">Reserve Before Market Day</h6>
-                <p class="text-muted small">Guarantee supply of high-demand varieties without offering last-minute sell-outs before arrival.</p>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="ml-step__icon mx-auto"><i class="fa-solid fa-store"></i></div>
-                <h6 class="mt-3">Convenient Pickup</h6>
-                <p class="text-muted small">Skip long lines. Your pre-packaged crate is waiting at the stall with your items on arrival.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="ml-section">
-    <div class="ml-container">
-        <div class="ml-cta-banner text-center">
-            <span class="ml-badge ml-badge-mint mb-3"><i class="fa-solid fa-leaf"></i> Ready to Shop Local?</span>
-            <h2>Ready to Shop Local?</h2>
-            <p class="mt-2 mb-4" style="color: rgba(255,255,255,0.85);">Discover fresh seasonal harvest from verified farmers and reserve your weekly favourites before market stalls open.</p>
-            <div class="d-flex justify-content-center gap-3 flex-wrap">
-                <a href="{{ url('/markets') }}" class="btn ml-btn-primary">Explore Markets</a>
-                <a href="{{ url('/register') }}" class="btn ml-btn-secondary">Become a Farmer</a>
-            </div>
-        </div>
-    </div>
-</section>
-
+    <section class="ml-container home-final"><div><span class="shop-kicker">MAKE YOUR NEXT BASKET LOCAL</span><h2>Good things are<br><em>growing near you.</em></h2><p>Find your favourites. Choose your pickup. See you at the market.</p></div><div><a href="{{ url('/products') }}" class="shop-pill">Explore fresh produce <span>↗</span></a><a href="{{ route('register') }}" class="home-text-link">Have a harvest to share? Join us <span>↗</span></a></div><i class="fa-solid fa-seedling" aria-hidden="true"></i></section>
+</div>
+@endsection
+@section('page_scripts')
+<script src="https://cdn.jsdelivr.net/npm/swiper@14.2.0/swiper-bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="{{ asset('Assets/Website_Asset/js/home.js') }}" defer></script>
 @endsection

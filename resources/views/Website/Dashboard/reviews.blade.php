@@ -1,61 +1,9 @@
-@extends('Website._master')
-
-@section('page_title', 'My Reviews')
-
-@section('body')
-
-<div class="ml-container">
-    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ route('customer_dashboard') }}">Dashboard</a> / <span class="active">My Reviews</span></nav>
-</div>
-
-<section class="ml-section pt-2">
-    <div class="ml-container">
-        @include('Website.Partials.alerts')
-
-        <div class="row g-4">
-            <div class="col-lg-3">
-                @include('Website.Dashboard._sidebar')
-            </div>
-
-            <div class="col-lg-9">
-                @if($reviews->isEmpty())
-                @include('Website.Partials.empty-state', [
-                    'icon' => 'fa-comment-slash',
-                    'title' => 'No Reviews Yet',
-                    'message' => 'Reviews you submit for farmers and products will appear here.',
-                ])
-                @else
-                @foreach($reviews as $review)
-                <div class="ml-card mb-3">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                        <div>
-                            <span class="ml-badge ml-badge-mint">{{ $review->product ? 'Product Review' : 'Farmer Review' }}</span>
-                            <strong class="d-block mt-1">{{ $review->product->name ?? ($review->farmer->stall_name ?? $review->farmer->business_name ?? '') }}</strong>
-                            <span class="small text-muted">{{ $review->farmer->stall_name ?? $review->farmer->business_name ?? '' }}</span>
-                        </div>
-                        <div class="text-end">
-                            <div class="ml-rating small">
-                                @for($i = 1; $i <= 5; $i++)
-                                    <i class="fa-solid fa-star {{ $i > $review->rating ? 'text-muted' : '' }}"></i>
-                                @endfor
-                            </div>
-                            <span class="small text-muted">{{ $review->created_at->format('d M Y') }}</span>
-                        </div>
-                    </div>
-                    <p class="small text-muted mt-2 mb-0">{{ $review->comment }}</p>
-                    @if($review->reply)
-                    <div class="mt-2 pt-2" style="border-top:1px solid var(--ml-border);">
-                        <span class="small text-success d-block"><i class="fa-solid fa-reply"></i> Farmer replied</span>
-                        <span class="small text-muted">{{ $review->reply->response }}</span>
-                    </div>
-                    @endif
-                </div>
-                @endforeach
-                @include('Website.Partials.pagination', ['paginator' => $reviews])
-                @endif
-            </div>
-        </div>
-    </div>
-</section>
-
+@extends('Website.Dashboard._layout')
+@section('page_title', 'My reviews')
+@section('banner_title', 'Good food deserves a word.')
+@section('banner_text', 'Share your pickup experience and help your community discover local favorites.')
+@section('banner_icon', 'fa-star')
+@section('account_content')
+@if($reviewableItems->isNotEmpty())<section class="customer-panel account-review-form"><h2>How was your fresh pick?</h2><p class="customer-muted">Review an item from a completed pickup. Submitting again updates your review.</p><form method="POST" action="{{ route('customer_review_store') }}">@csrf<div class="account-form-grid"><div><label for="review-item" class="customer-field-label">Your purchased item</label><select id="review-item" name="item_id" class="customer-select" required>@foreach($reviewableItems as $item)<option value="{{ $item->id }}" @selected(old('item_id') == $item->id)>{{ $item->product->name }} · Order #{{ $item->order_id }}</option>@endforeach</select></div><div><label for="review-rating" class="customer-field-label">Your rating</label><select id="review-rating" name="rating" class="customer-select" required>@foreach([5=>'Loved it',4=>'Really good',3=>'It was okay',2=>'Could be better',1=>'Disappointed'] as $score=>$label)<option value="{{ $score }}" @selected(old('rating',5) == $score)>{{ $score }} / 5 · {{ $label }}</option>@endforeach</select></div></div><label for="review-comment" class="customer-field-label">Your experience</label><textarea id="review-comment" name="comment" rows="4" class="form-control" maxlength="2000" required placeholder="What did you enjoy about your market pickup?">{{ old('comment') }}</textarea><button class="customer-button mt-3">Share your review ↗</button></form></section>@endif
+<div class="account-order-grid">@forelse($reviews as $review)<article class="customer-panel"><span class="customer-eyebrow">{{ $review->created_at->format('d M Y') }}</span><h2 class="account-card-title">{{ $review->product?->name ?? $review->farmer?->stall_name }}</h2><p class="account-stars" aria-label="{{ $review->rating }} out of 5 stars">{{ str_repeat('★',$review->rating) }}{{ str_repeat('☆',5-$review->rating) }}</p><p>{{ $review->comment }}</p>@if($review->reply)<div class="account-pickup-box"><strong>A note from your grower</strong><p>{{ $review->reply->response }}</p></div>@endif<a class="customer-text-link" href="{{ $review->product ? url('/products/'.$review->product_id) : url('/farmers/'.$review->farmer_id) }}">Visit again ↗</a></article>@empty<div class="customer-panel customer-empty"><i class="fa-regular fa-star"></i><h2>Your story starts at pickup.</h2><p>Once you collect a pre-order, you can review its products here.</p><a class="customer-button" href="{{ route('customer_orders') }}">View your pre-orders ↗</a></div>@endforelse</div>@include('Website.Partials.pagination',['paginator'=>$reviews])
 @endsection

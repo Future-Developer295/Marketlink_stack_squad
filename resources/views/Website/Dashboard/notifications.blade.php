@@ -1,55 +1,8 @@
-@extends('Website._master')
-
-@section('page_title', 'Notifications')
-
-@section('body')
-
-<div class="ml-container">
-    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ route('customer_dashboard') }}">Dashboard</a> / <span class="active">Notifications</span></nav>
-</div>
-
-<section class="ml-section pt-2">
-    <div class="ml-container">
-        @include('Website.Partials.alerts')
-
-        <div class="row g-4">
-            <div class="col-lg-3">
-                @include('Website.Dashboard._sidebar')
-            </div>
-
-            <div class="col-lg-9">
-                @if($notifications->isEmpty())
-                @include('Website.Partials.empty-state', [
-                    'icon' => 'fa-bell',
-                    'title' => 'No Notifications',
-                    'message' => 'Updates about your orders and account will appear here.',
-                ])
-                @else
-                <div class="ml-card">
-                    @foreach($notifications as $notification)
-                    <div class="d-flex justify-content-between align-items-start gap-3 py-3" style="border-top:1px solid var(--ml-border);">
-                        <div class="d-flex gap-3">
-                            <i class="fa-solid {{ $notification->is_read ? 'fa-bell text-muted' : 'fa-bell text-success' }} mt-1"></i>
-                            <div>
-                                <strong>{{ $notification->title }}</strong>
-                                <p class="small text-muted mb-1">{{ $notification->message }}</p>
-                                <span class="small text-muted">{{ $notification->created_at->diffForHumans() }}</span>
-                            </div>
-                        </div>
-                        @unless($notification->is_read)
-                        <form method="POST" action="{{ route('customer_notification_read', $notification->id) }}">
-                            @csrf
-                            <button type="submit" class="ml-btn-link small">Mark as Read</button>
-                        </form>
-                        @endunless
-                    </div>
-                    @endforeach
-                </div>
-                @include('Website.Partials.pagination', ['paginator' => $notifications])
-                @endif
-            </div>
-        </div>
-    </div>
-</section>
-
+@extends('Website.Dashboard._layout')
+@section('page_title', 'Updates')
+@section('banner_title', 'A little heads-up.')
+@section('banner_text', 'Pickup news, fresh arrivals, and updates from your local world.')
+@section('banner_icon', 'fa-bell')
+@section('account_content')
+<section class="customer-panel">@forelse($notifications as $notification)<article class="account-update {{ !$notification->is_read ? 'is-unread' : '' }}"><span class="discovery-icon"><i class="fa-regular fa-bell"></i></span><div><span class="customer-eyebrow">{{ $notification->is_read ? 'READ' : 'NEW UPDATE' }}</span><h2>{{ $notification->title }}</h2><p>{{ $notification->message }}</p><time class="customer-muted">{{ $notification->created_at->diffForHumans() }}</time>@if($notification->type === 'restock')<p><a class="customer-text-link" href="{{ route('customer_favorites') }}">Explore your favorites ↗</a></p>@endif</div>@unless($notification->is_read)<form method="POST" action="{{ route('customer_notification_read',$notification) }}">@csrf<button class="customer-button customer-button-light customer-button-small">Mark as read</button></form>@endunless</article>@empty<div class="customer-empty"><i class="fa-regular fa-bell"></i><h2>You are all caught up.</h2><p>Your latest updates will appear here.</p><a href="{{ route('customer_orders') }}" class="customer-button">Check your pre-orders ↗</a></div>@endforelse</section>@include('Website.Partials.pagination',['paginator'=>$notifications])
 @endsection

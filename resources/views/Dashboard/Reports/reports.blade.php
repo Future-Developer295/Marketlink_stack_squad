@@ -61,179 +61,49 @@ active
 <div class="panel">
 
 
-<div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+<div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
 
     <span class="panel-title">
         <i class="bi bi-folder2-open"></i> Generated Reports
     </span>
 
-    <div style="display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap;">
+    <form action="{{ route('reports') }}" method="GET" style="margin:0">
 
-        <form action="{{ route('reports') }}" method="GET"
-              style="margin:0; display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap;">
+        <select name="report_type"
+                class="field-input"
+                onchange="this.form.submit()"
+                style="width:220px;">
 
-            <div class="field" style="margin:0;">
-                <label class="field-label">Type</label>
-                <select name="report_type" class="field-input" style="width:180px;">
+            <option value="all"
+                {{ !request('report_type') || request('report_type') == 'all' ? 'selected' : '' }}>
+                All Reports
+            </option>
 
-                    <option value="all"
-                        {{ !request('report_type') || request('report_type') == 'all' ? 'selected' : '' }}>
-                        All Reports
-                    </option>
+            <option value="sales"
+                {{ request('report_type') == 'sales' ? 'selected' : '' }}>
+                Sales Summary
+            </option>
 
-                    <option value="sales"
-                        {{ request('report_type') == 'sales' ? 'selected' : '' }}>
-                        Sales Summary
-                    </option>
+            <option value="orders"
+                {{ request('report_type') == 'orders' ? 'selected' : '' }}>
+                Orders
+            </option>
 
-                    <option value="orders"
-                        {{ request('report_type') == 'orders' ? 'selected' : '' }}>
-                        Orders
-                    </option>
+            <option value="farmers"
+                {{ request('report_type') == 'farmers' ? 'selected' : '' }}>
+                Farmer Activity
+            </option>
 
-                    <option value="farmers"
-                        {{ request('report_type') == 'farmers' ? 'selected' : '' }}>
-                        Farmer Activity
-                    </option>
+            <option value="products"
+                {{ request('report_type') == 'products' ? 'selected' : '' }}>
+                Product Inventory
+            </option>
 
-                    <option value="products"
-                        {{ request('report_type') == 'products' ? 'selected' : '' }}>
-                        Product Inventory
-                    </option>
+        </select>
 
-                </select>
-            </div>
-
-            <div class="field" style="margin:0;">
-                <label class="field-label">Date From</label>
-                <input type="date" name="date_from" class="field-input"
-                       style="width:160px;"
-                       value="{{ request('date_from') }}">
-            </div>
-
-            <div class="field" style="margin:0;">
-                <label class="field-label">Date To</label>
-                <input type="date" name="date_to" class="field-input"
-                       style="width:160px;"
-                       value="{{ request('date_to') }}">
-            </div>
-
-            <button type="submit" class="btn-primary" style="height:38px;">
-                <i class="bi bi-funnel"></i> Filter
-            </button>
-
-            @if(request('report_type') || request('date_from') || request('date_to'))
-                <a href="{{ route('reports') }}" class="btn-ghost sm" style="height:38px; display:inline-flex; align-items:center;">
-                    Clear
-                </a>
-            @endif
-
-        </form>
-
-        <details class="export-dropdown">
-            <summary class="btn-ghost" style="height:38px;">
-                <i class="bi bi-download"></i> Export <i class="bi bi-chevron-down"></i>
-            </summary>
-
-            <div class="export-dropdown-menu">
-
-                <a href="{{ route('reports_export', array_merge(request()->query(), ['format' => 'pdf'])) }}">
-                    <i class="bi bi-file-earmark-pdf"></i>
-                    <span>
-                        Export as PDF
-                        <small>All data in one file</small>
-                    </span>
-                </a>
-
-                <a href="{{ route('reports_export', array_merge(request()->query(), ['format' => 'xlsx'])) }}">
-                    <i class="bi bi-file-earmark-excel"></i>
-                    <span>
-                        Export as Excel
-                        <small>Separate table per report type</small>
-                    </span>
-                </a>
-
-            </div>
-        </details>
-
-    </div>
+    </form>
 
 </div>
-
-<style>
-    .export-dropdown {
-        position: relative;
-    }
-
-    .export-dropdown summary {
-        list-style: none;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .export-dropdown summary::-webkit-details-marker {
-        display: none;
-    }
-
-    .export-dropdown-menu {
-        position: absolute;
-        right: 0;
-        top: 44px;
-        background: #ffffff;
-        border: 1px solid #e1e7e3;
-        border-radius: 8px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        min-width: 240px;
-        z-index: 20;
-        padding: 6px;
-    }
-
-    .export-dropdown-menu a {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 12px;
-        border-radius: 6px;
-        color: #263238;
-        text-decoration: none;
-        font-size: 13.5px;
-    }
-
-    .export-dropdown-menu a:hover {
-        background: #f0f9f4;
-    }
-
-    .export-dropdown-menu small {
-        display: block;
-        color: #8a949d;
-        font-size: 11px;
-        font-weight: normal;
-    }
-
-    .row-export-dropdown {
-        position: relative;
-        display: inline-block;
-    }
-
-    .row-export-dropdown summary {
-        list-style: none;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    .row-export-dropdown summary::-webkit-details-marker {
-        display: none;
-    }
-
-    .row-export-dropdown .export-dropdown-menu {
-        top: 32px;
-        min-width: 130px;
-    }
-</style>
 
 <div class="tbl-wrap">
 
@@ -278,27 +148,13 @@ active
                 </td>
 
                 <td>
-                    <details class="row-export-dropdown">
-                        <summary class="btn-ghost sm">
-                            <i class="bi bi-download"></i>
-                            Download
-                            <i class="bi bi-chevron-down"></i>
-                        </summary>
+                    <a class="btn-ghost sm"
+                       href="{{ route('report_download', $report->id) }}">
 
-                        <div class="export-dropdown-menu">
+                        <i class="bi bi-download"></i>
+                        Download
 
-                            <a href="{{ route('report_download', ['id' => $report->id, 'format' => 'pdf']) }}">
-                                <i class="bi bi-file-earmark-pdf"></i>
-                                <span>PDF</span>
-                            </a>
-
-                            <a href="{{ route('report_download', ['id' => $report->id, 'format' => 'xlsx']) }}">
-                                <i class="bi bi-file-earmark-excel"></i>
-                                <span>Excel</span>
-                            </a>
-
-                        </div>
-                    </details>
+                    </a>
                 </td>
 
             </tr>

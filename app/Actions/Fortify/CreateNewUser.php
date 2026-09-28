@@ -2,12 +2,12 @@
 
 namespace App\Actions\Fortify;
 
-use App\Models\FarmerProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
+use Spatie\Permission\Models\Role;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -23,8 +23,8 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'address' => ['required', 'string'],
+            'phone' => ['required', 'string', 'max:20'],
+            'address' => ['required', 'string', 'max:500'],
             'role' => ['required', 'in:farmer,customer'],
             'password' => $this->passwordRules(),
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
@@ -33,35 +33,14 @@ class CreateNewUser implements CreatesNewUsers
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
-            'phone' => $input['phone'] ?? null,
+            'phone' => $input['phone'],
             'address' => $input['address'],
             'role' => $input['role'],
             'password' => Hash::make($input['password']),
-            'is_active' => true,
         ]);
 
-        $user->syncRoles([$input['role']]);
-
-        if ($input['role'] === 'farmer') {
-            FarmerProfile::firstOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'stall_name' => $user->name,
-                    'business_name' => $user->name,
-                    'description' => 'Farmer profile pending completion.',
-                    'address' => $user->address ?: 'N/A',
-                    'city' => 'N/A',
-                    'state' => 'N/A',
-                    'country' => 'N/A',
-                    'latitude' => 0,
-                    'longitude' => 0,
-                    'operating_days' => 'Mon',
-                    'start_time' => '09:00:00',
-                    'end_time' => '17:00:00',
-                    'approval_status' => 'pending',
-                ]
-            );
-        }
+        Role::firstOrCreate(['name' => $input['role'], 'guard_name' => 'web']);
+        $user->assignRole($input['role']);
 
         return $user;
     }

@@ -35,7 +35,7 @@
                 <div class="nav-group-label">MAIN</div>
 
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view dashboard')): ?>
-                    <a class="nav-link-custom <?php echo $__env->yieldContent('nav_dashboard_farmer'); ?>" href="<?php echo e(route('dashboard')); ?>">
+                    <a class="nav-link-custom <?php echo $__env->yieldContent('nav_dashboard_farmer'); ?>" href="<?php echo e(route('index')); ?>">
                         <i class="bi bi-grid-1x2-fill"></i> Farmer Dashboard
                     </a>
                 <?php endif; ?>
@@ -46,40 +46,33 @@
                     </a>
                 <?php endif; ?>
 
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('role', 'farmer')): ?>
+                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view profile')): ?>
                     <div class="nav-group-label">ACCOUNT</div>
+                    <a class="nav-link-custom <?php echo $__env->yieldContent('nav_profile'); ?>" href="<?php echo e(route('my_profile')); ?>">
+                        <i class="bi bi-person-badge-fill"></i> My Profile
+                    </a>
+                <?php endif; ?>
 
-                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view profile')): ?>
-                        <a class="nav-link-custom <?php echo $__env->yieldContent('nav_profile'); ?>" href="<?php echo e(route('my_profile')); ?>">
-                            <i class="bi bi-person-badge-fill"></i> My Profile
-                        </a>
-                    <?php endif; ?>
-
-                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['view markets', 'join markets'])): ?>
-                        <details class="nav-dropdown">
-                            <summary>
-                                <i class="bi bi-shop-window nav-ic"></i> My Markets
-                                <i class="bi bi-chevron-down chevron"></i>
-                            </summary>
-
-                            <div class="nav-sub">
-
-                                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view markets')): ?>
-                                    <a class="nav-sublink <?php echo $__env->yieldContent('nav_my_markets_list'); ?>" href="<?php echo e(route('my_markets')); ?>">
-                                        <i class="bi bi-list-ul"></i> Market Listing
-                                    </a>
-                                <?php endif; ?>
-
-                                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('join markets')): ?>
-                                    <a class="nav-sublink <?php echo $__env->yieldContent('nav_my_markets_add'); ?>" href="<?php echo e(route('my_markets_join')); ?>">
-                                        <i class="bi bi-plus-lg"></i> Join Market
-                                    </a>
-                                <?php endif; ?>
-
-                            </div>
-                        </details>
-                    <?php endif; ?>
-                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['view markets', 'join markets'])): ?>
+                    <details class="nav-dropdown">
+                        <summary>
+                            <i class="bi bi-shop-window nav-ic"></i> My Markets
+                            <i class="bi bi-chevron-down chevron"></i>
+                        </summary>
+                        <div class="nav-sub">
+                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view markets')): ?>
+                                <a class="nav-sublink <?php echo $__env->yieldContent('nav_my_markets_list'); ?>" href="<?php echo e(route('my_markets')); ?>">
+                                    <i class="bi bi-list-ul"></i> Market Listing
+                                </a>
+                            <?php endif; ?>
+                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('join markets')): ?>
+                                <a class="nav-sublink <?php echo $__env->yieldContent('nav_my_markets_add'); ?>" href="<?php echo e(route('my_markets_join')); ?>">
+                                    <i class="bi bi-plus-lg"></i> Join Market
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </details>
+                <?php endif; ?>
 
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['view categories', 'view products'])): ?>
                     <div class="nav-group-label">CATALOG</div>
@@ -155,12 +148,6 @@
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view orders')): ?>
                     <a class="nav-link-custom <?php echo $__env->yieldContent('nav_orders'); ?>" href="<?php echo e(route('orders')); ?>">
                         <i class="bi bi-cart-check-fill"></i> Orders
-                    </a>
-                <?php endif; ?>
-
-                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view product sales analytics')): ?>
-                    <a class="nav-link-custom <?php echo $__env->yieldContent('nav_product_sales_analytics'); ?>" href="<?php echo e(route('product_sales_analytics')); ?>">
-                        <i class="bi bi-graph-up-arrow"></i> Product Sales Analytics
                     </a>
                 <?php endif; ?>
 
@@ -281,21 +268,9 @@
                     </a>
                 <?php endif; ?>
 
-                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view farmer leaderboard')): ?>
-                    <a class="nav-link-custom <?php echo $__env->yieldContent('nav_farmer_leaderboard'); ?>" href="<?php echo e(route('farmer_leaderboard')); ?>">
-                        <i class="bi bi-trophy-fill"></i> Farmer Leaderboard
-                    </a>
-                <?php endif; ?>
-
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view customers')): ?>
                     <a class="nav-link-custom <?php echo $__env->yieldContent('nav_customers'); ?>" href="<?php echo e(route('customers')); ?>">
                         <i class="bi bi-person-lines-fill"></i> Customers
-                    </a>
-                <?php endif; ?>
-
-                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view low stock alerts')): ?>
-                    <a class="nav-link-custom <?php echo $__env->yieldContent('nav_low_stock'); ?>" href="<?php echo e(route('low_stock_alerts')); ?>">
-                        <i class="bi bi-exclamation-triangle-fill"></i> Low Stock Alerts
                     </a>
                 <?php endif; ?>
 
@@ -333,18 +308,6 @@
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view reports')): ?>
                     <a class="nav-link-custom <?php echo $__env->yieldContent('nav_reports'); ?>" href="<?php echo e(route('reports')); ?>">
                         <i class="bi bi-bar-chart-line-fill"></i> Reports
-                    </a>
-                <?php endif; ?>
-
-                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view activity log')): ?>
-                    <a class="nav-link-custom <?php echo $__env->yieldContent('nav_activity_log'); ?>" href="<?php echo e(route('activity_log')); ?>">
-                        <i class="bi bi-clock-history"></i> Activity Log
-                    </a>
-                <?php endif; ?>
-
-                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view commission tracking')): ?>
-                    <a class="nav-link-custom <?php echo $__env->yieldContent('nav_commission_tracking'); ?>" href="<?php echo e(route('commission_tracking')); ?>">
-                        <i class="bi bi-percent"></i> Commission Tracking
                     </a>
                 <?php endif; ?>
 
@@ -414,7 +377,6 @@
         </div>
 
         <script src="<?php echo e(asset('Assets/Dashboard_Asset/js/theme-change.js')); ?>"></script>
-        <script src="<?php echo e(asset('Assets/Dashboard_Asset/js/ajax-search.js')); ?>"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
         <script>
             function toggleUserMenu() {
