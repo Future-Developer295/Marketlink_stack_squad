@@ -1,35 +1,37 @@
 <?php
 
+use App\Mail\EmailVerificationCodeMail;
+use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Fortify\Features;
-use Laravel\Jetstream\Jetstream;
+use Spatie\Permission\Models\Role;
 
 test('registration screen can be rendered', function () {
-    $response = $this->get('/register');
-
-    $response->assertStatus(200);
+    $this->get('/register')->assertStatus(200);
 })->skip(function () {
     return ! Features::enabled(Features::registration());
 }, 'Registration support is not enabled.');
 
-test('registration screen cannot be rendered if support is disabled', function () {
-    $response = $this->get('/register');
+test('new users register, get an emailed code and are NOT logged in', function () {
+    Mail::fake();
+    Role::findOrCreate('customer', 'web');
 
-    $response->assertStatus(404);
-})->skip(function () {
-    return Features::enabled(Features::registration());
-}, 'Registration support is enabled.');
-
-test('new users can register', function () {
     $response = $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-        'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature(),
+        'phone' => '03001234567',
+        'address' => 'Karachi, Pakistan',
+        'role' => 'customer',
+        'password' => 'password-1234',
+        'password_confirmation' => 'password-1234',
+        'terms' => true,
     ]);
 
-    $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $this->assertGuest();
+    $response->assertRedirect(route('verification.notice'));
+
+    expect(User::where('email', 'test@example.com')->first()->hasVerifiedEmail())->toBeFalse();
+    Mail::assertSent(EmailVerificationCodeMail::class, 1);
 })->skip(function () {
     return ! Features::enabled(Features::registration());
 }, 'Registration support is not enabled.');
