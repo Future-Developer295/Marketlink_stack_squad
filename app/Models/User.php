@@ -47,6 +47,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'email_otp_hash',
         'two_factor_recovery_codes',
         'two_factor_secret',
     ];
@@ -69,6 +70,9 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_otp_expires_at' => 'datetime',
+            'email_otp_sent_at' => 'datetime',
+            'email_otp_attempts' => 'integer',
             'password' => 'hashed',
             'is_active' => 'boolean',
         ];
