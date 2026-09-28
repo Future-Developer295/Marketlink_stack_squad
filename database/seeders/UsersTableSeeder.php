@@ -14,6 +14,8 @@ class UsersTableSeeder extends Seeder
         // batch insert, so re-running `php artisan migrate --seed` on a database
         // that was already seeded updates these rows instead of throwing a
         // "Duplicate entry ... users_email_unique" error.
+        // Seeded demo accounts are pre-verified so they can log in without the
+        // email OTP step (email_verified_at is set in the loop below).
         $users = [
             [
                 'name' => 'Admin User',
@@ -74,7 +76,7 @@ class UsersTableSeeder extends Seeder
         foreach ($users as $user) {
             DB::table('users')->updateOrInsert(
                 ['email' => $user['email']],
-                $user + ['updated_at' => now(), 'created_at' => now()]
+                $user + ['email_verified_at' => now(), 'updated_at' => now(), 'created_at' => now()]
             );
         }
     }
