@@ -23,29 +23,24 @@
                     <i class="bi bi-search"></i>
 
                     <input type="text" name="q" value="{{ request('q') }}" placeholder="Search...">
-
-                    @if (request('q'))
-                        <a href="{{ route('products') }}" class="search-clear" title="Clear search">
-                            <i class="bi bi-x-lg"></i>
-                        </a>
-                    @endif
                 </form>
-                @can('add products')
-                    <a class="btn-primary" href="{{ route('product_add') }}">
-                        <i class="bi bi-plus-lg"></i>
-                        Add Product
-                    </a>
-                @endcan
+
+                <a class="btn-primary" href="{{ route('product_add') }}">
+                    <i class="bi bi-plus-lg"></i>
+                    Add Product
+                </a>
 
             </div>
 
         </div>
 
 
-        @if (session('success'))
+        @if(session('success'))
+
             <div style="padding: 12px 22px; color: green;">
                 {{ session('success') }}
             </div>
+
         @endif
 
 
@@ -68,10 +63,11 @@
 
 
                 <tbody>
-                    <?php
-                    $index = 1;
+                    <?php 
+    $index = 1;
                     ?>
                     @forelse($products as $product)
+
                         <tr>
 
                             <td>
@@ -87,11 +83,14 @@
 
                                     <div class="prod-img">
 
-                                        @if ($product->image)
-                                            <img src="{{ asset('product_images/' . $product->image) }}"
-                                                alt="{{ $product->name }}">
+                                        @if($product->image)
+
+                                            <img src="{{ asset('product_images/' . $product->image) }}" alt="{{ $product->name }}">
+
                                         @else
+
                                             <i class="bi bi-box-seam"></i>
+
                                         @endif
 
                                     </div>
@@ -113,10 +112,14 @@
 
                             </td>
 
+
+                            {{-- Farmer --}}
                             <td>
                                 {{ $product->farmer->name ?? 'N/A' }}
                             </td>
 
+
+                            {{-- Category --}}
                             <td>
 
                                 <span class="badge-cat">
@@ -125,6 +128,8 @@
 
                             </td>
 
+
+                            {{-- Price --}}
                             <td>
 
                                 <span class="price-mono">
@@ -134,6 +139,7 @@
                             </td>
 
 
+                            {{-- Stock --}}
                             <td>
 
                                 <span class="qty-tag">
@@ -142,50 +148,54 @@
 
                             </td>
 
+
+                            {{-- Status --}}
                             <td>
 
-                                @if ($product->is_active)
+                                @if($product->is_active)
+
                                     <span class="badge bg-success">
                                         Active
                                     </span>
+
                                 @else
+
                                     <span class="badge bg-secondary">
                                         Inactive
                                     </span>
+
                                 @endif
 
                             </td>
 
+
+                            {{-- Actions --}}
                             <td>
+
                                 <div class="action-wrap">
 
-                                    @can('view products')
-                                        <a class="btn-ghost sm" href="{{ route('product_view', $product->id) }}"
-                                            title="View">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    @endcan
+                                    <a class="btn-ghost sm" href="{{ route('product_view', $product->id) }}" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
 
-                                    @can('edit products')
-                                        <a class="btn-ghost sm" href="{{ route('product_edit', $product->id) }}"
-                                            title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                    @endcan
 
-                                    @can('delete products')
-                                        <form action="{{ route('product_delete', $product->id) }}" method="POST"
-                                            style="display:inline">
-                                            @csrf
+                                    <a class="btn-ghost sm" href="{{ route('product_edit', $product->id) }}" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
 
-                                            <button class="btn-ghost sm danger" type="submit" title="Delete"
-                                                onclick="return confirm('Are you sure you want to delete this product?')">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    @endcan
+
+                                    <form action="{{ route('product_delete', $product->id) }}" method="POST"
+                                        style="display:inline">
+                                        @csrf
+
+                                        <button class="btn-ghost sm danger" type="submit" title="Delete"
+                                            onclick="return confirm('Are you sure you want to delete this product?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
 
                                 </div>
+
                             </td>
 
                         </tr>
@@ -210,6 +220,7 @@
                             </td>
 
                         </tr>
+
                     @endforelse
 
                 </tbody>

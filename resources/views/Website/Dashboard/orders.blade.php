@@ -1,85 +1,9 @@
-@extends('Website._master')
-
-@section('page_title', 'My Orders')
-
-@section('body')
-
-<div class="ml-container">
-    <nav class="ml-breadcrumb"><a href="{{ url('/') }}">Home</a> / <a href="{{ route('customer_dashboard') }}">Dashboard</a> / <span class="active">My Orders</span></nav>
-</div>
-
-<section class="ml-section pt-2">
-    <div class="ml-container">
-        @include('Website.Partials.alerts')
-
-        <div class="row g-4">
-            <div class="col-lg-3">
-                @include('Website.Dashboard._sidebar')
-            </div>
-
-            <div class="col-lg-9">
-                <div class="ml-card mb-3">
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="{{ route('customer_orders') }}" class="ml-chip {{ request('status') ? '' : 'is-active' }}">All ({{ $statusCounts->sum() }})</a>
-                        @foreach($statusCounts as $status => $count)
-                        <a href="{{ route('customer_orders', ['status' => $status]) }}" class="ml-chip {{ request('status') == $status ? 'is-active' : '' }}">{{ \App\Models\Order::STATUS_LABELS[$status] ?? ucfirst($status) }} ({{ $count }})</a>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="ml-card">
-                    @if($orders->isEmpty())
-                    @include('Website.Partials.empty-state', [
-                        'icon' => 'fa-bag-shopping',
-                        'title' => 'No Orders Found',
-                        'message' => 'You have not placed any pre-orders yet.',
-                        'actionUrl' => url('/products'),
-                        'actionLabel' => 'Browse Products',
-                    ])
-                    @else
-                    <div class="table-responsive">
-                        <table class="table ml-table align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Order</th>
-                                    <th>Farmer</th>
-                                    <th>Items</th>
-                                    <th>Date</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($orders as $order)
-                                <tr>
-                                    <td>#{{ $order->id }}</td>
-                                    <td>{{ $order->farmer->stall_name ?? $order->farmer->business_name ?? '' }}</td>
-                                    <td>{{ $order->items->count() }}</td>
-                                    <td>{{ $order->order_date?->format('d M Y') }}</td>
-                                    <td>Rs. {{ number_format($order->total_amount, 0) }}</td>
-                                    <td><span class="ml-badge ml-badge-mint">{{ $order->statusLabel() }}</span></td>
-                                    <td>
-                                        <a href="{{ route('customer_order_detail', $order->id) }}" class="ml-btn-link small">View</a>
-                                        @if($order->status === 'picked_up')
-                                        <form method="POST" action="{{ route('customer_order_reorder', $order->id) }}" class="d-inline ms-2">
-                                            @csrf
-                                            <button type="submit" class="ml-btn-link small">Reorder</button>
-                                        </form>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    @endif
-                </div>
-
-                @include('Website.Partials.pagination', ['paginator' => $orders])
-            </div>
-        </div>
-    </div>
-</section>
-
+@extends('Website.Dashboard._layout')
+@section('page_title', 'My pre-orders')
+@section('banner_title', 'Good things, on the way.')
+@section('banner_text', 'From your first fresh pick to your next market morning.')
+@section('banner_icon', 'fa-bag-shopping')
+@section('account_content')
+<nav class="account-filters" aria-label="Filter pre-orders">@foreach([''=>'All pre-orders','active'=>'Active','pending'=>'Placed','confirmed'=>'Accepted','ready'=>'Ready for pickup','picked_up'=>'Completed','cancelled'=>'Cancelled'] as $status=>$label)<a class="{{ request('status', '') === $status ? 'is-selected' : '' }}" href="{{ route('customer_orders', $status ? ['status'=>$status] : []) }}">{{ $label }} <span>{{ $status === 'active' ? collect($statusCounts)->only(['pending','confirmed','ready'])->sum() : ($status ? ($statusCounts[$status] ?? 0) : $statusCounts->sum()) }}</span></a>@endforeach</nav>
+<div class="account-order-grid">@forelse($orders as $order)<article class="customer-panel"><div class="pickup-order-heading"><span class="order-number">PRE-ORDER #{{ $order->id }}</span><span class="customer-status status-{{ $order->status }}">{{ $order->statusLabel() }}</span></div><h2 class="account-card-title">{{ $order->farmer?->stall_name ?? 'Your local grower' }}</h2><p class="customer-muted">{{ $order->pickupSlot?->date?->format('D, d M Y') ?? 'Pickup date to be confirmed' }}<br>{{ $order->pickupSlot ? substr($order->pickupSlot->start_time,0,5).' – '.substr($order->pickupSlot->end_time,0,5).' '.config('app.timezone') : '' }}</p><p><i class="fa-solid fa-location-dot"></i> {{ $order->pickupSlot?->market?->name ?? 'Ask your grower for the pickup location' }}</p><div class="pickup-order-summary"><span>{{ $order->items->sum('quantity') }} items · Pay at pickup</span><strong>Rs. {{ number_format($order->total_amount) }}</strong></div><a class="customer-button" href="{{ route('customer_order_detail',$order) }}">View pre-order <span>↗</span></a></article>@empty<div class="customer-panel customer-empty"><i class="fa-solid fa-basket-shopping"></i><h2>A fresh start.</h2><p>No pre-orders in this view yet.</p><a href="{{ url('/products') }}" class="customer-button">Explore the harvest ↗</a></div>@endforelse</div>@include('Website.Partials.pagination',['paginator'=>$orders])
 @endsection

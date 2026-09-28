@@ -9,12 +9,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link href="<?php echo e(asset('Assets/Website_Asset/css/dashboard.css')); ?>" rel="stylesheet">
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/', 'dashboard/customer*')): ?>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/')): ?>
+        <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+        <link href="<?php echo e(asset('Assets/Website_Asset/css/shop.css')); ?>" rel="stylesheet">
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('dashboard/customer*')): ?>
+        <link href="<?php echo e(asset('Assets/Website_Asset/css/customer-dashboard.css')); ?>" rel="stylesheet">
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('markets*', 'farmers*')): ?>
+        <link href="<?php echo e(asset('Assets/Website_Asset/css/discovery.css')); ?>" rel="stylesheet">
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     <?php echo $__env->yieldContent('page_styles'); ?>
 </head>
 
-<body>
+<body class="<?php echo e(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/') ? 'harvest-shop' : ''); ?> <?php echo e(request()->is('dashboard/customer*') ? 'customer-area' : ''); ?>">
 
     <nav class="navbar navbar-expand-lg ml-navbar">
         <div class="ml-container d-flex align-items-center justify-content-between w-100">
@@ -40,40 +52,29 @@
                             href="<?php echo e(url('/products')); ?>">Products</a></li>
                     <li class="nav-item"><a class="nav-link ml-nav-link <?php echo e(request()->is('about*') ? 'active' : ''); ?>"
                             href="<?php echo e(url('/about')); ?>">About</a></li>
-                    <li class="nav-item"><a
-                            class="nav-link ml-nav-link <?php echo e(request()->is('contact*') ? 'active' : ''); ?>"
+                    <li class="nav-item"><a class="nav-link ml-nav-link <?php echo e(request()->is('contact*') ? 'active' : ''); ?>"
                             href="<?php echo e(url('/contact')); ?>">Contact</a></li>
                 </ul>
 
                 <div class="ml-navbar-actions">
-                    <button class="ml-icon-btn" type="button" aria-label="Search">
+                    <a class="ml-icon-btn" href="<?php echo e(url('/products').'#harvest'); ?>" aria-label="Search">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
+                    </a>
 
                     <a href="<?php echo e(url('/cart')); ?>" class="ml-icon-btn" aria-label="Cart">
                         <i class="fa-solid fa-cart-shopping"></i>
                         <?php ($cartCount = collect(session('cart', []))->sum()); ?>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($cartCount > 0): ?>
-                            <span class="ml-cart-badge"><?php echo e($cartCount); ?></span>
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <span class="ml-cart-badge" data-cart-count><?php echo e($cartCount); ?></span>
                     </a>
 
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->guard()->check()): ?>
-                        <a href="<?php echo e(route('customer_notifications')); ?>" class="ml-icon-btn" aria-label="Notifications">
-                            <i class="fa-solid fa-bell"></i>
-                            <?php ($unreadNotifCount = auth()->user()->notifications()->where('is_read', false)->count()); ?>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($unreadNotifCount > 0): ?>
-                                <span class="ml-cart-badge"><?php echo e($unreadNotifCount); ?></span>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                        </a>
-
                         <div class="dropdown d-inline-block">
-                            <button class="btn p-0 border-0 bg-transparent shadow-none dropdown-toggle-no-caret"
-                                type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <span class="ml-avatar-circle">
-                                    <i class="fa-solid fa-user"></i>
-                                </span>
-                            </button>
+                          <button class="btn p-0 border-0 bg-transparent shadow-none dropdown-toggle-no-caret"
+        type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+    <span class="ml-avatar-circle">
+        <i class="fa-solid fa-user"></i>
+    </span>
+</button>
 
                             <ul class="dropdown-menu dropdown-menu-end ml-dropdown-menu" aria-labelledby="userMenuDropdown">
                                 <!-- User Profile Header -->
@@ -114,6 +115,9 @@
 
 
 
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/')): ?>
+        <div class="shop-mobile-head"><a href="<?php echo e(url('/products')); ?>"><i class="fa-solid fa-leaf"></i> MarketLink<span>THE LOCAL EDIT</span></a><a class="ml-icon-btn" href="<?php echo e(url('/cart')); ?>" aria-label="View basket"><i class="fa-solid fa-bag-shopping"></i><span class="ml-cart-badge" data-cart-count><?php echo e(collect(session('cart', []))->sum()); ?></span></a></div>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     <main>
         <?php echo $__env->yieldContent('body'); ?>
     </main>
@@ -153,8 +157,8 @@
             <div class="ml-footer-bottom">
                 <span>&copy; <?php echo e(date('Y')); ?> MarketLink Marketplace. Fresh community provenance.</span>
                 <div class="d-flex gap-3">
-                    <a href="<?php echo e(url('/privacy-policy')); ?>">Privacy Policy</a>
-                    <a href="<?php echo e(url('/terms')); ?>">Terms &amp; Conditions</a>
+                    <a href="<?php echo e(url('/contact')); ?>">Contact &amp; Support</a>
+                    <a href="<?php echo e(url('/pickup-guidelines')); ?>">Pickup Guide</a>
                 </div>
             </div>
         </div>
@@ -162,7 +166,19 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo e(asset('Assets/Website_Asset/js/website.js')); ?>"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/')): ?>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+        <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+        <script src="<?php echo e(asset('Assets/Website_Asset/js/shop.js')); ?>"></script>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('dashboard/customer*')): ?>
+        <script src="<?php echo e(asset('Assets/Website_Asset/js/customer-dashboard.js')); ?>" defer></script>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->is('markets*', 'farmers*')): ?>
+        <script src="<?php echo e(asset('Assets/Website_Asset/js/discovery.js')); ?>" defer></script>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     <?php echo $__env->yieldContent('page_scripts'); ?>
 </body>
 

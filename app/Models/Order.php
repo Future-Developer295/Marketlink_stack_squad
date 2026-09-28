@@ -12,14 +12,6 @@ class Order extends Model
 {
     use HasFactory;
 
-    public const STATUS_LABELS = [
-        'pending' => 'Placed',
-        'confirmed' => 'Accepted',
-        'ready' => 'Ready for Pickup',
-        'picked_up' => 'Completed',
-        'cancelled' => 'Cancelled',
-    ];
-
     protected $fillable = [
         'user_id',
         'farmer_id',
@@ -40,30 +32,25 @@ class Order extends Model
 
     public function statusLabel(): string
     {
-        return self::STATUS_LABELS[$this->status] ?? ucfirst($this->status);
+        return match ($this->status) {
+            'pending' => 'Placed',
+            'confirmed' => 'Accepted',
+            'ready' => 'Ready for pickup',
+            'picked_up' => 'Completed',
+            'cancelled' => 'Cancelled',
+            default => ucfirst($this->status),
+        };
     }
 
-    public function cutoffAt(): ?Carbon
+    public function cancellationDeadline(): ?Carbon
     {
-        if (! $this->pickupSlot) {
-            return null;
-        }
-
-        $cutoffHours = $this->farmer?->cutoff_hours ?? 2;
-
-        return Carbon::parse($this->pickupSlot->date->toDateString().' '.$this->pickupSlot->start_time)
-            ->subHours($cutoffHours);
+        return $this->pickupSlot?->date?->copy()->setTimeFromTimeString($this->pickupSlot->start_time);
     }
 
-    public function isCancellable(): bool
+    public function canCancel(): bool
     {
-        if (! in_array($this->status, ['pending', 'confirmed'], true)) {
-            return false;
-        }
-
-        $cutoffAt = $this->cutoffAt();
-
-        return ! $cutoffAt || now()->lessThan($cutoffAt);
+        return in_array($this->status, ['pending', 'confirmed'], true)
+            && ($this->cancellationDeadline()?->isFuture() ?? false);
     }
 
     

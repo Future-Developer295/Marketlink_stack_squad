@@ -285,7 +285,7 @@ active
                             <td>
                                 <span class="badge-status bs-in">
                                     <i class="bi bi-circle-fill"></i>
-                                    {{ $order->statusLabel() }}
+                                    {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                                 </span>
                             </td>
 

@@ -18,38 +18,50 @@ class Product extends Model
         'description',
         'price',
         'stock_quantity',
-        'low_stock_threshold',
         'unit',
         'image',
         'is_active',
     ];
+
+    protected static function booted(): void
+    {
+        static::updated(function (Product $product): void {
+            $wasAvailable = $product->getOriginal('is_active') && $product->getOriginal('stock_quantity') > 0;
+            if ($wasAvailable || ! $product->is_active || $product->stock_quantity < 1) {
+                return;
+            }
+            $followers = Favorite::where('product_id', $product->id)->orWhere('farmer_id', $product->farmer_id)
+                ->distinct()->pluck('user_id');
+            foreach ($followers as $userId) {
+                Notification::create([
+                    'user_id' => $userId, 'type' => 'restock', 'title' => 'A favorite is back in stock',
+                    'message' => $product->name.' is available again. Explore your saved favorites to take a look.',
+                    'is_read' => false,
+                ]);
+            }
+        });
+    }
 
     protected function casts(): array
     {
         return [
             'price' => 'decimal:2',
             'stock_quantity' => 'integer',
-            'low_stock_threshold' => 'integer',
             'is_active' => 'boolean',
         ];
     }
 
-    /**
-     * Scope: products whose stock has fallen to/below their threshold.
-     */
-    public function scopeLowStock($query)
+    public function imageUrl(): string
     {
-        return $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold');
-    }
+        if ($this->image && filter_var($this->image, FILTER_VALIDATE_URL) && in_array(parse_url($this->image, PHP_URL_SCHEME), ['http', 'https'], true)) {
+            return $this->image;
+        }
 
-    public function getIsLowStockAttribute(): bool
-    {
-        return $this->stock_quantity <= $this->low_stock_threshold;
-    }
+        if ($this->image && is_file(public_path('product_images/'.basename($this->image)))) {
+            return asset('product_images/'.basename($this->image));
+        }
 
-    public function getIsOutOfStockAttribute(): bool
-    {
-        return $this->stock_quantity <= 0;
+        return asset('Assets/Website_Asset/images/product-placeholder.svg');
     }
 
     public function farmer(): BelongsTo

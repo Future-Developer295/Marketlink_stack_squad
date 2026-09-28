@@ -1,0 +1,1 @@
+@if($farmer->approval_status === 'approved' && $farmer->user?->is_active)<span class="grower-active-badge"><span aria-hidden="true"></span> Active grower</span>@else<span class="grower-active-badge is-inactive"><span aria-hidden="true"></span> Currently inactive</span>@endif
