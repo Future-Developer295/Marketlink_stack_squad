@@ -22,7 +22,7 @@
                 </div>
             </div>
             <div class="col-lg-6">
-                <div class="position-relative">
+                {{-- <div class="position-relative">
                     <img src="{{asset('Assets/Website_Asset/home_img/ChatGPT Image Sep 27, 2026, 12_05_15 AM.png')}}" class="rounded-4 shadow" alt="Local farmer with fresh vegetables">
                     @if($farmers->isNotEmpty())
                     @php($spotlight = $farmers->first())
@@ -36,7 +36,7 @@
                         </div>
                     </div>
                     @endif
-                </div>
+                </div> --}}
             </div>
         </div>
 
