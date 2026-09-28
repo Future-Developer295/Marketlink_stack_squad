@@ -23,6 +23,8 @@ use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\FarmerApprovedMail;
 use App\Support\SimpleXlsxWriter;
 
 class DashboardController extends Controller
@@ -345,13 +347,16 @@ class DashboardController extends Controller
     public function adminDashboard()
     {
         $totalUsers = User::count();
-        $pendingFarmers = FarmerProfile::where('approval_status', 'pending')->count();
+        // Farmers waiting for approval are users with role=farmer and is_active=0
+        // (that is how CreateNewUser registers them).
+        $pendingFarmerQuery = User::where('role', 'farmer')->where('is_active', false);
+        $pendingFarmers = (clone $pendingFarmerQuery)->count();
         $activeMarkets = Market::count();
         $totalProducts = Product::count();
         $flaggedReviews = Review::where('is_flagged', true)->count();
 
-        $pendingFarmerList = FarmerProfile::with('user')
-            ->where('approval_status', 'pending')
+        $pendingFarmerList = (clone $pendingFarmerQuery)
+            ->with('farmerProfile')
             ->latest()
             ->take(5)
             ->get();
@@ -403,8 +408,8 @@ class DashboardController extends Controller
         ];
 
         // Farmer approval rate
-        $totalFarmerProfiles = FarmerProfile::count();
-        $approvedFarmers = FarmerProfile::where('approval_status', 'approved')->count();
+        $totalFarmerProfiles = User::where('role', 'farmer')->count();
+        $approvedFarmers = User::where('role', 'farmer')->where('is_active', true)->count();
         $approvalRate = $totalFarmerProfiles > 0
             ? round(($approvedFarmers / $totalFarmerProfiles) * 100)
             : 0;
@@ -1111,6 +1116,7 @@ class DashboardController extends Controller
         $user->phone = $request->phone;
         $user->address = $request->address;
         $user->role = $request->role;
+        $wasActive = (bool) $user->is_active;
         $user->is_active = $request->boolean('is_active');
 
         if ($request->filled('password')) {
@@ -1119,7 +1125,55 @@ class DashboardController extends Controller
 
         $user->save();
 
-        return redirect()->route('users')->with('success', 'User updated successfully.');
+        $message = 'User updated successfully.';
+
+        // Farmer just got activated from the edit form -> send the same approval email.
+        if ($user->role === 'farmer' && ! $wasActive && $user->is_active) {
+            $message .= $this->sendFarmerApprovedMail($user);
+        }
+
+        return redirect()->route('users')->with('success', $message);
+    }
+
+    public function userApprove($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->role !== 'farmer') {
+            return back()->with('error', 'Only farmer accounts can be approved here.');
+        }
+
+        if ($user->is_active) {
+            return back()->with('success', $user->name . ' is already approved.');
+        }
+
+        $user->is_active = true;
+        $user->save();
+
+        return back()->with('success', $user->name . ' approved.' . $this->sendFarmerApprovedMail($user));
+    }
+
+    /**
+     * Sends the approval email. Never throws: the approval itself must not fail
+     * because of SMTP. Returns a short suffix for the flash message.
+     */
+    private function sendFarmerApprovedMail(User $user): string
+    {
+        try {
+            Mail::to($user->email)->send(new FarmerApprovedMail($user));
+
+            return ' Approval email sent to ' . $user->email . '.';
+        } catch (\Throwable $e) {
+            Log::error('Farmer approval email failed', [
+                'user_id' => $user->id,
+                'to' => $user->email,
+                'mailer' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host'),
+                'error' => $e->getMessage(),
+            ]);
+
+            return ' But the approval email could NOT be sent (check storage/logs/laravel.log).';
+        }
     }
 
     public function userDelete($id)

@@ -65,3 +65,5 @@
 @media(prefers-reduced-motion:reduce){
     .mlchat *{animation:none!important;transition:none!important}
 }
+
+

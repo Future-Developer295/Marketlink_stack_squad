@@ -610,6 +610,12 @@
             {{-- PAGE BODY --}}
             <div class="page-body">
 
+                @if (session('success') || session('error'))
+                    <div style="margin-bottom:16px;padding:12px 16px;border-radius:8px;font-size:14px;border:1px solid {{ session('error') ? '#e6b8b8' : '#b9d9c3' }};background:{{ session('error') ? '#fbeaea' : '#eaf6ee' }};color:{{ session('error') ? '#8a2b2b' : '#1f5a37' }};">
+                        {{ session('error') ?? session('success') }}
+                    </div>
+                @endif
+
                 @yield('body')
 
             </div>

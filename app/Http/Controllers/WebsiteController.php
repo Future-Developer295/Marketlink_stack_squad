@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -487,7 +488,17 @@ class WebsiteController extends Controller
         try {
             Mail::to(config('marketlink.contact_email'))->send(new ContactMessageMail($contact));
         } catch (Throwable $e) {
-            report($e);
+            // Log with enough context to diagnose (bad app password, blocked login, wrong port...).
+            Log::error('Contact form email failed to send', [
+                'contact_id' => $contact->id,
+                'to' => config('marketlink.contact_email'),
+                'mailer' => config('mail.default'),
+                'host' => config('mail.mailers.smtp.host'),
+                'port' => config('mail.mailers.smtp.port'),
+                'username' => config('mail.mailers.smtp.username'),
+                'exception' => get_class($e),
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return redirect('/contact')->with('success', $success);
