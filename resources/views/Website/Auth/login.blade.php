@@ -636,7 +636,7 @@
                                 </label>
                             </div>
 
-                            <a href="{{ url('/password/reset') }}" class="small auth-link">
+                            <a href="{{ route('password.request') }}" class="small auth-link">
                                 Forgot password?
                             </a>
                         </div>

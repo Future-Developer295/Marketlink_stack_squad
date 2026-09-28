@@ -40,7 +40,8 @@
 <body
     class="{{ request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/') ? 'harvest-shop' : '' }} {{ request()->is('dashboard/customer*') ? 'customer-area' : '' }}">
 
-    <nav class="navbar navbar-expand-lg ml-navbar">
+    @unless ($__env->hasSection('hide_chrome'))
+<nav class="navbar navbar-expand-lg ml-navbar">
         <div class="ml-container d-flex align-items-center justify-content-between w-100">
             <a class="navbar-brand" href="{{ url('/') }}">
                 <span class="ml-logo-icon"><i class="fa-solid fa-leaf"></i></span>
@@ -126,6 +127,7 @@
             </div>
         </div>
     </nav>
+@endunless
 
 
 
@@ -139,7 +141,8 @@
         @yield('body')
     </main>
 
-    <footer class="ml-footer">
+    @unless ($__env->hasSection('hide_chrome'))
+<footer class="ml-footer">
         <div class="ml-container">
             <div class="row g-5">
                 <div class="col-lg-4">
@@ -180,6 +183,7 @@
             </div>
         </div>
     </footer>
+@endunless
 
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
