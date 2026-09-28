@@ -1,178 +1,1557 @@
-.discovery-page { padding-bottom: 64px; color: #263c30; }
-.discovery-breadcrumb { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 24px 0; font-size: 14px; color: #74816b; }
-.discovery-breadcrumb a, .discovery-text-link { color: #425d35; text-decoration: none; font-weight: 600; }
-.discovery-hero { display: grid; grid-template-columns: 1.2fr 1fr; background: #e9eddc; border-radius: 28px; overflow: hidden; min-height: 390px; }
-.discovery-hero > div:first-child { padding: 48px; align-self: center; }
-.discovery-hero h1 { font-size: clamp(38px,4.2vw,64px); line-height: 1.1; letter-spacing: -.055em; margin: 20px 0; }
-.discovery-hero h1 em, .grower-story-panel h2 em { font-family: Georgia,serif; font-weight: 400; color: #657c47; }
-.discovery-hero p { font-size: 16px; line-height: 1.8; color: #65725e; margin-bottom: 25px; }
-.discovery-landscape { min-height: 320px; position: relative; overflow: hidden; background: #dce6c7; isolation: isolate; }
-.discovery-sun { position: absolute; width: 100px; height: 100px; border-radius: 50%; background: #eee8b4; top: 40px; left: 60px; box-shadow: 0 0 0 25px #eef0d030; }
-.discovery-hill { position: absolute; border-radius: 50% 50% 0 0; width: 140%; height: 65%; bottom: -20%; transform: rotate(-12deg); background: #b8ca96; }
-.hill-back { left: -45%; bottom: -7%; background: #c8d5b0; transform: rotate(16deg); }
-.hill-front { right: -35%; }
-.discovery-stall { position: absolute; width: 58%; height: 56%; top: 25%; left: 21%; transform: rotate(-5deg); filter: drop-shadow(0 16px 12px #31433118); }
-.stall-roof { height: 28%; background: #45633f; clip-path: polygon(14% 0,86% 0,100% 100%,0 100%); }
-.stall-awning { height: 12%; border-radius: 0 0 12px 12px; background: repeating-linear-gradient(90deg,#f4edd5 0%,#f4edd5 16.66%,#80965e 16.66%,#80965e 33.33%); }
-.stall-produce { height: 39%; margin: 0 8%; border-inline: 9px solid #c8b58b; display: flex; gap: 13px; justify-content: center; align-items: end; padding-bottom: 3px; font-size: clamp(25px,4vw,48px); color: #d3a05f; background: #e6eccf60; }
-.stall-produce i:nth-child(2) { color: #be7154; }
-.stall-produce i:nth-child(3) { color: #6e874b; }
-.stall-counter { height: 32%; background: repeating-linear-gradient(90deg,#e5d4af 0px,#e5d4af 25px,#d8c398 26px,#d8c398 28px); margin: 0 5%; border-radius: 3px 3px 10px 10px; display: grid; place-items: center; }
-.stall-counter span { background: #4c663f; color: #f5edcf; font-size: 10px; letter-spacing: .14em; padding: 9px 13px; border-radius: 5px; }
-.discovery-art-note { position: absolute; right: 20px; bottom: 26px; background: #f5f5e6; padding: 14px 20px; font-size: 10px; line-height: 1.8; letter-spacing: .07em; transform: rotate(-7deg); border-radius: 8px; }
-.discovery-art-note em { font-family: Georgia,serif; font-size: 22px; letter-spacing: -.03em; }
-.discovery-spark { position: absolute; right: 25px; top: 35px; font-size: 55px; color: #93a568; }
-.discovery-path { display: flex; justify-content: space-around; gap: 20px; align-items: center; padding: 25px 20px; border-bottom: 1px solid #e1e5d8; color: #67775b; font-size: 14px; }
-.discovery-path b { margin-right: 10px; color: #9eac80; font-size: 12px; }
-.discovery-path i { color: #aebba0; }
-.discovery-workspace { display: grid; grid-template-columns: 250px minmax(0,1fr); gap: 30px; padding-top: 40px; align-items: start; scroll-margin-top: 30px; }
-.discovery-filters { position: sticky; top: 25px; background: #fff; border: 1px solid #e1e7da; border-radius: 20px; overflow: hidden; }
-.discovery-filters summary { display: none; }
-.discovery-filters form { padding: 24px; }
-.filter-top { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-bottom: 20px; }
-.filter-top h2 { font-size: 20px; margin: 0; }
-.filter-top a { color: #6b7f52; font-size: 13px; }
-.discovery-filters label, .grower-product-filters label { font-size: 14px; font-weight: 600; display: block; margin: 18px 0 9px; }
-.discovery-filters :is(input:not([type=checkbox]),select), .grower-product-filters :is(input:not([type=checkbox]),select) { width: 100%; border: 1px solid #dce3d3; border-radius: 10px; padding: 12px; min-height: 46px; background: #fafbf7; color: #42523b; font: inherit; font-size: 14px; }
-.discovery-search { position: relative; }
-.discovery-search > i { position: absolute; left: 12px; top: 16px; color: #7f9168; }
-.discovery-search input { padding-left: 35px !important; }
-.discovery-filters .shop-pill { width: 100%; justify-content: space-between; margin-top: 24px; font-size: 14px; padding: 13px 16px; }
-.discovery-filters form > p { font-size: 13px; color: #79896b; line-height: 1.7; text-align: center; margin: 20px 0 0; }
-.discovery-check { display: flex !important; gap: 10px; align-items: center; }
-.discovery-check input { accent-color: #49613c; width: 18px; height: 18px; flex-shrink: 0; }
-.discovery-count { font-size: 14px; white-space: nowrap; color: #778668; }
-.discovery-market-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px; }
-.market-discovery-card { border-radius: 22px; overflow: hidden; background: white; border: 1px solid #e3e8dc; transition: transform .25s,box-shadow .25s; }
-.market-discovery-card:hover { transform: translateY(-4px); box-shadow: 0 16px 35px #3c543512; }
-.market-card-art { position: relative; min-height: 175px; display: grid; place-items: center; text-decoration: none; background: #e3e9d3; color: #677e4c; overflow: hidden; }
-.market-card-art:before,.market-card-art:after { content: ''; position: absolute; width: 200px; height: 180px; border-radius: 50%; background: #d4dfbe; left: -40px; bottom: -120px; }
-.market-card-art:after { width: 260px; left: auto; right: -40px; bottom: -140px; background: #c7d4b3; }
-.market-discovery-card:nth-child(3n+2) .market-card-art { background: #eee9d6; }
-.market-discovery-card:nth-child(3n+2) .market-card-art:before { background: #e3d8b7; }
-.market-card-art > i { font-size: 65px; transform: rotate(-7deg); color: #6f8654; }
-.market-card-art > span { position: absolute; left: 17px; top: 17px; background: #ffffffc9; border-radius: 30px; padding: 7px 12px; font-size: 12px; color: #4c623d; }
-.market-card-art > b { position: absolute; right: 17px; bottom: 17px; border-radius: 50%; width: 38px; height: 38px; display: grid; place-items: center; background: #fff9; z-index: 1; }
-.market-card-copy { padding: 25px; }
-.market-card-copy h3 { font-size: 25px; margin: 12px 0; line-height: 1.25; }
-.market-card-copy h3 a, .farmer-intro h3 a { color: #2d4433; text-decoration: none; }
-.market-card-copy p { color: #77816d; font-size: 14px; line-height: 1.7; }
-.market-card-facts { display: grid; gap: 12px; padding: 18px 0 22px; margin-top: 15px; border-top: 1px solid #ecf0e5; font-size: 14px; color: #596b4c; }
-.market-card-facts i { width: 22px; color: #7f9363; }
-.market-card-copy .shop-outline { width: 100%; display: flex; justify-content: space-between; }
-.discovery-empty { padding: 45px 25px; text-align: center; border: 1px dashed #d2ddc4; border-radius: 18px; background: #f5f7ef; grid-column: 1/-1; width: 100%; }
-.discovery-empty > i { display: block; color: #91a370; font-size: 35px; margin-bottom: 20px; }
-.discovery-empty p { color: #738164; font-size: 15px; line-height: 1.8; }
-.discovery-empty.compact { padding: 28px 18px; margin: 20px 0; }
-.discovery-farmer-list { display: grid; gap: 20px; }
-.discovery-farmer { display: grid; grid-template-columns: 135px 1fr 1fr; gap: 20px; align-items: center; padding: 20px; border-radius: 21px; border: 1px solid #e1e6d9; background: white; transition: box-shadow .25s; }
-.discovery-farmer:hover { box-shadow: 0 12px 30px #3b533510; }
-.farmer-photo-link { position: relative; align-self: stretch; display: flex; min-width: 0; text-decoration: none; }
-.farmer-portrait { width: 100%; height: 100%; min-height: 150px; object-fit: cover; border-radius: 14px; display: block; }
-.portrait-placeholder { background: #e8eddc; color: #839367; position: relative; display: grid; place-items: center; overflow: hidden; }
-.portrait-placeholder > span { font: italic 95px Georgia,serif; }
-.portrait-placeholder > i { position: absolute; font-size: 55px; bottom: -5px; right: -5px; color: #b8c89b; transform: rotate(-25deg); }
-.discovery-badge { position: absolute; top: 9px; left: 8px; right: 8px; border-radius: 20px; background: #faffeee8; color: #617949; padding: 6px; text-align: center; font-size: 10px; font-weight: 700; }
-.farmer-intro { min-width: 0; }
-.farmer-intro h3 { font-size: 23px; margin: 10px 0 5px; line-height: 1.2; }
-.farmer-intro > strong { font-size: 13px; color: #657656; }
-.farmer-intro p { font-size: 13px; color: #78816d; margin: 10px 0 0; line-height: 1.7; }
-.farmer-description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.farmer-harvest { min-width: 0; }
-.farmer-product-preview { display: flex; gap: 12px; padding: 12px 0; }
-.farmer-product-preview a { flex: 1; min-width: 0; text-align: center; text-decoration: none; color: #69795a; font-size: 11px; }
-.farmer-product-preview img { width: 45px; height: 45px; object-fit: cover; border-radius: 50%; background: #f0f3e9; margin-bottom: 7px; }
-.farmer-product-preview span { display: block; }
-.farmer-card-meta { display: flex; gap: 12px; flex-wrap: wrap; color: #72845f; font-size: 12px; }
-.farmer-card-meta .fa-star { color: #aa914b; }
-.farmer-profile-link { grid-column: 2/-1; justify-self: end; font-size: 13px; padding: 10px 16px; min-height: 44px; }
-.discovery-section { margin-top: 48px; scroll-margin-top: 25px; }
-.discovery-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-.discovery-actions form { margin: 0 !important; }
-.market-detail-hero h1 { font-size: clamp(32px,3.2vw,49px); }
-.market-detail-hero h1 em { display: block; font-size: .7em; margin-top: 12px; }
-.market-information { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 20px; margin: 25px 0 40px; }
-.market-information > div { display: flex; align-items: center; gap: 14px; padding: 20px; background: #fff; border: 1px solid #e4e9dd; border-radius: 15px; }
-.market-information i { font-size: 23px; color: #869a64; }
-.market-information span { font-size: 10px; letter-spacing: .05em; color: #87927b; }
-.market-information strong { display: block; color: #455b39; font-size: 14px; letter-spacing: 0; margin-top: 6px; }
-.market-grower-carousel { display: flex; overflow: auto; gap: 20px; scroll-snap-type: x mandatory; padding-bottom: 15px; scrollbar-width: thin; scrollbar-color: #bac99f transparent; }
-.farmer-compact { flex: 0 0 calc((100% - 60px)/4); min-width: 250px; display: flex; flex-direction: column; align-items: stretch; scroll-snap-align: start; }
-.farmer-compact .farmer-photo-link { height: 175px; }
-.farmer-compact .farmer-portrait { width: 150px; min-height: 150px; height: 150px; border-radius: 50%; margin: auto; }
-.farmer-compact .discovery-badge { top: 0; right: 0; left: auto; padding: 7px 10px; }
-.farmer-compact .farmer-description { display: none; }
-.farmer-compact .farmer-profile-link { align-self: stretch; margin-top: auto; justify-content: space-between; }
-.farmer-compact .farmer-product-preview { border-top: 1px solid #edf0e6; margin-top: 10px; }
-.discovery-two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 40px; align-items: start; }
-.discovery-panel { padding: 30px; border: 1px solid #e2e8d8; background: #fff; border-radius: 23px; min-width: 0; scroll-margin-top: 25px; }
-.discovery-panel h2 { font-size: 29px; margin: 13px 0; line-height: 1.2; }
-.discovery-panel > p { color: #718065; font-size: 15px; line-height: 1.8; }
-.discovery-map { width: 100%; height: 275px; border: 0; border-radius: 15px; background: #eaf0df; margin: 12px 0 22px; }
-.location-panel > small { display: block; font-size: 12px; margin-top: 14px; color: #89947d; }
-.discovery-slot { display: flex; gap: 16px; align-items: center; padding: 18px 0; border-bottom: 1px solid #e9eddf; text-decoration: none; color: #405438; }
-.slot-date { text-align: center; width: 55px; padding: 10px 5px; background: #f0f3e7; border-radius: 12px; font-size: 12px; flex-shrink: 0; }
-.slot-date b { display: block; font-size: 22px; }
-.discovery-slot strong { font-size: 15px; }
-.discovery-slot small { display: block; font-size: 13px; color: #7d8a70; margin-top: 6px; }
-.discovery-slot > i { margin-left: auto; }
-.discovery-panel > .discovery-text-link, .discovery-panel > .shop-pill { margin-top: 20px; display: inline-flex; }
-.discovery-product-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; }
-.farmer-profile-hero { display: grid; grid-template-columns: 260px minmax(0,1fr); gap: 45px; background: #e9eddd; padding: 40px; border-radius: 28px; position: relative; overflow: hidden; }
-.profile-portrait-wrap { position: relative; }
-.profile-portrait-wrap .farmer-portrait { min-height: 265px; border-radius: 18px; }
-.profile-portrait-caption { position: absolute; bottom: 14px; left: 12px; right: 12px; padding: 9px; text-align: center; background: #f8faeedd; font-size: 10px; letter-spacing: .12em; border-radius: 8px; }
-.profile-hero-copy { align-self: center; position: relative; z-index: 1; }
-.profile-hero-copy h1 { font-size: clamp(35px,4vw,57px); margin: 15px 0 7px; letter-spacing: -.045em; }
-.profile-hero-copy h2 { font-size: 25px; font-family: Georgia,serif; font-style: italic; font-weight: 400; color: #70814e; }
-.profile-hero-copy > p { color: #78846b; font-size: 15px; line-height: 1.8; margin-top: 15px; }
-.profile-trust { display: flex; flex-wrap: wrap; gap: 15px; margin: 22px 0; color: #65774f; font-size: 13px; }
-.profile-trust a { color: inherit; text-decoration: none; }
-.profile-trust .fa-star { color: #a99047; }
-.profile-hero-spark { position: absolute; font-size: 160px; right: -15px; top: -15px; color: #d8e0c5; }
-.profile-section-nav { display: flex; gap: 30px; overflow: auto; padding: 23px 0; border-bottom: 1px solid #dde4d2; scrollbar-width: thin; }
-.profile-section-nav a { white-space: nowrap; color: #6a7b57; text-decoration: none; font-size: 14px; }
-.profile-section-nav a:hover { color: #2f4a31; }
-.grower-product-filters { display: flex; flex-wrap: wrap; gap: 15px; padding: 22px; margin-bottom: 25px; background: #eef2e5; border-radius: 17px; align-items: end; }
-.grower-product-filters label { margin: 0; flex: 1 1 150px; }
-.grower-product-filters :is(input,select) { margin-top: 9px; }
-.grower-product-filters .discovery-check { flex: 0 1 auto; align-self: center; margin-top: 18px; }
-.grower-product-filters .discovery-check input { margin-top: 0; }
-.grower-product-filters .shop-pill { padding: 12px 17px; font-size: 14px; }
-.grower-product-filters > a { align-self: center; margin-top: 18px; font-size: 13px; }
-.profile-facts { margin-top: 28px; }
-.profile-facts > div { border-top: 1px solid #e8edde; padding: 18px 0; }
-.profile-facts dt { color: #8a967c; font-size: 12px; font-weight: 500; margin-bottom: 8px; }
-.profile-facts dd { font-size: 15px; margin: 0; color: #435939; }
-.profile-facts a { display: block; color: #587440; margin-top: 8px; }
-.weekly-stock-list a { display: flex; gap: 15px; align-items: center; padding: 19px 0; border-bottom: 1px solid #e5ebdc; text-decoration: none; color: #4b633c; }
-.weekly-stock-list a > span:first-child { flex: 1; }
-.weekly-stock-list small { display: block; margin-top: 5px; color: #8b967e; }
-.weekly-stock-list b { font-size: 14px; }
-.grower-rating { background: #e8eddc; }
-.grower-rating > strong { font-size: 64px; letter-spacing: -.04em; display: block; }
-.grower-rating > strong small { font-size: 20px; color: #84956c; }
-.grower-rating > span { display: block; margin: 14px 0; }
-.grower-review { margin-bottom: 18px; }
-.grower-review header { display: flex; align-items: center; gap: 12px; }
-.grower-review header > span:last-child { margin-left: auto; color: #9b874d; font-size: 13px; }
-.grower-review header small { display: block; color: #8d9780; font-size: 12px; margin-top: 5px; }
-.grower-review > p { margin: 20px 0 0; }
-.grower-review blockquote { padding: 18px; border-left: 3px solid #b4c596; background: #f5f7ee; margin: 20px 0 0; font-size: 14px; color: #657754; }
-.grower-review blockquote p { margin: 8px 0 0; line-height: 1.8; }
-.discovery-page .shop-kicker { font-size: 11px; }
-.discovery-page :is(button,a,input,select):focus-visible { outline: 3px solid #92a974; outline-offset: 4px; }
-@media (min-width: 1400px) { .discovery-farmer:not(.farmer-compact) { grid-template-columns: 150px 1fr 1fr auto; } .discovery-farmer:not(.farmer-compact) .farmer-profile-link { grid-column: auto; } }
-@media (max-width: 1199px) { .discovery-hero > div:first-child { padding: 35px; } .discovery-workspace { grid-template-columns: 220px minmax(0,1fr); gap: 20px; } .discovery-farmer { grid-template-columns: 115px 1fr; } .farmer-harvest { grid-column: 1/-1; } .farmer-product-preview { justify-content: start; } .farmer-product-preview a { flex: 0 0 70px; } .farmer-profile-link { grid-column: 1/-1; } .market-information { gap: 12px; } .market-information > div { padding: 15px; } }
-@media (max-width: 991px) { .discovery-workspace { grid-template-columns: 1fr; } .discovery-filters { position: static; } .discovery-filters summary { display: flex; justify-content: space-between; padding: 18px; font-size: 15px; font-weight: 600; cursor: pointer; } .discovery-filters form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .discovery-filters form > * { grid-column: 1/-1; } .filter-top { display: none; } .discovery-filters label { margin: 7px 0 0; } .discovery-filters .shop-pill { margin-top: 12px; } .discovery-filters form > p { display: none; } .discovery-farmer { grid-template-columns: 140px 1fr 1fr; } .farmer-harvest { grid-column: auto; } .farmer-profile-link { grid-column: 2/-1; } .market-information { grid-template-columns: 1fr 1fr; } .farmer-profile-hero { grid-template-columns: 200px minmax(0,1fr); gap: 28px; padding: 30px; } .discovery-product-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@media (max-width: 767px) { .discovery-hero { grid-template-columns: 1fr; } .discovery-hero > div:first-child { padding: 32px 25px; } .discovery-hero h1 { font-size: 44px; } .discovery-landscape { min-height: 240px; } .discovery-stall { width: 210px; left: calc(50% - 105px); height: 150px; top: 40px; } .discovery-path { overflow: auto; justify-content: start; white-space: nowrap; padding: 20px 0; font-size: 12px; gap: 12px; } .discovery-path b { margin-right: 5px; } .discovery-two-column { grid-template-columns: 1fr; } .discovery-panel { padding: 24px; } .discovery-section { margin-top: 35px; } .discovery-farmer { grid-template-columns: 115px 1fr; gap: 15px; padding: 17px; } .farmer-harvest { grid-column: 1/-1; } .farmer-profile-link { grid-column: 1/-1; } .discovery-farmer:not(.farmer-compact) .farmer-profile-link { justify-self: stretch; justify-content: space-between; } .discovery-product-grid { gap: 16px; } .market-card-copy { padding: 20px; } .market-card-copy h3 { font-size: 23px; } .farmer-profile-hero { grid-template-columns: 1fr; padding: 25px; gap: 25px; } .profile-portrait-wrap { max-width: 240px; } .profile-portrait-wrap .farmer-portrait { min-height: 230px; } .profile-hero-copy h1 { font-size: 40px; } .profile-section-nav { gap: 22px; } .grower-product-filters { padding: 18px; gap: 15px; } .grower-product-filters label { flex-basis: calc(50% - 15px); min-width: 0; } .discovery-page .shop-section-heading { align-items: start; gap: 15px; flex-wrap: wrap; } .discovery-hero p { font-size: 15px; } }
-@media (max-width: 479px) { .discovery-market-grid { grid-template-columns: 1fr; } .discovery-product-grid { grid-template-columns: 1fr; } .discovery-breadcrumb { font-size: 12px; padding-block: 18px; } .discovery-hero h1 { font-size: 39px; } .discovery-hero { border-radius: 22px; } .market-detail-hero h1 { font-size: 32px; } .market-information > div { flex-direction: column; align-items: start; padding: 17px; } .market-information strong { font-size: 13px; } .discovery-farmer { grid-template-columns: 90px minmax(0,1fr); } .farmer-intro h3 { font-size: 21px; } .discovery-badge { font-size: 9px; } .farmer-intro .shop-kicker { font-size: 10px; } .discovery-actions { align-items: stretch; } .discovery-actions .shop-pill,.discovery-actions .shop-outline { padding: 13px 15px; font-size: 14px; } .discovery-panel { padding: 22px 18px; } .discovery-slot { gap: 12px; } .grower-review header { flex-wrap: wrap; } .grower-product-filters label { flex-basis: 100%; } .profile-trust { gap: 12px; } }
-@media (prefers-reduced-motion: no-preference) { .discovery-stall { animation: stall-arrive .8s ease both; } .discovery-spark { animation: market-sway 12s ease-in-out infinite alternate; } @keyframes stall-arrive { from { opacity: 0; transform: translateY(20px) rotate(0); } to { opacity: 1; transform: translateY(0) rotate(-5deg); } } @keyframes market-sway { to { transform: rotate(60deg); } } }
-@media (prefers-reduced-motion: reduce) { .discovery-page * { transition: none !important; scroll-behavior: auto !important; } }
-.profile-status-line { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
-.grower-active-badge { display: inline-flex; align-items: center; gap: 7px; color: #3d623a; background: #f6fbea; padding: 7px 11px; border: 1px solid #d9e6c5; border-radius: 30px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-.grower-active-badge > span { width: 6px; height: 6px; background: #77964d; border-radius: 50%; box-shadow: 0 0 0 3px #77964d15; }
-.grower-active-badge.is-inactive { color: #81795f; background: #f5f1e7; border-color: #e7e0d0; }
-.grower-active-badge.is-inactive > span { background: #a59b80; }
-.discovery-badge { padding: 0; background: none; }
-.discovery-badge .grower-active-badge { font-size: 10px; padding: 6px 8px; }
+.discovery-page {
+    padding-bottom: 64px;
+    color: #263c30;
+}
+.discovery-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    padding: 24px 0;
+    font-size: 14px;
+    color: #74816b;
+}
+.discovery-breadcrumb a,
+.discovery-text-link {
+    color: #425d35;
+    text-decoration: none;
+    font-weight: 600;
+}
+.discovery-hero {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    background: #e9eddc;
+    border-radius: 28px;
+    overflow: hidden;
+    min-height: 390px;
+}
+.discovery-hero > div:first-child {
+    padding: 48px;
+    align-self: center;
+}
+.discovery-hero h1 {
+    font-size: clamp(38px, 4.2vw, 64px);
+    line-height: 1.1;
+    letter-spacing: -0.055em;
+    margin: 20px 0;
+}
+.discovery-hero h1 em,
+.grower-story-panel h2 em {
+    font-family: Georgia, serif;
+    font-weight: 400;
+    color: #657c47;
+}
+.discovery-hero p {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #65725e;
+    margin-bottom: 25px;
+}
+.discovery-landscape {
+    min-height: 320px;
+    position: relative;
+    overflow: hidden;
+    background: #dce6c7;
+    isolation: isolate;
+}
+.discovery-sun {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #eee8b4;
+    top: 40px;
+    left: 60px;
+    box-shadow: 0 0 0 25px #eef0d030;
+}
+.discovery-hill {
+    position: absolute;
+    border-radius: 50% 50% 0 0;
+    width: 140%;
+    height: 65%;
+    bottom: -20%;
+    transform: rotate(-12deg);
+    background: #b8ca96;
+}
+.hill-back {
+    left: -45%;
+    bottom: -7%;
+    background: #c8d5b0;
+    transform: rotate(16deg);
+}
+.hill-front {
+    right: -35%;
+}
+.discovery-stall {
+    position: absolute;
+    width: 58%;
+    height: 56%;
+    top: 25%;
+    left: 21%;
+    transform: rotate(-5deg);
+    filter: drop-shadow(0 16px 12px #31433118);
+}
+.stall-roof {
+    height: 28%;
+    background: #45633f;
+    clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
+}
+.stall-awning {
+    height: 12%;
+    border-radius: 0 0 12px 12px;
+    background: repeating-linear-gradient(
+        90deg,
+        #f4edd5 0%,
+        #f4edd5 16.66%,
+        #80965e 16.66%,
+        #80965e 33.33%
+    );
+}
+.stall-produce {
+    height: 39%;
+    margin: 0 8%;
+    border-inline: 9px solid #c8b58b;
+    display: flex;
+    gap: 13px;
+    justify-content: center;
+    align-items: end;
+    padding-bottom: 3px;
+    font-size: clamp(25px, 4vw, 48px);
+    color: #d3a05f;
+    background: #e6eccf60;
+}
+.stall-produce i:nth-child(2) {
+    color: #be7154;
+}
+.stall-produce i:nth-child(3) {
+    color: #6e874b;
+}
+.stall-counter {
+    height: 32%;
+    background: repeating-linear-gradient(
+        90deg,
+        #e5d4af 0px,
+        #e5d4af 25px,
+        #d8c398 26px,
+        #d8c398 28px
+    );
+    margin: 0 5%;
+    border-radius: 3px 3px 10px 10px;
+    display: grid;
+    place-items: center;
+}
+.stall-counter span {
+    background: #4c663f;
+    color: #f5edcf;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    padding: 9px 13px;
+    border-radius: 5px;
+}
+.discovery-art-note {
+    position: absolute;
+    right: 20px;
+    bottom: 26px;
+    background: #f5f5e6;
+    padding: 14px 20px;
+    font-size: 10px;
+    line-height: 1.8;
+    letter-spacing: 0.07em;
+    transform: rotate(-7deg);
+    border-radius: 8px;
+}
+.discovery-art-note em {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    letter-spacing: -0.03em;
+}
+.discovery-spark {
+    position: absolute;
+    right: 25px;
+    top: 35px;
+    font-size: 55px;
+    color: #93a568;
+}
+.discovery-path {
+    display: flex;
+    justify-content: space-around;
+    gap: 20px;
+    align-items: center;
+    padding: 25px 20px;
+    border-bottom: 1px solid #e1e5d8;
+    color: #67775b;
+    font-size: 14px;
+}
+.discovery-path b {
+    margin-right: 10px;
+    color: #9eac80;
+    font-size: 12px;
+}
+.discovery-path i {
+    color: #aebba0;
+}
+.discovery-workspace {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 30px;
+    padding-top: 40px;
+    align-items: start;
+    scroll-margin-top: 30px;
+}
+.discovery-filters {
+    position: sticky;
+    top: 25px;
+    background: #fff;
+    border: 1px solid #e1e7da;
+    border-radius: 20px;
+    overflow: hidden;
+}
+.discovery-filters summary {
+    display: none;
+}
+.discovery-filters form {
+    padding: 24px;
+}
+.filter-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.filter-top h2 {
+    font-size: 20px;
+    margin: 0;
+}
+.filter-top a {
+    color: #6b7f52;
+    font-size: 13px;
+}
+.discovery-filters label,
+.grower-product-filters label {
+    font-size: 14px;
+    font-weight: 600;
+    display: block;
+    margin: 18px 0 9px;
+}
+.discovery-filters :is(input:not([type="checkbox"]), select),
+.grower-product-filters :is(input:not([type="checkbox"]), select) {
+    width: 100%;
+    border: 1px solid #dce3d3;
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 46px;
+    background: #fafbf7;
+    color: #42523b;
+    font: inherit;
+    font-size: 14px;
+}
+.discovery-search {
+    position: relative;
+}
+.discovery-search > i {
+    position: absolute;
+    left: 12px;
+    top: 16px;
+    color: #7f9168;
+}
+.discovery-search input {
+    padding-left: 35px !important;
+}
+.discovery-filters .shop-pill {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 24px;
+    font-size: 14px;
+    padding: 13px 16px;
+}
+.discovery-filters form > p {
+    font-size: 13px;
+    color: #79896b;
+    line-height: 1.7;
+    text-align: center;
+    margin: 20px 0 0;
+}
+.discovery-check {
+    display: flex !important;
+    gap: 10px;
+    align-items: center;
+}
+.discovery-check input {
+    accent-color: #49613c;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+.discovery-count {
+    font-size: 14px;
+    white-space: nowrap;
+    color: #778668;
+}
+.discovery-market-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+.market-discovery-card {
+    border-radius: 22px;
+    overflow: hidden;
+    background: white;
+    border: 1px solid #e3e8dc;
+    transition:
+        transform 0.25s,
+        box-shadow 0.25s;
+}
+.market-discovery-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 35px #3c543512;
+}
+.market-card-art {
+    position: relative;
+    min-height: 175px;
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+    background: #e3e9d3;
+    color: #677e4c;
+    overflow: hidden;
+}
+.market-card-art:before,
+.market-card-art:after {
+    content: "";
+    position: absolute;
+    width: 200px;
+    height: 180px;
+    border-radius: 50%;
+    background: #d4dfbe;
+    left: -40px;
+    bottom: -120px;
+}
+.market-card-art:after {
+    width: 260px;
+    left: auto;
+    right: -40px;
+    bottom: -140px;
+    background: #c7d4b3;
+}
+.market-discovery-card:nth-child(3n + 2) .market-card-art {
+    background: #eee9d6;
+}
+.market-discovery-card:nth-child(3n + 2) .market-card-art:before {
+    background: #e3d8b7;
+}
+.market-card-art > i {
+    font-size: 65px;
+    transform: rotate(-7deg);
+    color: #6f8654;
+}
+.market-card-art > span {
+    position: absolute;
+    left: 17px;
+    top: 17px;
+    background: #ffffffc9;
+    border-radius: 30px;
+    padding: 7px 12px;
+    font-size: 12px;
+    color: #4c623d;
+}
+.market-card-art > b {
+    position: absolute;
+    right: 17px;
+    bottom: 17px;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    background: #fff9;
+    z-index: 1;
+}
+.market-card-copy {
+    padding: 25px;
+}
+.market-card-copy h3 {
+    font-size: 25px;
+    margin: 12px 0;
+    line-height: 1.25;
+}
+.market-card-copy h3 a,
+.farmer-intro h3 a {
+    color: #2d4433;
+    text-decoration: none;
+}
+.market-card-copy p {
+    color: #77816d;
+    font-size: 14px;
+    line-height: 1.7;
+}
+.market-card-facts {
+    display: grid;
+    gap: 12px;
+    padding: 18px 0 22px;
+    margin-top: 15px;
+    border-top: 1px solid #ecf0e5;
+    font-size: 14px;
+    color: #596b4c;
+}
+.market-card-facts i {
+    width: 22px;
+    color: #7f9363;
+}
+.market-card-copy .shop-outline {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+.discovery-empty {
+    padding: 45px 25px;
+    text-align: center;
+    border: 1px dashed #d2ddc4;
+    border-radius: 18px;
+    background: #f5f7ef;
+    grid-column: 1/-1;
+    width: 100%;
+}
+.discovery-empty > i {
+    display: block;
+    color: #91a370;
+    font-size: 35px;
+    margin-bottom: 20px;
+}
+.discovery-empty p {
+    color: #738164;
+    font-size: 15px;
+    line-height: 1.8;
+}
+.discovery-empty.compact {
+    padding: 28px 18px;
+    margin: 20px 0;
+}
+.discovery-farmer-list {
+    display: grid;
+    gap: 20px;
+}
+.discovery-farmer {
+    display: grid;
+    grid-template-columns: 135px 1fr 1fr;
+    gap: 20px;
+    align-items: center;
+    padding: 20px;
+    border-radius: 21px;
+    border: 1px solid #e1e6d9;
+    background: white;
+    transition: box-shadow 0.25s;
+}
+.discovery-farmer:hover {
+    box-shadow: 0 12px 30px #3b533510;
+}
+.farmer-photo-link {
+    position: relative;
+    align-self: stretch;
+    display: flex;
+    min-width: 0;
+    text-decoration: none;
+}
+.farmer-portrait {
+    width: 100%;
+    height: 100%;
+    min-height: 150px;
+    object-fit: cover;
+    border-radius: 14px;
+    display: block;
+}
+.portrait-placeholder {
+    background: #e8eddc;
+    color: #839367;
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+}
+.portrait-placeholder > span {
+    font:
+        italic 95px Georgia,
+        serif;
+}
+.portrait-placeholder > i {
+    position: absolute;
+    font-size: 55px;
+    bottom: -5px;
+    right: -5px;
+    color: #b8c89b;
+    transform: rotate(-25deg);
+}
+.discovery-badge {
+    position: absolute;
+    top: 9px;
+    left: 8px;
+    right: 8px;
+    border-radius: 20px;
+    background: #faffeee8;
+    color: #617949;
+    padding: 6px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+}
+.farmer-intro {
+    min-width: 0;
+}
+.farmer-intro h3 {
+    font-size: 23px;
+    margin: 10px 0 5px;
+    line-height: 1.2;
+}
+.farmer-intro > strong {
+    font-size: 13px;
+    color: #657656;
+}
+.farmer-intro p {
+    font-size: 13px;
+    color: #78816d;
+    margin: 10px 0 0;
+    line-height: 1.7;
+}
+.farmer-description {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.farmer-harvest {
+    min-width: 0;
+}
+.farmer-product-preview {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+}
+.farmer-product-preview a {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    text-decoration: none;
+    color: #69795a;
+    font-size: 11px;
+}
+.farmer-product-preview img {
+    width: 45px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 50%;
+    background: #f0f3e9;
+    margin-bottom: 7px;
+}
+.farmer-product-preview span {
+    display: block;
+}
+.farmer-card-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    color: #72845f;
+    font-size: 12px;
+}
+.farmer-card-meta .fa-star {
+    color: #aa914b;
+}
+.farmer-profile-link {
+    grid-column: 2/-1;
+    justify-self: end;
+    font-size: 13px;
+    padding: 10px 16px;
+    min-height: 44px;
+}
+.discovery-section {
+    margin-top: 48px;
+    scroll-margin-top: 25px;
+}
+.discovery-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+.discovery-actions form {
+    margin: 0 !important;
+}
+.market-detail-hero h1 {
+    font-size: clamp(32px, 3.2vw, 49px);
+}
+.market-detail-hero h1 em {
+    display: block;
+    font-size: 0.7em;
+    margin-top: 12px;
+}
+.market-information {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+    margin: 25px 0 40px;
+}
+.market-information > div {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #e4e9dd;
+    border-radius: 15px;
+}
+.market-information i {
+    font-size: 23px;
+    color: #869a64;
+}
+.market-information span {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: #87927b;
+}
+.market-information strong {
+    display: block;
+    color: #455b39;
+    font-size: 14px;
+    letter-spacing: 0;
+    margin-top: 6px;
+}
+.market-grower-carousel {
+    display: flex;
+    overflow: auto;
+    gap: 20px;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 15px;
+    scrollbar-width: thin;
+    scrollbar-color: #bac99f transparent;
+}
+.farmer-compact {
+    flex: 0 0 calc((100% - 60px) / 4);
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    scroll-snap-align: start;
+}
+.farmer-compact .farmer-photo-link {
+    height: 175px;
+}
+.farmer-compact .farmer-portrait {
+    width: 150px;
+    min-height: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin: auto;
+}
+.farmer-compact .discovery-badge {
+    top: 0;
+    right: 0;
+    left: auto;
+    padding: 7px 10px;
+}
+.farmer-compact .farmer-description {
+    display: none;
+}
+.farmer-compact .farmer-profile-link {
+    align-self: stretch;
+    margin-top: auto;
+    justify-content: space-between;
+}
+.farmer-compact .farmer-product-preview {
+    border-top: 1px solid #edf0e6;
+    margin-top: 10px;
+}
+.discovery-two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+    margin-top: 40px;
+    align-items: start;
+}
+.discovery-panel {
+    padding: 30px;
+    border: 1px solid #e2e8d8;
+    background: #fff;
+    border-radius: 23px;
+    min-width: 0;
+    scroll-margin-top: 25px;
+}
+.discovery-panel h2 {
+    font-size: 29px;
+    margin: 13px 0;
+    line-height: 1.2;
+}
+.discovery-panel > p {
+    color: #718065;
+    font-size: 15px;
+    line-height: 1.8;
+}
+.discovery-map {
+    width: 100%;
+    height: 275px;
+    border: 0;
+    border-radius: 15px;
+    background: #eaf0df;
+    margin: 12px 0 22px;
+}
+.location-panel > small {
+    display: block;
+    font-size: 12px;
+    margin-top: 14px;
+    color: #89947d;
+}
+.discovery-slot {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 18px 0;
+    border-bottom: 1px solid #e9eddf;
+    text-decoration: none;
+    color: #405438;
+}
+.slot-date {
+    text-align: center;
+    width: 55px;
+    padding: 10px 5px;
+    background: #f0f3e7;
+    border-radius: 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.slot-date b {
+    display: block;
+    font-size: 22px;
+}
+.discovery-slot strong {
+    font-size: 15px;
+}
+.discovery-slot small {
+    display: block;
+    font-size: 13px;
+    color: #7d8a70;
+    margin-top: 6px;
+}
+.discovery-slot > i {
+    margin-left: auto;
+}
+.discovery-panel > .discovery-text-link,
+.discovery-panel > .shop-pill {
+    margin-top: 20px;
+    display: inline-flex;
+}
+.discovery-product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+}
+.farmer-profile-hero {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 45px;
+    background: #e9eddd;
+    padding: 40px;
+    border-radius: 28px;
+    position: relative;
+    overflow: hidden;
+}
+.profile-portrait-wrap {
+    position: relative;
+}
+.profile-portrait-wrap .farmer-portrait {
+    min-height: 265px;
+    border-radius: 18px;
+}
+.profile-portrait-caption {
+    position: absolute;
+    bottom: 14px;
+    left: 12px;
+    right: 12px;
+    padding: 9px;
+    text-align: center;
+    background: #f8faeedd;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    border-radius: 8px;
+}
+.profile-hero-copy {
+    align-self: center;
+    position: relative;
+    z-index: 1;
+}
+.profile-hero-copy h1 {
+    font-size: clamp(35px, 4vw, 57px);
+    margin: 15px 0 7px;
+    letter-spacing: -0.045em;
+}
+.profile-hero-copy h2 {
+    font-size: 25px;
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    color: #70814e;
+}
+.profile-hero-copy > p {
+    color: #78846b;
+    font-size: 15px;
+    line-height: 1.8;
+    margin-top: 15px;
+}
+.profile-trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin: 22px 0;
+    color: #65774f;
+    font-size: 13px;
+}
+.profile-trust a {
+    color: inherit;
+    text-decoration: none;
+}
+.profile-trust .fa-star {
+    color: #a99047;
+}
+.profile-hero-spark {
+    position: absolute;
+    font-size: 160px;
+    right: -15px;
+    top: -15px;
+    color: #d8e0c5;
+}
+.profile-section-nav {
+    display: flex;
+    gap: 30px;
+    overflow: auto;
+    padding: 23px 0;
+    border-bottom: 1px solid #dde4d2;
+    scrollbar-width: thin;
+}
+.profile-section-nav a {
+    white-space: nowrap;
+    color: #6a7b57;
+    text-decoration: none;
+    font-size: 14px;
+}
+.profile-section-nav a:hover {
+    color: #2f4a31;
+}
+.grower-product-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 22px;
+    margin-bottom: 25px;
+    background: #eef2e5;
+    border-radius: 17px;
+    align-items: end;
+}
+.grower-product-filters label {
+    margin: 0;
+    flex: 1 1 150px;
+}
+.grower-product-filters :is(input, select) {
+    margin-top: 9px;
+}
+.grower-product-filters .discovery-check {
+    flex: 0 1 auto;
+    align-self: center;
+    margin-top: 18px;
+}
+.grower-product-filters .discovery-check input {
+    margin-top: 0;
+}
+.grower-product-filters .shop-pill {
+    padding: 12px 17px;
+    font-size: 14px;
+}
+.grower-product-filters > a {
+    align-self: center;
+    margin-top: 18px;
+    font-size: 13px;
+}
+.profile-facts {
+    margin-top: 28px;
+}
+.profile-facts > div {
+    border-top: 1px solid #e8edde;
+    padding: 18px 0;
+}
+.profile-facts dt {
+    color: #8a967c;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+.profile-facts dd {
+    font-size: 15px;
+    margin: 0;
+    color: #435939;
+}
+.profile-facts a {
+    display: block;
+    color: #587440;
+    margin-top: 8px;
+}
+.weekly-stock-list a {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    padding: 19px 0;
+    border-bottom: 1px solid #e5ebdc;
+    text-decoration: none;
+    color: #4b633c;
+}
+.weekly-stock-list a > span:first-child {
+    flex: 1;
+}
+.weekly-stock-list small {
+    display: block;
+    margin-top: 5px;
+    color: #8b967e;
+}
+.weekly-stock-list b {
+    font-size: 14px;
+}
+.grower-rating {
+    background: #e8eddc;
+}
+.grower-rating > strong {
+    font-size: 64px;
+    letter-spacing: -0.04em;
+    display: block;
+}
+.grower-rating > strong small {
+    font-size: 20px;
+    color: #84956c;
+}
+.grower-rating > span {
+    display: block;
+    margin: 14px 0;
+}
+.grower-review {
+    margin-bottom: 18px;
+}
+.grower-review header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.grower-review header > span:last-child {
+    margin-left: auto;
+    color: #9b874d;
+    font-size: 13px;
+}
+.grower-review header small {
+    display: block;
+    color: #8d9780;
+    font-size: 12px;
+    margin-top: 5px;
+}
+.grower-review > p {
+    margin: 20px 0 0;
+}
+.grower-review blockquote {
+    padding: 18px;
+    border-left: 3px solid #b4c596;
+    background: #f5f7ee;
+    margin: 20px 0 0;
+    font-size: 14px;
+    color: #657754;
+}
+.grower-review blockquote p {
+    margin: 8px 0 0;
+    line-height: 1.8;
+}
+.discovery-page .shop-kicker {
+    font-size: 11px;
+}
+.discovery-page :is(button, a, input, select):focus-visible {
+    outline: 3px solid #92a974;
+    outline-offset: 4px;
+}
+@media (min-width: 1400px) {
+    .discovery-farmer:not(.farmer-compact) {
+        grid-template-columns: 150px 1fr 1fr auto;
+    }
+    .discovery-farmer:not(.farmer-compact) .farmer-profile-link {
+        grid-column: auto;
+    }
+}
+@media (max-width: 1199px) {
+    .discovery-hero > div:first-child {
+        padding: 35px;
+    }
+    .discovery-workspace {
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 20px;
+    }
+    .discovery-farmer {
+        grid-template-columns: 115px 1fr;
+    }
+    .farmer-harvest {
+        grid-column: 1/-1;
+    }
+    .farmer-product-preview {
+        justify-content: start;
+    }
+    .farmer-product-preview a {
+        flex: 0 0 70px;
+    }
+    .farmer-profile-link {
+        grid-column: 1/-1;
+    }
+    .market-information {
+        gap: 12px;
+    }
+    .market-information > div {
+        padding: 15px;
+    }
+}
+@media (max-width: 991px) {
+    .discovery-workspace {
+        grid-template-columns: 1fr;
+    }
+    .discovery-filters {
+        position: static;
+    }
+    .discovery-filters summary {
+        display: flex;
+        justify-content: space-between;
+        padding: 18px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .discovery-filters form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .discovery-filters form > * {
+        grid-column: 1/-1;
+    }
+    .filter-top {
+        display: none;
+    }
+    .discovery-filters label {
+        margin: 7px 0 0;
+    }
+    .discovery-filters .shop-pill {
+        margin-top: 12px;
+    }
+    .discovery-filters form > p {
+        display: none;
+    }
+    .discovery-farmer {
+        grid-template-columns: 140px 1fr 1fr;
+    }
+    .farmer-harvest {
+        grid-column: auto;
+    }
+    .farmer-profile-link {
+        grid-column: 2/-1;
+    }
+    .market-information {
+        grid-template-columns: 1fr 1fr;
+    }
+    .farmer-profile-hero {
+        grid-template-columns: 200px minmax(0, 1fr);
+        gap: 28px;
+        padding: 30px;
+    }
+    .discovery-product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 767px) {
+    .discovery-hero {
+        grid-template-columns: 1fr;
+    }
+    .discovery-hero > div:first-child {
+        padding: 32px 25px;
+    }
+    .discovery-hero h1 {
+        font-size: 44px;
+    }
+    .discovery-landscape {
+        min-height: 240px;
+    }
+    .discovery-stall {
+        width: 210px;
+        left: calc(50% - 105px);
+        height: 150px;
+        top: 40px;
+    }
+    .discovery-path {
+        overflow: auto;
+        justify-content: start;
+        white-space: nowrap;
+        padding: 20px 0;
+        font-size: 12px;
+        gap: 12px;
+    }
+    .discovery-path b {
+        margin-right: 5px;
+    }
+    .discovery-two-column {
+        grid-template-columns: 1fr;
+    }
+    .discovery-panel {
+        padding: 24px;
+    }
+    .discovery-section {
+        margin-top: 35px;
+    }
+    .discovery-farmer {
+        grid-template-columns: 115px 1fr;
+        gap: 15px;
+        padding: 17px;
+    }
+    .farmer-harvest {
+        grid-column: 1/-1;
+    }
+    .farmer-profile-link {
+        grid-column: 1/-1;
+    }
+    .discovery-farmer:not(.farmer-compact) .farmer-profile-link {
+        justify-self: stretch;
+        justify-content: space-between;
+    }
+    .discovery-product-grid {
+        gap: 16px;
+    }
+    .market-card-copy {
+        padding: 20px;
+    }
+    .market-card-copy h3 {
+        font-size: 23px;
+    }
+    .farmer-profile-hero {
+        grid-template-columns: 1fr;
+        padding: 25px;
+        gap: 25px;
+    }
+    .profile-portrait-wrap {
+        max-width: 240px;
+    }
+    .profile-portrait-wrap .farmer-portrait {
+        min-height: 230px;
+    }
+    .profile-hero-copy h1 {
+        font-size: 40px;
+    }
+    .profile-section-nav {
+        gap: 22px;
+    }
+    .grower-product-filters {
+        padding: 18px;
+        gap: 15px;
+    }
+    .grower-product-filters label {
+        flex-basis: calc(50% - 15px);
+        min-width: 0;
+    }
+    .discovery-page .shop-section-heading {
+        align-items: start;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    .discovery-hero p {
+        font-size: 15px;
+    }
+}
+@media (max-width: 479px) {
+    .discovery-market-grid {
+        grid-template-columns: 1fr;
+    }
+    .discovery-product-grid {
+        grid-template-columns: 1fr;
+    }
+    .discovery-breadcrumb {
+        font-size: 12px;
+        padding-block: 18px;
+    }
+    .discovery-hero h1 {
+        font-size: 39px;
+    }
+    .discovery-hero {
+        border-radius: 22px;
+    }
+    .market-detail-hero h1 {
+        font-size: 32px;
+    }
+    .market-information > div {
+        flex-direction: column;
+        align-items: start;
+        padding: 17px;
+    }
+    .market-information strong {
+        font-size: 13px;
+    }
+    .discovery-farmer {
+        grid-template-columns: 90px minmax(0, 1fr);
+    }
+    .farmer-intro h3 {
+        font-size: 21px;
+    }
+    .discovery-badge {
+        font-size: 9px;
+    }
+    .farmer-intro .shop-kicker {
+        font-size: 10px;
+    }
+    .discovery-actions {
+        align-items: stretch;
+    }
+    .discovery-actions .shop-pill,
+    .discovery-actions .shop-outline {
+        padding: 13px 15px;
+        font-size: 14px;
+    }
+    .discovery-panel {
+        padding: 22px 18px;
+    }
+    .discovery-slot {
+        gap: 12px;
+    }
+    .grower-review header {
+        flex-wrap: wrap;
+    }
+    .grower-product-filters label {
+        flex-basis: 100%;
+    }
+    .profile-trust {
+        gap: 12px;
+    }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .discovery-stall {
+        animation: stall-arrive 0.8s ease both;
+    }
+    .discovery-spark {
+        animation: market-sway 12s ease-in-out infinite alternate;
+    }
+    @keyframes stall-arrive {
+        from {
+            opacity: 0;
+            transform: translateY(20px) rotate(0);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) rotate(-5deg);
+        }
+    }
+    @keyframes market-sway {
+        to {
+            transform: rotate(60deg);
+        }
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .discovery-page * {
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+}
+.profile-status-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+.grower-active-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #3d623a;
+    background: #f6fbea;
+    padding: 7px 11px;
+    border: 1px solid #d9e6c5;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.grower-active-badge > span {
+    width: 6px;
+    height: 6px;
+    background: #77964d;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px #77964d15;
+}
+.grower-active-badge.is-inactive {
+    color: #81795f;
+    background: #f5f1e7;
+    border-color: #e7e0d0;
+}
+.grower-active-badge.is-inactive > span {
+    background: #a59b80;
+}
+.discovery-badge {
+    padding: 0;
+    background: none;
+}
+.discovery-badge .grower-active-badge {
+    font-size: 10px;
+    padding: 6px 8px;
+}
+
+/* ==========================================================
+   MARKETS PAGE (image-free redesign)
+   Append to the BOTTOM of discovery.css.
+   Everything is scoped to .markets-page so the farmers page,
+   market detail page and farmer profile are not affected.
+   ========================================================== */
+
+/* ---------- Hero ---------- */
+.markets-page .markets-hero {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 56px;
+    align-items: center;
+    background: #e9eddc;
+    border-radius: 28px;
+    padding: 56px;
+    position: relative;
+    overflow: hidden;
+}
+.markets-page .markets-hero h1 {
+    font-family: Manrope, sans-serif;
+    font-size: clamp(40px, 4.6vw, 66px);
+    line-height: 1.06;
+    letter-spacing: -0.055em;
+    font-weight: 700;
+    margin: 22px 0;
+    color: #263b2b;
+}
+.markets-page .markets-hero h1 em {
+    font-family: Georgia, serif;
+    font-weight: 400;
+    color: #435a2d;
+}
+.markets-page .markets-hero-copy > p {
+    font-size: 17px;
+    line-height: 1.8;
+    color: #627060;
+    max-width: 460px;
+    margin: 0;
+}
+.markets-page .markets-hero-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 30px;
+}
+.markets-page .markets-hero-actions .discovery-text-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 44px;
+    font-size: 15px;
+}
+.markets-page .markets-hero-actions .discovery-text-link span {
+    transition: transform 0.25s;
+}
+.markets-page .markets-hero-actions .discovery-text-link:hover span {
+    transform: translate(3px, -3px);
+}
+
+/* Market board (replaces the illustrated landscape) */
+.markets-page .markets-board {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: #344829;
+    color: #f1f5e6;
+    border-radius: 26px 26px 26px 90px;
+    padding: 34px 36px 30px;
+    box-shadow: 0 24px 40px #263b2018;
+}
+.markets-page .markets-board-tag {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    font-weight: 700;
+    color: #d3e1b4;
+}
+.markets-page .markets-board-count {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 22px 0 26px;
+}
+.markets-page .markets-board-count strong {
+    font-family: Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(76px, 8vw, 116px);
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    color: #fff;
+}
+.markets-page .markets-board-count span {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #dae2d0;
+}
+.markets-page .markets-board-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.markets-page .markets-board-steps li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 15px 0;
+    border-top: 1px solid #ffffff26;
+    font-size: 15px;
+}
+.markets-page .markets-board-steps b {
+    font-family: Georgia, serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: #b8cc94;
+}
+.markets-page .markets-board-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 18px;
+    border-top: 1px solid #ffffff26;
+    font-size: 13px;
+    color: #d3e1b4;
+}
+.markets-page .markets-board-mark {
+    position: absolute;
+    right: -30px;
+    top: -50px;
+    font-size: 230px;
+    line-height: 1;
+    color: #ffffff09;
+    z-index: -1;
+}
+
+/* ---------- Market cards (no art, typographic header) ---------- */
+.markets-page .markets-card-head {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 22px 24px;
+    text-decoration: none;
+    background: #e8eddc;
+    color: #435a2d;
+    overflow: hidden;
+    isolation: isolate;
+}
+.markets-page .markets-card-head:after {
+    content: "✳";
+    position: absolute;
+    right: 60px;
+    top: -22px;
+    font-size: 96px;
+    line-height: 1;
+    color: #d3dcbf;
+    z-index: -1;
+}
+.markets-page .markets-card:nth-child(3n + 2) .markets-card-head {
+    background: #efead7;
+}
+.markets-page .markets-card:nth-child(3n + 2) .markets-card-head:after {
+    color: #e0d8b8;
+}
+.markets-page .markets-card:nth-child(3n) .markets-card-head {
+    background: #e3ebd6;
+}
+.markets-page .markets-card-num {
+    font-family: Georgia, serif;
+    font-size: 42px;
+    line-height: 1;
+    color: #7c9065;
+    letter-spacing: -0.03em;
+}
+.markets-page .markets-card-city {
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #ffffffc9;
+    border-radius: 30px;
+    padding: 7px 13px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4c623d;
+}
+.markets-page .markets-card-head > b {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #ffffff99;
+    font-weight: 400;
+    transition:
+        transform 0.25s,
+        background 0.25s,
+        color 0.25s;
+}
+.markets-page .markets-card:hover .markets-card-head > b {
+    background: #435a2d;
+    color: #fff;
+    transform: translate(2px, -2px);
+}
+.markets-page .markets-card .market-card-copy {
+    padding: 24px 25px 25px;
+}
+.markets-page .markets-card .market-card-copy h3 {
+    font-family: Manrope, sans-serif;
+    letter-spacing: -0.035em;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 991px) {
+    .markets-page .markets-hero {
+        gap: 34px;
+        padding: 40px 32px;
+    }
+}
+@media (max-width: 767px) {
+    .markets-page .markets-hero {
+        grid-template-columns: 1fr;
+        padding: 32px 24px;
+        gap: 30px;
+    }
+    .markets-page .markets-hero h1 {
+        font-size: 44px;
+    }
+    .markets-page .markets-hero-copy > p {
+        font-size: 16px;
+    }
+    .markets-page .markets-board {
+        padding: 28px 24px 24px;
+        border-radius: 22px 22px 22px 60px;
+    }
+    .markets-page .markets-board-mark {
+        font-size: 180px;
+    }
+}
+@media (max-width: 479px) {
+    .markets-page .markets-hero {
+        border-radius: 22px;
+    }
+    .markets-page .markets-hero h1 {
+        font-size: 39px;
+    }
+    .markets-page .markets-hero-actions {
+        gap: 14px;
+    }
+    .markets-page .markets-card-num {
+        font-size: 36px;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .markets-page * {
+        transition: none !important;
+    }
+}
