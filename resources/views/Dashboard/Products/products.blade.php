@@ -92,17 +92,7 @@
 
         </div>
 
-        @if(session('success'))
-            <div style="padding:12px 22px; color:green;">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div style="padding:12px 22px; color:red;">
-                {{ session('error') }}
-            </div>
-        @endif
+        {{-- success/error flash now rendered by Dashboard._master --}}
 
         <div class="tbl-wrap">
 

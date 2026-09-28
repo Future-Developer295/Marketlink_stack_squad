@@ -174,6 +174,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::post('/dashboard/users/update/{id}', [DashboardController::class, 'userUpdate'])
         ->name('user_update')
         ->middleware('permission:edit users');
+    Route::post('/dashboard/users/approve/{id}', [DashboardController::class, 'userApprove'])
+        ->name('user_approve')
+        ->middleware('permission:edit users');
     Route::post('/dashboard/users/delete/{id}', [DashboardController::class, 'userDelete'])
         ->name('user_delete')
         ->middleware('permission:delete users');
