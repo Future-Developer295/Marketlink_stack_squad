@@ -3,7 +3,82 @@
 @section('page_styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@14.2.0/swiper-bundle.min.css">
 <link rel="stylesheet" href="{{ asset('Assets/Website_Asset/css/home.css') }}">
+    <link rel="stylesheet" href="{{ asset('Assets/Website_Asset/css/loader.css') }}">
+
+    <script src="{{ asset('Assets/Website_Asset/js/loader.js') }}"></script>
 @endsection
+
+  <div class="loader-overlay" id="loaderOverlay">
+    <div class="stage">
+      
+      <div class="basket-wrapper" id="basketWrapper">
+        <div class="motion-trail"></div>
+
+        <!-- LAYER 1: BACK FRAME & WHEELS -->
+        <svg class="basket-svg-layer layer-back" viewBox="0 0 220 180" fill="none">
+          <path d="M60 52 L195 58 L182 118 L76 124 Z" fill="rgba(0,0,0,0.03)" stroke="none"/>
+          <rect x="26" y="14" width="24" height="32" rx="9" transform="rotate(-22 26 14)" fill="var(--cart-handle)"/>
+          <path d="M40 30 L62 65" stroke="var(--cart-metal)" stroke-width="5" stroke-linecap="round"/>
+          <path d="M45 25 L67 60" stroke="var(--cart-metal)" stroke-width="5" stroke-linecap="round"/>
+
+          <path d="M66 55 L90 98 M96 62 L84 92" stroke="var(--cart-metal)" stroke-width="3" stroke-linecap="round"/>
+          <rect x="76" y="75" width="22" height="6" fill="var(--cart-handle)" rx="3" transform="rotate(-15 76 75)"/>
+
+          <path d="M76 124 C 55 140, 55 158, 68 158 L 178 158 C 172 140, 178 128, 182 118" fill="none" stroke="var(--cart-metal)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M68 158 L178 158" stroke="var(--cart-metal)" stroke-width="4.5"/>
+
+          <g transform="translate(70, 158)">
+            <path d="M-7 0 L7 0 L5 12 L-5 12 Z" fill="var(--cart-metal)"/>
+            <g class="wheel-rotate" transform="translate(0, 15)">
+              <circle cx="0" cy="0" r="8" fill="#2C3539" stroke="#90A4AE" stroke-width="2.5"/>
+              <line x1="0" y1="-8" x2="0" y2="8" stroke="#FFFFFF" stroke-width="1.5"/>
+              <line x1="-8" y1="0" x2="8" y2="0" stroke="#FFFFFF" stroke-width="1.5"/>
+              <circle cx="0" cy="0" r="2.5" fill="#FFFFFF"/>
+            </g>
+          </g>
+
+          <g transform="translate(172, 158)">
+            <path d="M-7 0 L7 0 L5 12 L-5 12 Z" fill="var(--cart-metal)"/>
+            <g class="wheel-rotate" transform="translate(0, 15)">
+              <circle cx="0" cy="0" r="8" fill="#2C3539" stroke="#90A4AE" stroke-width="2.5"/>
+              <line x1="0" y1="-8" x2="0" y2="8" stroke="#FFFFFF" stroke-width="1.5"/>
+              <line x1="-8" y1="0" x2="8" y2="0" stroke="#FFFFFF" stroke-width="1.5"/>
+              <circle cx="0" cy="0" r="2.5" fill="#FFFFFF"/>
+            </g>
+          </g>
+        </svg>
+
+        <!-- LAYER 2: REAL FRUITS -->
+        <div class="fruits-container">
+          <img src="https://pngimg.com/uploads/apple/apple_PNG12405.png" class="produce-item f-apple" id="prod1" alt="Apple" />
+          <img src="https://pngimg.com/uploads/orange/orange_PNG780.png" class="produce-item f-orange" id="prod2" alt="Orange" />
+          <img src="https://pngimg.com/uploads/banana/banana_PNG827.png" class="produce-item f-banana" id="prod3" alt="Banana" />
+          <img src="https://pngimg.com/uploads/strawberry/strawberry_PNG2596.png" class="produce-item f-strawberry" id="prod4" alt="Strawberry" />
+        </div>
+
+        <!-- LAYER 3: FRONT WIRE MESH -->
+        <svg class="basket-svg-layer layer-front" viewBox="0 0 220 180" fill="none">
+          <path d="M60 52 L195 58 L182 118 L76 124 Z" fill="none" stroke="var(--cart-metal)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+
+          <path d="M84 53 L92 122" stroke="var(--cart-metal)" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M104 54 L110 121" stroke="var(--cart-metal)" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M124 55 L128 120" stroke="var(--cart-metal)" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M144 56 L145 119" stroke="var(--cart-metal)" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M164 57 L162 119" stroke="var(--cart-metal)" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M180 58 L174 118" stroke="var(--cart-metal)" stroke-width="3.5" stroke-linecap="round"/>
+
+          <path d="M66 74 L190 78" stroke="var(--cart-metal)" stroke-width="3"/>
+          <path d="M70 96 L186 98" stroke="var(--cart-metal)" stroke-width="3"/>
+        </svg>
+
+      </div>
+
+    </div>
+
+    <div class="loading-text-container" id="loadingText">
+      Loading fresh fruits<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+    </div>
+  </div>
 @section('body')
 <div class="home-page">
     <section class="home-hero" aria-labelledby="home-title">
