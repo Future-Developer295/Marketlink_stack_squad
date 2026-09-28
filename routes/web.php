@@ -1,12 +1,10 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmailOtpController;
 use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
 
-// Single entry point for "/dashboard": sends admin/farmer/customer to
-// their own dashboard. Registered under both names since different
-// layouts in the app reference either name to build the link.
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('index');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -303,6 +301,14 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     ->name('my_markets_store')
     ->middleware('permission:join markets');
 });
+Route::get('/email/verify', [EmailOtpController::class, 'show'])
+    ->name('verification.notice');
+Route::post('/email/verify', [EmailOtpController::class, 'verify'])
+    ->middleware('throttle:10,1')
+    ->name('verification.otp.verify');
+Route::post('/email/verify/resend', [EmailOtpController::class, 'resend'])
+    ->middleware('throttle:5,1')
+    ->name('verification.otp.resend');
 
 Route::get('/', [WebsiteController::class, 'home']);
 

@@ -1,347 +1,714 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+@extends('Website._master')
 
-    <title>{{ __('Log in') }} - MarketLink</title>
+@section('page_title', 'Login')
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
+@section('page_styles')
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
 
-    <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
+:root {
+    --ml-green: #2f5d3a;
+    --ml-green-dark: #173923;
+    --ml-green-soft: #eaf2eb;
+    --ml-cream: #f6f3ea;
+    --ml-white: #ffffff;
+    --ml-text: #18231c;
+    --ml-muted: #6f786f;
+    --ml-border: #dfe5de;
+    --ml-accent: #9fb89f;
+}
 
-    <style>
-        .ml-login-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #eef1ee;
-            font-family: 'Figtree', 'Segoe UI', sans-serif;
-            padding: 28px;
-            box-sizing: border-box;
-        }
-        .ml-login-page *, .ml-login-page *::before, .ml-login-page *::after { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
 
-        .ml-login-shell {
-            width: 100%;
-            max-width: 1220px;
-            min-height: 660px;
-            background: #ffffff;
-            border-radius: 28px;
-            overflow: hidden;
-            display: flex;
-            box-shadow: 0 24px 70px rgba(11, 43, 36, 0.10);
-        }
+body {
+    background: var(--ml-cream);
+    color: var(--ml-text);
+    font-family: 'DM Sans', sans-serif;
+}
 
-        /* Left panel */
-        .ml-login-left {
-            flex: 0 0 42%;
-            background: #073f3c;
-            padding: 48px 56px;
-            display: flex;
-            flex-direction: column;
-            color: #fff;
-        }
-        .ml-login-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .ml-login-brand-badge {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
-            background: #35c978;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .ml-login-brand-badge svg { width: 26px; height: 26px; color: #fff; }
-        .ml-login-brand-name {
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            color: #ffffff;
-        }
-        .ml-login-content {
-            margin-top: auto;
-            margin-bottom: auto;
-            padding: 90px 0 40px;
-            max-width: 420px;
-        }
-        .ml-login-heading {
-            font-size: 40px;
-            line-height: 1.18;
-            font-weight: 800;
-            color: #ffffff;
-            margin: 0 0 18px;
-            letter-spacing: -0.01em;
-        }
-        .ml-login-sub {
-            font-size: 16px;
-            line-height: 1.6;
-            color: #a9c9bd;
-            margin: 0;
-        }
+.auth-page {
+    min-height: 100vh;
+    padding: 42px 20px;
+    background:
+        radial-gradient(circle at 8% 12%, rgba(47, 93, 58, 0.08), transparent 28%),
+        radial-gradient(circle at 92% 88%, rgba(23, 57, 35, 0.07), transparent 26%),
+        #f6f3ea;
+}
 
-        /* Right panel */
-        .ml-login-right {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #fbfcfb;
-            padding: 40px 32px;
-        }
-        .ml-login-card {
-            width: 100%;
-            max-width: 460px;
-            background: #ffffff;
-            border: 1px solid #eef2ef;
-            border-radius: 22px;
-            padding: 44px 40px;
-            box-shadow: 0 10px 40px rgba(15, 43, 38, 0.06);
-        }
-        .ml-login-title {
-            font-size: 30px;
-            font-weight: 800;
-            color: #0f2b25;
-            margin: 0 0 6px;
-            letter-spacing: -0.01em;
-        }
-        .ml-login-desc {
-            font-size: 15px;
-            color: #7c8f87;
-            margin: 0 0 26px;
-        }
+.auth-wrap {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+}
 
-        .ml-login-status {
-            margin-bottom: 18px;
-            padding: 11px 14px;
-            border-radius: 10px;
-            background: #eaf6ef;
-            color: #1c7a4c;
-            font-size: 13.5px;
-            font-weight: 600;
-        }
-        .ml-login-errors {
-            margin-bottom: 18px;
-            padding: 14px 16px;
-            border-radius: 10px;
-            background: #fceeed;
-            border: 1px solid #f3d3d1;
-        }
-        .ml-login-errors p { margin: 0 0 6px; font-weight: 700; color: #b54748; font-size: 13.5px; }
-        .ml-login-errors ul { margin: 0; padding-left: 18px; }
-        .ml-login-errors li { color: #b54748; font-size: 13px; }
+.auth-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: var(--ml-muted);
+}
 
-        .ml-field { margin-bottom: 20px; }
-        .ml-field label {
-            display: block;
-            font-size: 13.5px;
-            font-weight: 700;
-            color: #16241f;
-            margin-bottom: 8px;
-        }
-        .ml-input-wrap { position: relative; }
-        .ml-input-wrap svg.ml-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 19px;
-            height: 19px;
-            color: #8a9c95;
-            pointer-events: none;
-        }
-        .ml-input-wrap input {
-            width: 100%;
-            height: 50px;
-            padding: 0 16px 0 44px;
-            border: 1.5px solid #e3e8e5;
-            border-radius: 12px;
-            font-size: 14.5px;
-            color: #16241f;
-            background: #fff;
-            outline: none;
-            transition: border-color .15s ease, box-shadow .15s ease;
-            font-family: inherit;
-        }
-        .ml-input-wrap input::placeholder { color: #9fb0aa; }
-        .ml-input-wrap input:focus {
-            border-color: #35c978;
-            box-shadow: 0 0 0 3px rgba(53, 201, 120, 0.18);
-        }
+.auth-breadcrumb a {
+    color: var(--ml-green);
+    text-decoration: none;
+    font-weight: 600;
+}
 
-        .ml-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin: 4px 0 26px;
-        }
-        .ml-remember {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            font-size: 14px;
-            color: #46564f;
-            cursor: pointer;
-            user-select: none;
-        }
-        .ml-remember input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            border-radius: 5px;
-            border: 1.5px solid #cbd6d0;
-            accent-color: #073f3c;
-            cursor: pointer;
-        }
-        .ml-forgot {
-            font-size: 14px;
-            font-weight: 600;
-            color: #128a5d;
-            text-decoration: none;
-        }
-        .ml-forgot:hover { text-decoration: underline; }
+.auth-breadcrumb a:hover {
+    color: var(--ml-green-dark);
+}
 
-        .ml-submit {
-            width: 100%;
-            height: 50px;
-            border: none;
-            border-radius: 12px;
-            background: #073f3c;
-            color: #ffffff;
-            font-size: 15.5px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background .15s ease;
-            font-family: inherit;
-        }
-        .ml-submit:hover { background: #0a4d48; }
-        .ml-submit:focus-visible { outline: 3px solid rgba(53, 201, 120, 0.35); outline-offset: 2px; }
+.auth-shell {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    min-height: 640px;
+    background: var(--ml-white);
+    box-shadow: 0 28px 80px rgba(23, 57, 35, 0.11);
+    overflow: hidden;
+}
 
-        .ml-secure {
-            margin-top: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-size: 13px;
-            color: #8a9c95;
-        }
-        .ml-secure svg { width: 14px; height: 14px; }
+.auth-visual {
+    background: linear-gradient(160deg, #21472d 0%, #173923 100%);
+    color: #fff;
+    padding: 54px 48px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
 
-        @media (max-width: 900px) {
-            .ml-login-shell { flex-direction: column; min-height: auto; max-width: 480px; }
-            .ml-login-left { flex: none; padding: 36px 32px; }
-            .ml-login-content { padding: 30px 0 8px; margin: 0; }
-            .ml-login-heading { font-size: 30px; }
-            .ml-login-right { padding: 32px 24px; }
-            .ml-login-card { padding: 34px 26px; box-shadow: none; border: none; }
-        }
-    </style>
-</head>
-<body>
-    <div class="ml-login-page">
-        <div class="ml-login-shell">
-            <!-- Left brand / info panel -->
-            <div class="ml-login-left">
-                <div class="ml-login-brand">
-                    <div class="ml-login-brand-badge">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
-                            <path d="M2.6 12.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83"/>
-                            <path d="M2.6 17.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83"/>
-                        </svg>
+.auth-visual::before,
+.auth-visual::after {
+    content: '';
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.auth-visual::before {
+    width: 420px;
+    height: 420px;
+    top: -210px;
+    right: -210px;
+}
+
+.auth-visual::after {
+    width: 300px;
+    height: 300px;
+    bottom: -160px;
+    left: -160px;
+}
+
+.auth-emblem {
+    position: relative;
+    z-index: 2;
+    width: fit-content;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    line-height: 1.5;
+    color: #d7e5d8;
+}
+
+.auth-emblem i {
+    margin-right: 8px;
+    color: #aec9b0;
+}
+
+.auth-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--ml-green);
+}
+
+.auth-visual .auth-kicker {
+    color: #b8cfb9;
+}
+
+.auth-kicker > span {
+    width: 28px;
+    height: 1px;
+    background: currentColor;
+    display: inline-block;
+}
+
+.auth-visual h2 {
+    position: relative;
+    z-index: 2;
+    max-width: 480px;
+    margin: 16px 0 18px;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(38px, 4vw, 54px);
+    line-height: 1.08;
+    font-weight: 700;
+}
+
+.auth-visual h2 em,
+.auth-panel h1 em {
+    color: #b8cfb9;
+    font-style: italic;
+}
+
+.auth-visual p {
+    position: relative;
+    z-index: 2;
+    max-width: 460px;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 14px;
+    line-height: 1.8;
+    margin: 0;
+}
+
+.auth-points {
+    list-style: none;
+    padding: 0;
+    margin: 36px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: relative;
+    z-index: 2;
+}
+
+.auth-points li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.auth-points i {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    color: #bcd2bd;
+}
+
+.auth-visual-note {
+    position: relative;
+    z-index: 2;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.auth-orbit {
+    position: absolute;
+    width: 130px;
+    height: 130px;
+    right: 30px;
+    bottom: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+}
+
+.auth-panel {
+    padding: 58px 62px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #fff;
+}
+
+.auth-panel-head {
+    margin-bottom: 30px;
+}
+
+.auth-panel h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(34px, 4vw, 46px);
+    line-height: 1.12;
+    margin: 10px 0 12px;
+    color: var(--ml-text);
+}
+
+.auth-panel h1 em {
+    color: var(--ml-green);
+}
+
+.auth-panel-head p {
+    margin: 0;
+    color: var(--ml-muted);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.ml-form-label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3d473f;
+}
+
+.auth-field {
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--ml-border);
+    background: #fff;
+    transition: 0.25s ease;
+    position: relative;
+}
+
+.auth-field:focus-within {
+    border-color: var(--ml-green);
+    box-shadow: 0 0 0 3px rgba(47, 93, 58, 0.07);
+}
+
+.auth-icon {
+    width: 48px;
+    text-align: center;
+    color: #738076;
+    flex-shrink: 0;
+}
+
+.auth-field .form-control {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    min-height: 54px;
+    padding: 0 14px 0 0;
+    font-size: 14px;
+    color: var(--ml-text);
+}
+
+.auth-field .form-control:focus {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.auth-field .form-control::placeholder {
+    color: #a1a8a2;
+}
+
+.auth-field.has-toggle .form-control {
+    padding-right: 48px;
+}
+
+.auth-toggle {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border: 0;
+    background: transparent;
+    color: #7f8880;
+    cursor: pointer;
+}
+
+.auth-toggle:hover {
+    color: var(--ml-green);
+}
+
+.auth-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.form-check-input {
+    border-color: #aeb7af;
+}
+
+.form-check-input:checked {
+    background-color: var(--ml-green);
+    border-color: var(--ml-green);
+}
+
+.form-check-input:focus {
+    border-color: var(--ml-green);
+    box-shadow: 0 0 0 0.2rem rgba(47, 93, 58, 0.12);
+}
+
+.auth-link {
+    color: var(--ml-green);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-link:hover {
+    color: var(--ml-green-dark);
+}
+
+.auth-submit {
+    width: 100%;
+    min-height: 56px;
+    border: 0;
+    background: var(--ml-green);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: 0.25s ease;
+}
+
+.auth-submit:hover {
+    background: var(--ml-green-dark);
+    transform: translateY(-1px);
+}
+
+.auth-switch {
+    text-align: center;
+    margin: 24px 0 0;
+    color: var(--ml-muted);
+    font-size: 13px;
+}
+
+.invalid-feedback {
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+@media (max-width: 1100px) {
+    .auth-panel {
+        padding: 48px 42px;
+    }
+
+    .auth-visual {
+        padding: 48px 38px;
+    }
+}
+
+@media (max-width: 991px) {
+    .auth-page {
+        padding: 28px 18px;
+    }
+
+    .auth-shell {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .auth-panel {
+        order: 1;
+        padding: 48px 44px;
+    }
+
+    .auth-visual {
+        order: 2;
+        min-height: 440px;
+        padding: 48px 44px;
+    }
+
+    .auth-visual h2 {
+        max-width: 650px;
+    }
+
+    .auth-visual p {
+        max-width: 650px;
+    }
+}
+
+@media (max-width: 767px) {
+    .auth-page {
+        padding: 18px 12px;
+    }
+
+    .auth-breadcrumb {
+        margin-bottom: 12px;
+    }
+
+    .auth-panel {
+        padding: 38px 28px;
+    }
+
+    .auth-visual {
+        padding: 40px 28px;
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 575px) {
+    .auth-page {
+        padding: 0;
+    }
+
+    .auth-wrap {
+        max-width: 100%;
+    }
+
+    .auth-breadcrumb {
+        padding: 14px 16px 0;
+    }
+
+    .auth-shell {
+        box-shadow: none;
+    }
+
+    .auth-panel {
+        padding: 34px 20px;
+    }
+
+    .auth-visual {
+        padding: 38px 20px;
+        min-height: 380px;
+    }
+
+    .auth-panel h1 {
+        font-size: 30px;
+    }
+
+    .auth-visual h2 {
+        font-size: 32px;
+    }
+
+    .auth-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .auth-field {
+        min-height: 54px;
+    }
+
+    .auth-submit {
+        min-height: 54px;
+    }
+}
+</style>
+@endsection
+
+
+@section('body')
+
+<div class="auth-page">
+    <div class="auth-wrap">
+
+        <nav class="auth-breadcrumb">
+            <a href="{{ url('/') }}">Home</a>
+            <span>/</span>
+            <span>Login</span>
+        </nav>
+
+        <div class="auth-shell">
+
+            <aside class="auth-visual">
+                <div class="auth-emblem">
+                    <i class="fa-solid fa-leaf"></i>
+                    LOCAL<br>&amp; FRESH
+                </div>
+
+                <div>
+                    <span class="auth-kicker">
+                        <span></span>
+                        WELCOME BACK
+                    </span>
+
+                    <h2>
+                        Good things are
+                        <em>waiting</em>
+                        for you.
+                    </h2>
+
+                    <p>
+                        Pick up where you left off: your basket, your favorite growers
+                        and your next market morning.
+                    </p>
+
+                    <ul class="auth-points">
+                        <li>
+                            <i class="fa-solid fa-basket-shopping"></i>
+                            Track your pre-orders from placed to pickup
+                        </li>
+
+                        <li>
+                            <i class="fa-solid fa-heart"></i>
+                            Keep your favorite products close
+                        </li>
+
+                        <li>
+                            <i class="fa-solid fa-store"></i>
+                            Meet the people behind your food
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="auth-visual-note">
+                    A little closer to the source.
+                </div>
+
+                <span class="auth-orbit"></span>
+            </aside>
+
+            <div class="auth-panel">
+
+                <div class="auth-panel-head">
+                    <span class="auth-kicker">
+                        <span></span>
+                        LOGIN
+                    </span>
+
+                    <h1>
+                        Login to
+                        <em>MarketLink</em>
+                    </h1>
+
+                    <p>
+                        Access your reservations, favorites and pickup history.
+                    </p>
+                </div>
+
+                @include('Website.Partials.alerts')
+
+                <form method="POST" action="{{ url('/login') }}">
+                    @csrf
+
+                    <div class="mb-3">
+                        <label class="ml-form-label" for="loginEmail">
+                            Email Address
+                        </label>
+
+                        <div class="auth-field">
+                            <i class="fa-regular fa-envelope auth-icon"></i>
+
+                            <input
+                                type="email"
+                                id="loginEmail"
+                                name="email"
+                                value="{{ old('email') }}"
+                                class="form-control @error('email') is-invalid @enderror"
+                                placeholder="you@example.com"
+                                autocomplete="email"
+                                required
+                            >
+                        </div>
+
+                        @error('email')
+                            <div class="invalid-feedback d-block">
+                                {{ $message }}
+                            </div>
+                        @enderror
                     </div>
-                    <div class="ml-login-brand-name">MarketLink</div>
-                </div>
 
-                <div class="ml-login-content">
-                    <h1 class="ml-login-heading">Welcome to<br>MarketLink.</h1>
-                    <p class="ml-login-sub">Manage your market, products and orders in one place.</p>
-                </div>
-            </div>
+                    <div class="mb-3">
 
-            <!-- Right login form panel -->
-            <div class="ml-login-right">
-                <div class="ml-login-card">
-                    <h2 class="ml-login-title">Welcome back</h2>
-                    <p class="ml-login-desc">Sign in to your MarketLink account.</p>
+                        <label class="ml-form-label" for="loginPassword">
+                            Password
+                        </label>
 
-                    @if ($errors->any())
-                        <div class="ml-login-errors">
-                            <p>{{ __('Whoops! Something went wrong.') }}</p>
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
+                        <div class="auth-field has-toggle">
+                            <i class="fa-solid fa-lock auth-icon"></i>
+
+                            <input
+                                type="password"
+                                id="loginPassword"
+                                name="password"
+                                class="form-control @error('password') is-invalid @enderror"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="auth-toggle"
+                                data-toggle-password="#loginPassword"
+                                aria-label="Show password"
+                            >
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
                         </div>
-                    @endif
 
-                    @session('status')
-                        <div class="ml-login-status">{{ $value }}</div>
-                    @endsession
-
-                    <form method="POST" action="{{ route('login') }}">
-                        @csrf
-
-                        <div class="ml-field">
-                            <label for="email">{{ __('Email address') }}</label>
-                            <div class="ml-input-wrap">
-                                <svg class="ml-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="4" width="20" height="16" rx="2"/>
-                                    <path d="m22 6-10 7L2 6"/>
-                                </svg>
-                                <input id="email" type="email" name="email" value="{{ old('email') }}" placeholder="Enter your email" required autofocus autocomplete="username">
+                        @error('password')
+                            <div class="invalid-feedback d-block">
+                                {{ $message }}
                             </div>
-                        </div>
+                        @enderror
+                    </div>
 
-                        <div class="ml-field">
-                            <label for="password">{{ __('Password') }}</label>
-                            <div class="ml-input-wrap">
-                                <svg class="ml-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="11" width="18" height="11" rx="2"/>
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                                </svg>
-                                <input id="password" type="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
-                            </div>
-                        </div>
+                    <div class="auth-row mb-4">
 
-                        <div class="ml-row">
-                            <label class="ml-remember" for="remember_me">
-                                <input id="remember_me" type="checkbox" name="remember">
-                                <span>{{ __('Remember me') }}</span>
+                        <div class="form-check">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="rememberMe"
+                                name="remember"
+                                {{ old('remember') ? 'checked' : '' }}
+                            >
+
+                            <label class="form-check-label small" for="rememberMe">
+                                Remember me
                             </label>
-
-                            @if (Route::has('password.request'))
-                                <a class="ml-forgot" href="{{ route('password.request') }}">{{ __('Forgot password?') }}</a>
-                            @endif
                         </div>
 
-                        <button type="submit" class="ml-submit">{{ __('Log in') }}</button>
+                        <a
+                            href="{{ route('password.request') }}"
+                            class="small auth-link"
+                        >
+                            Forgot password?
+                        </a>
+                    </div>
 
-                        <div class="ml-secure">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2"/>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                            </svg>
-                            <span>{{ __('Secure access to your dashboard') }}</span>
-                        </div>
-                    </form>
-                </div>
+                    <button type="submit" class="auth-submit">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        Login
+                    </button>
+
+                </form>
+
+                <p class="auth-switch">
+                    Don't have an account?
+                    <a href="{{ url('/register') }}" class="auth-link">
+                        Register
+                    </a>
+                </p>
+
             </div>
-        </div>
-    </div>
 
-    @livewireScripts
-</body>
-</html>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var input = document.querySelector(
+            btn.getAttribute('data-toggle-password')
+        )
+
+        var show = input.type === 'password'
+
+        input.type = show ? 'text' : 'password'
+
+        btn.setAttribute(
+            'aria-label',
+            show ? 'Hide password' : 'Show password'
+        )
+
+        btn.innerHTML =
+            '<i class="fa-regular ' +
+            (show ? 'fa-eye-slash' : 'fa-eye') +
+            '"></i>'
+    })
+})
+</script>
+
+@endsection
