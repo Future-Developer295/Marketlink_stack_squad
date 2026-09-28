@@ -114,25 +114,7 @@
         </div>
 
 
-        <div class="field">
-
-          <label class="field-label">
-            Availability
-          </label>
-
-          <br>
-
-          <input type="checkbox" name="is_active" id="is_active" value="1" checked
-            style="width:18px;height:18px;vertical-align:middle">
-
-          <label for="is_active" style="vertical-align:middle;
-                         margin-left:6px;
-                         color:var(--muted);
-                         font-size:13px">
-            Product is active / visible to customers
-          </label>
-
-        </div>
+       
 
 
         <div class="field">

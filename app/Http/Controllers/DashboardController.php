@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\Mail;
 
 
 class DashboardController extends Controller
@@ -117,7 +118,7 @@ class DashboardController extends Controller
                 ->pluck('total', 'status');
 
             $orderStatusData = array_map(
-                fn ($key) => (int) ($statusCounts[$key] ?? 0),
+                fn($key) => (int) ($statusCounts[$key] ?? 0),
                 $statusKeys
             );
 
@@ -133,8 +134,8 @@ class DashboardController extends Controller
                 ->with('product')
                 ->get();
 
-            $topProductLabels = $topProducts->map(fn ($item) => $item->product->name ?? 'Unknown')->values()->all();
-            $topProductData = $topProducts->map(fn ($item) => (int) $item->units_sold)->values()->all();
+            $topProductLabels = $topProducts->map(fn($item) => $item->product->name ?? 'Unknown')->values()->all();
+            $topProductData = $topProducts->map(fn($item) => (int) $item->units_sold)->values()->all();
         }
 
         return view('Dashboard.farmer-dashboard', compact(
@@ -378,7 +379,7 @@ class DashboardController extends Controller
             ->pluck('total', 'status');
 
         $orderStatusData = array_map(
-            fn ($key) => (int) ($statusCounts[$key] ?? 0),
+            fn($key) => (int) ($statusCounts[$key] ?? 0),
             $statusKeys
         );
 
@@ -614,12 +615,36 @@ class DashboardController extends Controller
         return redirect()->route('categories');
     }
 
-    public function products()
+    public function products(Request $request)
     {
-        $products = Product::with(['farmer', 'category'])
-            ->where('farmer_id', Auth::id())
+        $query = Product::with(['farmer.user', 'category']);
+
+        if (auth()->user()->hasRole('farmer')) {
+            $query->where('farmer_id', auth()->id());
+        }
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhereHas('farmer.user', function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('category', function ($q) use ($search) {
+                        $q->where('name', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        if ($request->filled('approval_status')) {
+            $query->where('approval_status', $request->approval_status);
+        }
+
+        $products = $query
             ->latest()
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return view('Dashboard.Products.products', compact('products'));
     }
@@ -653,7 +678,7 @@ class DashboardController extends Controller
         }
 
         Product::create([
-            'farmer_id' => Auth::id(),
+            'farmer_id' => auth()->id(),
             'category_id' => $request->category_id,
             'name' => $request->name,
             'description' => $request->description,
@@ -661,17 +686,71 @@ class DashboardController extends Controller
             'stock_quantity' => $request->stock_quantity,
             'unit' => $request->unit,
             'image' => $imageName,
-            'is_active' => $request->has('is_active') ? 1 : 0,
+            'is_active' => false,
+            'approval_status' => 'pending',
+            'rejection_reason' => null,
+            'approved_by' => null,
+            'approved_at' => null,
         ]);
 
         return redirect()
             ->route('products')
-            ->with('success', 'Product added successfully.');
+            ->with('success', 'Product added successfully and sent for approval.');
+    }
+
+    public function productApprove($id)
+    {
+        $product = Product::with('farmer.user')->findOrFail($id);
+
+        $product->update([
+            'approval_status' => 'approved',
+            'is_active' => true,
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+            'rejection_reason' => null,
+        ]);
+
+        return redirect()
+            ->route('products')
+            ->with('success', 'Product approved successfully.');
+    }
+
+    public function productReject(Request $request, $id)
+    {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:2000',
+        ]);
+
+        $product = Product::with('farmer.user')->findOrFail($id);
+
+        $product->update([
+            'approval_status' => 'rejected',
+            'is_active' => false,
+            'approved_by' => null,
+            'approved_at' => null,
+            'rejection_reason' => $request->rejection_reason,
+        ]);
+
+        if ($product->farmer?->user?->email) {
+            Mail::raw(
+                "Your product \"{$product->name}\" has been rejected.\n\nReason:\n{$request->rejection_reason}",
+                function ($message) use ($product) {
+                    $message
+                        ->to($product->farmer->user->email)
+                        ->subject('MarketLink Product Rejected');
+                }
+            );
+        }
+
+        return redirect()
+            ->route('products')
+            ->with('success', 'Product rejected and farmer notified by email.');
     }
 
     public function productEdit($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with(['farmer.user', 'category'])
+            ->findOrFail($id);
 
         return view('Dashboard.Products.edit-product', compact('product'));
     }
@@ -693,7 +772,6 @@ class DashboardController extends Controller
         $imageName = $product->image;
 
         if ($request->hasFile('image')) {
-
             $imageName = time() . '.' . $request->image->extension();
 
             $request->image->move(
@@ -710,7 +788,11 @@ class DashboardController extends Controller
             'stock_quantity' => $request->stock_quantity,
             'unit' => $request->unit,
             'image' => $imageName,
-            'is_active' => $request->has('is_active') ? 1 : 0,
+            'is_active' => $product->is_active,
+            'approval_status' => $product->approval_status,
+            'rejection_reason' => $product->rejection_reason,
+            'approved_by' => $product->approved_by,
+            'approved_at' => $product->approved_at,
         ]);
 
         return redirect()
@@ -720,20 +802,22 @@ class DashboardController extends Controller
 
     public function productView($id)
     {
-        $product = Product::with(['farmer', 'category'])
+        $product = Product::with(['farmer.user', 'category'])
             ->findOrFail($id);
 
         return view('Dashboard.Products.view-product', compact('product'));
     }
 
-
     public function productDelete($id)
     {
         $product = Product::findOrFail($id);
-        $product->delete();
-        return redirect()->route('products');
-    }
 
+        $product->delete();
+
+        return redirect()
+            ->route('products')
+            ->with('success', 'Product deleted successfully.');
+    }
     public function stock()
     {
         $weekly_stock = WeeklyStockTemplate::all();

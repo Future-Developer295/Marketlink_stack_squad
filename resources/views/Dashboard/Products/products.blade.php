@@ -19,30 +19,90 @@
 
             <div class="panel-tools">
 
-                <form class="search-box" method="GET" action="{{ route('products') }}">
-                    <i class="bi bi-search"></i>
+                <form method="GET" action="{{ route('products') }}" class="d-flex align-items-center gap-2">
 
-                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search...">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+
+                        <input
+                            type="text"
+                            name="q"
+                            value="{{ request('q') }}"
+                            placeholder="Search..."
+                        >
+
+                        @if(request('q'))
+                            <a
+                                href="{{ route('products') }}"
+                                class="search-clear"
+                                title="Clear search"
+                            >
+                                <i class="bi bi-x-lg"></i>
+                            </a>
+                        @endif
+                    </div>
+
+                    <select
+                        name="approval_status"
+                        class="form-select"
+                        style="width:180px;"
+                    >
+                        <option value="">All Approval</option>
+
+                        <option
+                            value="pending"
+                            @selected(request('approval_status') === 'pending')
+                        >
+                            Pending Approval
+                        </option>
+
+                        <option
+                            value="approved"
+                            @selected(request('approval_status') === 'approved')
+                        >
+                            Approved
+                        </option>
+
+                        <option
+                            value="rejected"
+                            @selected(request('approval_status') === 'rejected')
+                        >
+                            Rejected
+                        </option>
+                    </select>
+
+                    <button type="submit" class="btn-primary">
+                        <i class="bi bi-funnel"></i>
+                        Filter
+                    </button>
+
                 </form>
 
-                <a class="btn-primary" href="{{ route('product_add') }}">
-                    <i class="bi bi-plus-lg"></i>
-                    Add Product
-                </a>
+                @can('add products')
+                    <a
+                        class="btn-primary"
+                        href="{{ route('product_add') }}"
+                    >
+                        <i class="bi bi-plus-lg"></i>
+                        Add Product
+                    </a>
+                @endcan
 
             </div>
 
         </div>
 
-
         @if(session('success'))
-
-            <div style="padding: 12px 22px; color: green;">
+            <div style="padding:12px 22px; color:green;">
                 {{ session('success') }}
             </div>
-
         @endif
 
+        @if(session('error'))
+            <div style="padding:12px 22px; color:red;">
+                {{ session('error') }}
+            </div>
+        @endif
 
         <div class="tbl-wrap">
 
@@ -56,26 +116,23 @@
                         <th>Category</th>
                         <th>Price</th>
                         <th>Stock</th>
+                        <th>Approval</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
 
-
                 <tbody>
-                    <?php 
-    $index = 1;
-                    ?>
+
                     @forelse($products as $product)
 
                         <tr>
 
                             <td>
                                 <span class="id-chip">
-                                    {{ $index++ }}
+                                    {{ $product->id }}
                                 </span>
                             </td>
-
 
                             <td>
 
@@ -85,7 +142,10 @@
 
                                         @if($product->image)
 
-                                            <img src="{{ asset('product_images/' . $product->image) }}" alt="{{ $product->name }}">
+                                            <img
+                                                src="{{ asset('product_images/' . $product->image) }}"
+                                                alt="{{ $product->name }}"
+                                            >
 
                                         @else
 
@@ -94,7 +154,6 @@
                                         @endif
 
                                     </div>
-
 
                                     <div class="prod-info">
 
@@ -112,44 +171,63 @@
 
                             </td>
 
-
-                            {{-- Farmer --}}
                             <td>
-                                {{ $product->farmer->name ?? 'N/A' }}
+                                {{ $product->farmer?->user?->name ?? 'N/A' }}
                             </td>
 
-
-                            {{-- Category --}}
                             <td>
-
                                 <span class="badge-cat">
-                                    {{ $product->category->name ?? 'N/A' }}
+                                    {{ $product->category?->name ?? 'N/A' }}
                                 </span>
-
                             </td>
 
-
-                            {{-- Price --}}
                             <td>
-
                                 <span class="price-mono">
                                     PKR {{ number_format($product->price, 2) }}
                                 </span>
-
                             </td>
 
-
-                            {{-- Stock --}}
                             <td>
-
                                 <span class="qty-tag">
                                     {{ $product->stock_quantity }}
                                 </span>
+                            </td>
+
+                            <td>
+
+                                @if($product->approval_status === 'approved')
+
+                                    <span class="badge bg-success">
+                                        Approved
+                                    </span>
+
+                                @elseif($product->approval_status === 'rejected')
+
+                                    <span class="badge bg-danger">
+                                        Rejected
+                                    </span>
+
+                                    @if($product->rejection_reason)
+
+                                        <div
+                                            class="small text-danger mt-1"
+                                            style="max-width:220px;"
+                                        >
+                                            {{ $product->rejection_reason }}
+                                        </div>
+
+                                    @endif
+
+                                @else
+
+                                    <span class="badge bg-warning text-dark">
+                                        Pending Approval
+                                    </span>
+
+                                @endif
 
                             </td>
 
-
-                            {{-- Status --}}
                             <td>
 
                                 @if($product->is_active)
@@ -168,31 +246,142 @@
 
                             </td>
 
-
-                            {{-- Actions --}}
                             <td>
 
                                 <div class="action-wrap">
 
-                                    <a class="btn-ghost sm" href="{{ route('product_view', $product->id) }}" title="View">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
+                                    @can('view products')
 
+                                        <a
+                                            class="btn-ghost sm"
+                                            href="{{ route('product_view', $product->id) }}"
+                                            title="View"
+                                        >
+                                            <i class="bi bi-eye"></i>
+                                        </a>
 
-                                    <a class="btn-ghost sm" href="{{ route('product_edit', $product->id) }}" title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                    @endcan
 
+                                    @can('edit products')
 
-                                    <form action="{{ route('product_delete', $product->id) }}" method="POST"
-                                        style="display:inline">
-                                        @csrf
+                                        <a
+                                            class="btn-ghost sm"
+                                            href="{{ route('product_edit', $product->id) }}"
+                                            title="Edit"
+                                        >
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
 
-                                        <button class="btn-ghost sm danger" type="submit" title="Delete"
-                                            onclick="return confirm('Are you sure you want to delete this product?')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    @endcan
+
+                                    @canany(['approve products', 'reject products'])
+
+                                        @if($product->approval_status === 'pending')
+
+                                            <div style="display:inline-block; position:relative;">
+
+                                                <select
+                                                    class="form-select form-select-sm"
+                                                    style="width:150px;"
+                                                    onchange="handleProductApproval(this, {{ $product->id }})"
+                                                >
+                                                    <option value="">
+                                                        Select Action
+                                                    </option>
+
+                                                    @can('approve products')
+                                                        <option value="approve">
+                                                            Approve
+                                                        </option>
+                                                    @endcan
+
+                                                    @can('reject products')
+                                                        <option value="reject">
+                                                            Not Approve
+                                                        </option>
+                                                    @endcan
+
+                                                </select>
+
+                                                @can('approve products')
+
+                                                    <form
+                                                        id="approve-form-{{ $product->id }}"
+                                                        action="{{ route('product_approve', $product->id) }}"
+                                                        method="POST"
+                                                        style="display:none;"
+                                                    >
+                                                        @csrf
+                                                    </form>
+
+                                                @endcan
+
+                                                @can('reject products')
+
+                                                    <div
+                                                        id="reject-box-{{ $product->id }}"
+                                                        style="display:none; position:absolute; right:0; top:42px; z-index:50; width:260px; background:#fff; border:1px solid #ddd; border-radius:10px; padding:12px; box-shadow:0 8px 24px rgba(0,0,0,0.12);"
+                                                    >
+
+                                                        <form
+                                                            action="{{ route('product_reject', $product->id) }}"
+                                                            method="POST"
+                                                            onsubmit="return confirm('Reject this product?')"
+                                                        >
+
+                                                            @csrf
+
+                                                            <textarea
+                                                                name="rejection_reason"
+                                                                rows="3"
+                                                                class="form-control"
+                                                                placeholder="Enter rejection reason..."
+                                                                required
+                                                            ></textarea>
+
+                                                            <button
+                                                                type="submit"
+                                                                class="btn btn-danger btn-sm mt-2"
+                                                                style="width:100%;"
+                                                            >
+                                                                <i class="bi bi-x-circle"></i>
+                                                                Not Approve
+                                                            </button>
+
+                                                        </form>
+
+                                                    </div>
+
+                                                @endcan
+
+                                            </div>
+
+                                        @endif
+
+                                    @endcanany
+
+                                    @can('delete products')
+
+                                        <form
+                                            action="{{ route('product_delete', $product->id) }}"
+                                            method="POST"
+                                            style="display:inline"
+                                            onsubmit="return confirm('Are you sure you want to delete this product?')"
+                                        >
+
+                                            @csrf
+
+                                            <button
+                                                class="btn-ghost sm danger"
+                                                type="submit"
+                                                title="Delete"
+                                            >
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+
+                                        </form>
+
+                                    @endcan
 
                                 </div>
 
@@ -204,17 +393,26 @@
 
                         <tr>
 
-                            <td colspan="8" style="text-align:center; padding:40px;">
-                                <i class="bi bi-box-seam" style="font-size:35px;"></i>
+                            <td
+                                colspan="9"
+                                style="text-align:center; padding:40px;"
+                            >
+
+                                <i
+                                    class="bi bi-box-seam"
+                                    style="font-size:35px;"
+                                ></i>
 
                                 <br>
 
-                                <strong>No products found</strong>
+                                <strong>
+                                    No products found
+                                </strong>
 
                                 <br>
 
                                 <span style="color:var(--muted);">
-                                    Add your first product to get started.
+                                    No products available.
                                 </span>
 
                             </td>
@@ -229,15 +427,55 @@
 
         </div>
 
+        @if($products->hasPages())
+
+            <div class="hr-thin"></div>
+
+            <div style="padding:14px 22px;">
+                {{ $products->links() }}
+            </div>
+
+        @endif
 
         <div class="hr-thin"></div>
 
-        <div style="padding:14px 22px; color:var(--muted); font-size:13px">
-
-            Showing your products only.
-
+        <div style="padding:14px 22px; color:var(--muted); font-size:13px;">
+            Showing {{ $products->count() }} of {{ $products->total() }} products.
         </div>
 
     </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    function handleProductApproval(select, productId) {
+        const rejectBox = document.getElementById('reject-box-' + productId);
+        const approveForm = document.getElementById('approve-form-' + productId);
+
+        if (rejectBox) {
+            rejectBox.style.display = 'none';
+        }
+
+        if (select.value === 'approve') {
+            if (confirm('Approve this product?')) {
+                approveForm.submit();
+            } else {
+                select.value = '';
+            }
+        }
+
+        if (select.value === 'reject') {
+            if (rejectBox) {
+                rejectBox.style.display = 'block';
+            }
+        }
+
+        if (select.value === '') {
+            if (rejectBox) {
+                rejectBox.style.display = 'none';
+            }
+        }
+    }
+</script>
+@endpush
