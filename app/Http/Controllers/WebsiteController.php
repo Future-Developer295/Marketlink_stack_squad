@@ -45,7 +45,23 @@ class WebsiteController extends Controller
 
         return view('Website.Home.index', compact('categories', 'markets', 'reviews', 'products'));
     }
+    public function dashboardRedirect(): RedirectResponse
+    {
+        $user = Auth::user();
 
+        if ($user->role === 'farmer' && !$user->is_active) {
+            return redirect()->route('farmer_pending');
+        }
+
+        return match ($user->role) {
+            'customer' => redirect()->route('customer_dashboard'),
+            'farmer' => redirect()->route('farmer_dashboard'),
+            'admin' => redirect()->route('admin_dashboard'),
+            default => redirect('/')->withErrors([
+                'role' => 'Your account does not have a valid dashboard role.',
+            ]),
+        };
+    }
     public function farmerPending(): View
     {
         return view('Website.Auth.farmer-pending');

@@ -6,8 +6,8 @@ use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('index');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [WebsiteController::class, 'dashboardRedirect'])
+        ->name('dashboard');
 });
 Route::get('/farmer/pending', [WebsiteController::class, 'farmerPending'])
     ->name('farmer_pending');
@@ -35,9 +35,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('permission:join markets')
         ->name('my_markets_join');
 
-    Route::post('/dashboard/my-markets/join', [DashboardController::class, 'myMarketsStore'])
-        ->middleware('permission:join markets')
-        ->name('my_markets_store');
     Route::post('/dashboard/my-markets/{market}/leave', [DashboardController::class, 'myMarketsLeave'])
         ->middleware('permission:leave markets')
         ->name('my_markets_leave');
