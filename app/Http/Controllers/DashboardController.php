@@ -1138,12 +1138,15 @@ class DashboardController extends Controller
 
     public function farmerEdit($id)
     {
-        $farmer = MarketFarmer::find($id);
+        $farmer = MarketFarmer::findOrFail($id);
         $markets = Market::all();
-        $users = User::all();
-        return view('Dashboard.Farmers.edit-farmer', compact('farmer', 'markets', 'users'));
-    }
+        $users = User::where('role', 'farmer')->get();
 
+        return view(
+            'Dashboard.Farmers.edit-farmer',
+            compact('farmer', 'markets', 'users')
+        );
+    }
     public function farmerUpdate(Request $request, $id)
     {
         $farmer = MarketFarmer::find($id);
