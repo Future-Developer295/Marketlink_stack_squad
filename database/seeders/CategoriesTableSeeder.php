@@ -9,10 +9,6 @@ class CategoriesTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // updateOrInsert keyed on the unique 'slug' column,
-        // so reseeding an already-seeded database doesn't
-        // throw a duplicate-entry error.
-
         $categories = [
             [
                 'name' => 'Vegetables',
@@ -44,7 +40,11 @@ class CategoriesTableSeeder extends Seeder
                 'slug' => 'spices',
                 'icon' => 'spices.png',
             ],
-        
+            [
+                'name' => 'Organic',
+                'slug' => 'organic',
+                'icon' => 'organic.png',
+            ],
             [
                 'name' => 'Pulses',
                 'slug' => 'pulses',
@@ -63,4 +63,3 @@ class CategoriesTableSeeder extends Seeder
         }
     }
 }
-
