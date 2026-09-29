@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('page_title', 'MarketLink') | MarketLink</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -34,6 +35,7 @@
     @if (request()->is('markets*', 'farmers*'))
         <link href="{{ asset('Assets/Website_Asset/css/discovery.css') }}" rel="stylesheet">
     @endif
+    <link href="{{ asset('Assets/Shared/ajax.css') }}" rel="stylesheet">
     @yield('page_styles')
 </head>
 
@@ -95,7 +97,7 @@
                                 <!-- User Profile Header -->
                                 <li class="ml-dropdown-header">
                                     <span class="user-name">{{ auth()->user()->name }}</span>
-                                    <span class="user-role">Customer Account</span>
+                                    <span class="user-role">{{ ucfirst(auth()->user()->role) }} Account</span>
                                 </li>
 
                                 <li>
@@ -104,7 +106,7 @@
 
                                 <!-- Links -->
                                 <li>
-                                    <a class="dropdown-item ml-dropdown-item" href="{{ route('customer_dashboard') }}">
+                                    <a class="dropdown-item ml-dropdown-item" href="{{ route('dashboard') }}">
                                         <i class="fa-solid fa-gauge"></i> Dashboard
                                     </a>
                                 </li>
@@ -188,6 +190,11 @@
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script src="{{ asset('Assets/Website_Asset/js/website.js') }}"></script>
+<script src="{{ asset('Assets/Shared/ajax.js') }}" defer></script>
+
+@auth
+    @include('Website.Partials.welcome-back')
+@endauth
 
 @if(request()->is('products*', 'cart', 'checkout', 'pickup-guidelines', 'markets*', 'farmers*', 'about', '/'))
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>

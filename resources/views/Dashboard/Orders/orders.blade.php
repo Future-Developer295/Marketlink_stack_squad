@@ -8,7 +8,7 @@ active
         <div class="panel-header">
             <span class="panel-title"><i class="bi bi-cart-check-fill"></i> Orders</span>
             <div class="panel-tools">
-                <form class="search-box" method="GET" action="{{ route('orders') }}">
+                <form class="search-box" method="GET" action="{{ route('orders') }}" data-ajax-filter="#orders-list">
                     <i class="bi bi-search"></i>
                     <input
     type="text"
@@ -20,7 +20,8 @@ active
             </div>
         </div>
 
-        <div class="tbl-wrap">
+        <div id="orders-list" data-ajax-list>
+<div class="tbl-wrap">
             <table class="dtable">
                 <thead>
                     <tr>
@@ -59,7 +60,7 @@ active
 
         <td>
             <span class="qty-tag">
-                {{ $order->items->sum('quantity') }}
+                {{ (int) $order->items_sum_quantity }}
             </span>
         </td>
 
@@ -141,6 +142,8 @@ active
                 </tbody>
             </table>
         </div>
+@include('Dashboard._pager', ['paginator' => $orders, 'label' => 'orders'])
+</div>
         <div class="hr-thin"></div>
         <div style="padding:14px 22px; color:var(--muted); font-size:13px">Orders are created by customers at checkout — this dashboard only views them and updates status.</div>
     </div>

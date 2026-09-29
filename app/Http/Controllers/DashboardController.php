@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 
+use App\Mail\FarmerApprovedMail;
+use App\Mail\FarmerRejectedMail;
+use App\Models\ContactMessage;
 use App\Models\Market;
 use App\Models\MarketFarmer;
 use App\Models\Order;
@@ -23,12 +26,90 @@ use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
-use App\Mail\FarmerApprovedMail;
 use App\Support\SimpleXlsxWriter;
+use App\Services\SafeMail;
 
 class DashboardController extends Controller
 {
+    /** Rows per page on every dashboard list. */
+    protected int $perPage = 15;
+
+    /**
+     * The trimmed ?q= search term, or null when empty. Capped so a huge string
+     * can never be turned into an expensive LIKE.
+     */
+    protected function searchTerm(Request $request): ?string
+    {
+        $term = trim((string) $request->query('q', ''));
+
+        return $term === '' ? null : mb_substr($term, 0, 100);
+    }
+
+    /**
+     * Revenue and order count for each of the last 7 days, using ONE grouped
+     * query instead of loading every order of every day.
+     *
+     * @return array{0: array<int,string>, 1: array<int,float>, 2: array<int,int>} labels, revenue, orders
+     */
+    protected function lastSevenDaysTrend($orderQuery): array
+    {
+        $rows = $orderQuery
+            ->whereBetween('order_date', [now()->subDays(6)->startOfDay(), now()->endOfDay()])
+            ->selectRaw('DATE(order_date) as day, COUNT(*) as orders_count, COALESCE(SUM(total_amount), 0) as revenue')
+            ->groupByRaw('DATE(order_date)')
+            ->toBase()
+            ->get()
+            ->keyBy('day');
+
+        $labels = [];
+        $revenue = [];
+        $orders = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $day = now()->subDays($i);
+            $row = $rows->get($day->toDateString());
+
+            $labels[] = $day->format('D');
+            $revenue[] = (float) ($row->revenue ?? 0);
+            $orders[] = (int) ($row->orders_count ?? 0);
+        }
+
+        return [$labels, $revenue, $orders];
+    }
+
+    /**
+     * Email a farmer that the admin has approved (activated) their account.
+     * Returns the flash [type, message] so the caller can show whether the email went out.
+     *
+     * @return array{0: string, 1: string}
+     */
+    protected function notifyFarmerApproved(User $user): array
+    {
+        $sent = SafeMail::send($user->email, new FarmerApprovedMail($user));
+
+        return $sent
+            ? ['success', 'Farmer approved and notified by email.']
+            : ['warning', 'Farmer approved, but the email could not be sent. Check the mail settings (storage/logs/laravel.log).'];
+    }
+
+    /**
+     * Delete a model but answer with a friendly message (instead of a 500)
+     * when something else still depends on it.
+     */
+    protected function deleteModel($model, string $label, string $route)
+    {
+        try {
+            $model->delete();
+        } catch (\Illuminate\Database\QueryException $e) {
+            report($e);
+
+            return redirect()->route($route)
+                ->with('error', "This {$label} cannot be deleted because it is still in use.");
+        }
+
+        return redirect()->route($route)->with('success', ucfirst($label).' deleted successfully.');
+    }
+
 
     public function index()
     {
@@ -99,18 +180,9 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
-            // Revenue & orders trend for the last 7 days
-            for ($i = 6; $i >= 0; $i--) {
-                $day = now()->subDays($i);
-
-                $dayOrders = Order::where('farmer_id', $farmer->id)
-                    ->whereDate('order_date', $day->toDateString())
-                    ->get();
-
-                $revenueTrendLabels[] = $day->format('D');
-                $revenueTrendData[] = (float) $dayOrders->sum('total_amount');
-                $ordersTrendData[] = $dayOrders->count();
-            }
+            // Revenue & orders trend for the last 7 days (one grouped query)
+            [$revenueTrendLabels, $revenueTrendData, $ordersTrendData] =
+                $this->lastSevenDaysTrend(Order::where('farmer_id', $farmer->id));
 
             // Order status breakdown
             $statusKeys = ['pending', 'confirmed', 'ready', 'picked_up', 'cancelled'];
@@ -157,9 +229,15 @@ class DashboardController extends Controller
             'topProductData'
         ));
     }
-    public function roles()
+    public function roles(Request $request)
     {
-        $roles = Role::with('permissions')->get();
+        $search = $this->searchTerm($request);
+
+        $roles = Role::withCount('permissions')
+            ->when($search !== null, fn ($query) => $query->where('name', 'like', "%{$search}%"))
+            ->orderBy('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.Roles.index', compact('roles'));
     }
@@ -208,9 +286,15 @@ class DashboardController extends Controller
             ->route('roles')
             ->with('success', 'Role created successfully.');
     }
-    public function permissions()
+    public function permissions(Request $request)
     {
-        $permissions = Permission::orderBy('name')->get();
+        $search = $this->searchTerm($request);
+
+        $permissions = Permission::withCount('roles')
+            ->when($search !== null, fn ($query) => $query->where('name', 'like', "%{$search}%"))
+            ->orderBy('name')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.Permissions.index', compact('permissions'));
     }
@@ -292,6 +376,12 @@ class DashboardController extends Controller
     public function roleDelete($id)
     {
         $role = Role::findOrFail($id);
+
+        if ($role->users()->exists()) {
+            return redirect()->route('roles')
+                ->with('error', 'This role is still assigned to users, so it cannot be deleted.');
+        }
+
         $role->delete();
 
         return redirect()
@@ -347,34 +437,20 @@ class DashboardController extends Controller
     public function adminDashboard()
     {
         $totalUsers = User::count();
-        // Farmers waiting for approval are users with role=farmer and is_active=0
-        // (that is how CreateNewUser registers them).
-        $pendingFarmerQuery = User::where('role', 'farmer')->where('is_active', false);
-        $pendingFarmers = (clone $pendingFarmerQuery)->count();
+        $pendingFarmers = FarmerProfile::where('approval_status', 'pending')->count();
         $activeMarkets = Market::count();
         $totalProducts = Product::count();
         $flaggedReviews = Review::where('is_flagged', true)->count();
 
-        $pendingFarmerList = (clone $pendingFarmerQuery)
-            ->with('farmerProfile')
+        $pendingFarmerList = FarmerProfile::with('user')
+            ->where('approval_status', 'pending')
             ->latest()
             ->take(5)
             ->get();
 
         // Platform-wide revenue & orders trend for the last 7 days
-        $revenueTrendLabels = [];
-        $revenueTrendData = [];
-        $ordersTrendData = [];
-
-        for ($i = 6; $i >= 0; $i--) {
-            $day = now()->subDays($i);
-
-            $dayOrders = Order::whereDate('order_date', $day->toDateString())->get();
-
-            $revenueTrendLabels[] = $day->format('D');
-            $revenueTrendData[] = (float) $dayOrders->sum('total_amount');
-            $ordersTrendData[] = $dayOrders->count();
-        }
+        [$revenueTrendLabels, $revenueTrendData, $ordersTrendData] =
+            $this->lastSevenDaysTrend(Order::query());
 
         // Platform-wide order status breakdown
         $orderStatusLabels = ['Pending', 'Confirmed', 'Ready', 'Picked Up', 'Cancelled'];
@@ -401,15 +477,16 @@ class DashboardController extends Controller
 
         // Users by role
         $userRoleLabels = ['Customer', 'Farmer', 'Admin'];
+        $roleCounts = User::selectRaw('role, count(*) as total')->groupBy('role')->pluck('total', 'role');
         $userRoleData = [
-            User::where('role', 'customer')->count(),
-            User::where('role', 'farmer')->count(),
-            User::where('role', 'admin')->count(),
+            (int) ($roleCounts['customer'] ?? 0),
+            (int) ($roleCounts['farmer'] ?? 0),
+            (int) ($roleCounts['admin'] ?? 0),
         ];
 
         // Farmer approval rate
-        $totalFarmerProfiles = User::where('role', 'farmer')->count();
-        $approvedFarmers = User::where('role', 'farmer')->where('is_active', true)->count();
+        $totalFarmerProfiles = FarmerProfile::count();
+        $approvedFarmers = FarmerProfile::where('approval_status', 'approved')->count();
         $approvalRate = $totalFarmerProfiles > 0
             ? round(($approvedFarmers / $totalFarmerProfiles) * 100)
             : 0;
@@ -496,16 +573,14 @@ class DashboardController extends Controller
         $query = MarketFarmer::with('market')
             ->where('farmer_id', auth()->id());
 
-        if ($request->filled('q')) {
-            $search = $request->q;
-
+        if (($search = $this->searchTerm($request)) !== null) {
             $query->whereHas('market', function ($q) use ($search) {
                 $q->where('name', 'like', '%' . $search . '%')
                     ->orWhere('city', 'like', '%' . $search . '%');
             });
         }
 
-        $myMarkets = $query->get();
+        $myMarkets = $query->orderBy('id')->paginate($this->perPage)->withQueryString();
 
         return view('Dashboard.Markets.my-markets', compact('myMarkets'));
     }
@@ -556,9 +631,17 @@ class DashboardController extends Controller
     }
 
 
-    public function categories()
+    public function categories(Request $request)
     {
-        $categories = Category::all();
+        $search = $this->searchTerm($request);
+
+        $categories = Category::query()
+            ->when($search !== null, fn ($query) => $query->where(function ($inner) use ($search) {
+                $inner->where('name', 'like', "%{$search}%")->orWhere('slug', 'like', "%{$search}%");
+            }))
+            ->orderBy('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.Categories.categories', compact('categories'));
     }
@@ -615,9 +698,7 @@ class DashboardController extends Controller
 
     public function categoryDelete($id)
     {
-        $category = Category::findOrFail($id);
-        $category->delete();
-        return redirect()->route('categories');
+        return $this->deleteModel(Category::findOrFail($id), 'category', 'categories');
     }
 
     public function products(Request $request)
@@ -715,9 +796,19 @@ class DashboardController extends Controller
             'rejection_reason' => null,
         ]);
 
+        $sent = SafeMail::send(
+            $product->farmer?->user?->email,
+            new \App\Mail\ProductApprovedMail($product)
+        );
+
         return redirect()
             ->route('products')
-            ->with('success', 'Product approved successfully.');
+            ->with(
+                $sent ? 'success' : 'warning',
+                $sent
+                    ? 'Product approved successfully and farmer notified by email.'
+                    : 'Product approved, but the farmer could not be notified by email.'
+            );
     }
 
     public function productReject(Request $request, $id)
@@ -736,20 +827,19 @@ class DashboardController extends Controller
             'rejection_reason' => $request->rejection_reason,
         ]);
 
-        if ($product->farmer?->user?->email) {
-            Mail::raw(
-                "Your product \"{$product->name}\" has been rejected.\n\nReason:\n{$request->rejection_reason}",
-                function ($message) use ($product) {
-                    $message
-                        ->to($product->farmer->user->email)
-                        ->subject('MarketLink Product Rejected');
-                }
-            );
-        }
+        $sent = SafeMail::send(
+            $product->farmer?->user?->email,
+            new \App\Mail\ProductRejectedMail($product, $request->rejection_reason)
+        );
 
         return redirect()
             ->route('products')
-            ->with('success', 'Product rejected and farmer notified by email.');
+            ->with(
+                $sent ? 'success' : 'warning',
+                $sent
+                    ? 'Product rejected and farmer notified by email.'
+                    : 'Product rejected, but the farmer could not be notified by email.'
+            );
     }
 
     public function productEdit($id)
@@ -815,17 +905,20 @@ class DashboardController extends Controller
 
     public function productDelete($id)
     {
-        $product = Product::findOrFail($id);
-
-        $product->delete();
-
-        return redirect()
-            ->route('products')
-            ->with('success', 'Product deleted successfully.');
+        return $this->deleteModel(Product::findOrFail($id), 'product', 'products');
     }
-    public function stock()
+    public function stock(Request $request)
     {
-        $weekly_stock = WeeklyStockTemplate::all();
+        $search = $this->searchTerm($request);
+
+        $weekly_stock = WeeklyStockTemplate::with('product')
+            ->when($search !== null, fn ($query) => $query->where(function ($inner) use ($search) {
+                $inner->where('day_of_week', 'like', "%{$search}%")
+                    ->orWhereHas('product', fn ($product) => $product->where('name', 'like', "%{$search}%"));
+            }))
+            ->orderBy('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.WeeklyStock.weekly-stock', compact('weekly_stock'));
     }
@@ -881,42 +974,40 @@ class DashboardController extends Controller
 
     public function stockDelete($id)
     {
-        $stock = WeeklyStockTemplate::findOrFail($id);
-        $stock->delete();
-        return redirect()->route('stock');
+        return $this->deleteModel(WeeklyStockTemplate::findOrFail($id), 'weekly stock schedule', 'stock');
     }
 
     public function orders(Request $request)
     {
-        $query = Order::with([
-            'user',
-            'pickupSlot',
-            'items'
-        ]);
+        $query = Order::with(['user', 'pickupSlot'])->withSum('items', 'quantity');
 
         if (auth()->user()->role === 'farmer') {
 
             $farmer = FarmerProfile::where('user_id', auth()->id())->first();
 
             if (!$farmer) {
-                $orders = collect();
-
-                return view('Dashboard.Orders.orders', compact('orders'));
+                // No farmer profile yet: an always-empty (but real) paginator.
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->where('farmer_id', $farmer->id);
             }
-
-            $query->where('farmer_id', $farmer->id);
         }
 
-        if ($request->filled('q')) {
+        if (($search = $this->searchTerm($request)) !== null) {
+            $query->where(function ($inner) use ($search) {
+                $inner->whereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%');
+                });
 
-            $search = $request->q;
-
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%');
+                if (ctype_digit($search)) {
+                    $inner->orWhere('id', (int) $search);
+                }
             });
         }
 
-        $orders = $query->latest('order_date')->get();
+        $orders = $query->latest('order_date')->orderByDesc('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.Orders.orders', compact('orders'));
     }
@@ -942,13 +1033,21 @@ class DashboardController extends Controller
         $order->status = $request->status;
         $order->save();
 
-        return redirect()->route('orders');
+        return redirect()->route('orders')->with('success', 'Order status updated.');
     }
 
-    public function slots()
+    public function slots(Request $request)
     {
-        $slots = PickupSlot::all();
+        $search = $this->searchTerm($request);
 
+        $slots = PickupSlot::with('market')
+            ->when($search !== null, fn ($query) => $query->where(function ($inner) use ($search) {
+                $inner->where('date', 'like', "%{$search}%")
+                    ->orWhereHas('market', fn ($market) => $market->where('name', 'like', "%{$search}%"));
+            }))
+            ->orderBy('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.PickupSlots.pickup-slots', compact('slots'));
     }
@@ -1001,15 +1100,22 @@ class DashboardController extends Controller
 
     public function slotDelete($id)
     {
-        $slot = PickupSlot::findOrFail($id);
-        $slot->delete();
-
-        return redirect()->route('slots');
+        return $this->deleteModel(PickupSlot::findOrFail($id), 'pickup slot', 'slots');
     }
 
-    public function markets()
+    public function markets(Request $request)
     {
-        $markets = Market::all();
+        $search = $this->searchTerm($request);
+
+        $markets = Market::withCount('marketFarmers')
+            ->when($search !== null, fn ($query) => $query->where(function ($inner) use ($search) {
+                $inner->where('name', 'like', "%{$search}%")
+                    ->orWhere('city', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%");
+            }))
+            ->orderBy('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.Markets.markets', compact('markets'));
     }
@@ -1044,16 +1150,24 @@ class DashboardController extends Controller
 
     public function marketDelete($id)
     {
-        $market = Market::findOrFail($id);
-
-        $market->delete();
-
-        return redirect()->route('markets');
+        return $this->deleteModel(Market::findOrFail($id), 'market', 'markets');
     }
 
-    public function users()
+    public function users(Request $request)
     {
-        $users = User::latest()->get();
+        $search = $this->searchTerm($request);
+
+        $users = User::query()
+            ->when($search !== null, fn ($query) => $query->where(function ($inner) use ($search) {
+                $inner->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('role', 'like', "%{$search}%");
+            }))
+            ->latest()
+            ->orderByDesc('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.Users.users', compact('users'));
     }
@@ -1111,13 +1225,19 @@ class DashboardController extends Controller
             'password' => 'nullable|string|min:6',
         ]);
 
+        $wasActive = (bool) $user->is_active;
+
         $user->name = $request->name;
         $user->email = $request->email;
         $user->phone = $request->phone;
         $user->address = $request->address;
         $user->role = $request->role;
-        $wasActive = (bool) $user->is_active;
         $user->is_active = $request->boolean('is_active');
+
+        if ($user->role === 'farmer' && $user->is_active) {
+            $user->approval_status = 'approved';
+            $user->rejection_reason = null;
+        }
 
         if ($request->filled('password')) {
             $user->password = $request->password;
@@ -1125,67 +1245,85 @@ class DashboardController extends Controller
 
         $user->save();
 
-        $message = 'User updated successfully.';
-
-        // Farmer just got activated from the edit form -> send the same approval email.
+        // Inactive -> active for a farmer = the admin just approved them: tell them by email.
         if ($user->role === 'farmer' && ! $wasActive && $user->is_active) {
-            $message .= $this->sendFarmerApprovedMail($user);
+            [$type, $message] = $this->notifyFarmerApproved($user);
+
+            return redirect()->route('users')->with($type, $message);
         }
 
-        return redirect()->route('users')->with('success', $message);
-    }
-
-    public function userApprove($id)
-    {
-        $user = User::findOrFail($id);
-
-        if ($user->role !== 'farmer') {
-            return back()->with('error', 'Only farmer accounts can be approved here.');
-        }
-
-        if ($user->is_active) {
-            return back()->with('success', $user->name . ' is already approved.');
-        }
-
-        $user->is_active = true;
-        $user->save();
-
-        return back()->with('success', $user->name . ' approved.' . $this->sendFarmerApprovedMail($user));
+        return redirect()->route('users')->with('success', 'User updated successfully.');
     }
 
     /**
-     * Sends the approval email. Never throws: the approval itself must not fail
-     * because of SMTP. Returns a short suffix for the flash message.
+     * One-click approval of a pending farmer from the Users list.
      */
-    private function sendFarmerApprovedMail(User $user): string
+    public function farmerApprove($id)
     {
-        try {
-            Mail::to($user->email)->send(new FarmerApprovedMail($user));
+        $user = User::where('role', 'farmer')->findOrFail($id);
 
-            return ' Approval email sent to ' . $user->email . '.';
-        } catch (\Throwable $e) {
-            Log::error('Farmer approval email failed', [
-                'user_id' => $user->id,
-                'to' => $user->email,
-                'mailer' => config('mail.default'),
-                'host' => config('mail.mailers.smtp.host'),
-                'error' => $e->getMessage(),
-            ]);
-
-            return ' But the approval email could NOT be sent (check storage/logs/laravel.log).';
+        if ($user->is_active) {
+            return redirect()->route('users')->with('warning', 'This farmer is already approved.');
         }
+
+        $user->is_active = true;
+        $user->approval_status = 'approved';
+        $user->rejection_reason = null;
+        $user->save();
+
+        [$type, $message] = $this->notifyFarmerApproved($user);
+
+        return redirect()->route('users')->with($type, $message);
+    }
+
+    /**
+     * Reject a pending farmer. The admin's comment is stored and emailed.
+     */
+    public function farmerReject(Request $request, $id)
+    {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:2000',
+        ]);
+
+        $user = User::where('role', 'farmer')->findOrFail($id);
+
+        $user->is_active = false;
+        $user->approval_status = 'rejected';
+        $user->rejection_reason = $request->rejection_reason;
+        $user->save();
+
+        $sent = SafeMail::send($user->email, new FarmerRejectedMail($user, $request->rejection_reason));
+
+        return redirect()->route('users')->with(
+            $sent ? 'success' : 'warning',
+            $sent
+                ? 'Farmer rejected and notified by email.'
+                : 'Farmer rejected, but the email could not be sent. Check the mail settings (storage/logs/laravel.log).'
+        );
     }
 
     public function userDelete($id)
     {
         $user = User::findOrFail($id);
-        $user->delete();
 
-        return redirect()->route('users')->with('success', 'User deleted successfully.');
+        if ($user->id === auth()->id()) {
+            return redirect()->route('users')->with('error', 'You cannot delete your own account.');
+        }
+
+        return $this->deleteModel($user, 'user', 'users');
     }
-    public function farmers()
+    public function farmers(Request $request)
     {
-        $farmers = MarketFarmer::with(['farmer', 'market'])->get();
+        $search = $this->searchTerm($request);
+
+        $farmers = MarketFarmer::with(['farmer', 'market'])
+            ->when($search !== null, fn ($query) => $query->where(function ($inner) use ($search) {
+                $inner->whereHas('farmer', fn ($farmer) => $farmer->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('market', fn ($market) => $market->where('name', 'like', "%{$search}%"));
+            }))
+            ->orderBy('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.Farmers.farmers', compact('farmers'));
     }
@@ -1231,9 +1369,21 @@ class DashboardController extends Controller
         return redirect()->route('customers');
     }
 
-    public function reviews()
+    public function reviews(Request $request)
     {
-        $reviews = Review::with(['user', 'farmer.user', 'product'])->latest()->get();
+        $search = $this->searchTerm($request);
+
+        $reviews = Review::with(['user', 'farmer.user', 'product'])
+            ->when($search !== null, fn ($query) => $query->where(function ($inner) use ($search) {
+                $inner->where('comment', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($user) => $user->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('farmer.user', fn ($user) => $user->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('product', fn ($product) => $product->where('name', 'like', "%{$search}%"));
+            }))
+            ->latest()
+            ->orderByDesc('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.Reviews.reviews', compact('reviews'));
     }
@@ -1264,7 +1414,7 @@ class DashboardController extends Controller
             $query->where('report_type', $request->report_type);
         }
 
-        $reports = $query->get();
+        $reports = $query->paginate($this->perPage)->withQueryString();
 
         return view('Dashboard.Reports.reports', compact('reports'));
     }
@@ -1826,9 +1976,18 @@ Target="xl/workbook.xml"/>
             ->deleteFileAfterSend(true);
     }
 
-    public function announcements()
+    public function announcements(Request $request)
     {
-        $announcements = Announcement::with('admin')->latest()->get();
+        $search = $this->searchTerm($request);
+
+        $announcements = Announcement::with('admin')
+            ->when($search !== null, fn ($query) => $query->where(function ($inner) use ($search) {
+                $inner->where('title', 'like', "%{$search}%")->orWhere('message', 'like', "%{$search}%");
+            }))
+            ->latest()
+            ->orderByDesc('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
 
         return view('Dashboard.Announcements.announcements', compact('announcements'));
     }
@@ -1885,9 +2044,46 @@ Target="xl/workbook.xml"/>
 
     public function announcementDelete($id)
     {
-        $announcement = Announcement::findOrFail($id);
-        $announcement->delete();
+        return $this->deleteModel(Announcement::findOrFail($id), 'announcement', 'announcements');
+    }
 
-        return redirect()->route('announcements')->with('success', 'Announcement deleted successfully.');
+    /* ---------------------------------------------------------------
+     | Contact form inbox (messages sent from the public Contact page)
+     * ------------------------------------------------------------- */
+
+    public function contactMessages(Request $request)
+    {
+        $search = $this->searchTerm($request);
+
+        $messages = ContactMessage::query()
+            ->when($search !== null, fn ($query) => $query->where(function ($inner) use ($search) {
+                $inner->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('subject', 'like', "%{$search}%")
+                    ->orWhere('message', 'like', "%{$search}%");
+            }))
+            ->when($request->query('status') === 'unread', fn ($query) => $query->whereNull('read_at'))
+            ->latest()
+            ->orderByDesc('id')
+            ->paginate($this->perPage)
+            ->withQueryString();
+
+        return view('Dashboard.ContactMessages.contact-messages', compact('messages'));
+    }
+
+    public function contactMessageShow($id)
+    {
+        $message = ContactMessage::findOrFail($id);
+
+        if ($message->read_at === null) {
+            $message->forceFill(['read_at' => now()])->save();
+        }
+
+        return view('Dashboard.ContactMessages.view-contact-message', compact('message'));
+    }
+
+    public function contactMessageDelete($id)
+    {
+        return $this->deleteModel(ContactMessage::findOrFail($id), 'message', 'contact_messages');
     }
 }

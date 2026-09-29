@@ -24,7 +24,7 @@ active
 
     </div>
 
-    <div style="padding:22px">
+    <div id="order-details" style="padding:22px">
 
         <div class="detail-grid">
 
@@ -136,6 +136,8 @@ active
         <form
             action="{{ route('order_status_update', $order->id) }}"
             method="post"
+            data-ajax
+            data-ajax-refresh="#order-details"
         >
 
             @csrf

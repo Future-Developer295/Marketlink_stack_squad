@@ -18,7 +18,7 @@
 
             <div class="panel-tools">
 
-                <form class="search-box" method="GET" action="{{ route('categories') }}">
+                <form class="search-box" method="GET" action="{{ route('categories') }}" data-ajax-filter="#categories-list">
                     <i class="bi bi-search"></i>
 
                     <input type="text" name="q" value="{{ request('q') }}" placeholder="Search..." />
@@ -33,7 +33,8 @@
 
         </div>
 
-        <div class="tbl-wrap">
+        <div id="categories-list" data-ajax-list>
+<div class="tbl-wrap">
 
             <table class="dtable">
 
@@ -49,16 +50,13 @@
 
                 <tbody>
 
-                    <?php 
-    $index = 1;
-                    ?>
                     @forelse($categories as $category)
 
                         <tr>
 
                             <td>
                                 <span class="id-chip">
-                                    {{ $index++ }}
+                                    {{ $categories->firstItem() + $loop->index }}
                                 </span>
                             </td>
 
@@ -87,12 +85,10 @@
                                         <i class="bi bi-pencil"></i>
                                     </a>
 
-                                    <form action="{{ route('category_delete', $category->id) }}" method="POST"
-                                        style="display:inline;">
+                                    <form action="{{ route('category_delete', $category->id) }}" method="POST" style="display:inline" data-ajax data-ajax-remove="tbody tr" data-confirm="Delete this category?">
                                         @csrf
 
-                                        <button class="btn-ghost sm danger" type="submit"
-                                            onclick="return confirm('Are you sure you want to delete this category?')">
+                                        <button class="btn-ghost sm danger" type="submit">
                                             <i class="bi bi-trash"></i>
                                         </button>
 
@@ -118,6 +114,8 @@
             </table>
 
         </div>
+@include('Dashboard._pager', ['paginator' => $categories, 'label' => 'categories'])
+</div>
 
     </div>
 

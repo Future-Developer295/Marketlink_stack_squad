@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\ContactMessageMail;
+use App\Services\SafeMail;
 use App\Models\Category;
 use App\Models\ContactMessage;
 use App\Models\FarmerProfile;
@@ -22,7 +23,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -68,9 +68,16 @@ class WebsiteController extends Controller
             ]),
         };
     }
-    public function farmerPending(): View
+    public function farmerPending(): View|RedirectResponse
     {
-        return view('Website.Auth.farmer-pending');
+        $user = Auth::user();
+
+        // Approved farmers (and everyone else) have nothing to wait for.
+        if ($user->role !== 'farmer' || $user->is_active) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('Website.Auth.farmer-pending', ['user' => $user]);
     }
     public function markets(Request $request): View
     {
@@ -368,7 +375,16 @@ class WebsiteController extends Controller
 
         $customer = Auth::user();
 
-        return view('Website.Checkout.index', compact('cartItems', 'farmerGroups', 'pickupSlotsByFarmer', 'cartTotal', 'customer'));
+        // Right after placing an order, show exactly what was ordered.
+        $placedOrders = collect();
+        if (Auth::check() && session()->has('placed_order_ids')) {
+            $placedOrders = Auth::user()->orders()
+                ->whereIn('id', (array) session('placed_order_ids'))
+                ->with(['farmer.user', 'pickupSlot.market', 'items.product'])
+                ->get();
+        }
+
+        return view('Website.Checkout.index', compact('cartItems', 'farmerGroups', 'pickupSlotsByFarmer', 'cartTotal', 'customer', 'placedOrders'));
     }
 
     public function placeOrder(Request $request): RedirectResponse
@@ -401,8 +417,10 @@ class WebsiteController extends Controller
             }
         }
 
+        $placedOrderIds = [];
+
         if (Auth::check() && $itemsByFarmer->isNotEmpty()) {
-            DB::transaction(function () use ($itemsByFarmer, $validated) {
+            DB::transaction(function () use ($itemsByFarmer, $validated, &$placedOrderIds) {
                 foreach ($itemsByFarmer as $farmerId => $items) {
                     $totalAmount = $items->sum('subtotal');
 
@@ -415,6 +433,8 @@ class WebsiteController extends Controller
                         'order_date' => now(),
                         'notes' => $validated['notes'] ?? null,
                     ]);
+
+                    $placedOrderIds[] = $order->id;
 
                     foreach ($items as $item) {
                         OrderItem::create([
@@ -431,7 +451,9 @@ class WebsiteController extends Controller
             $cart->clear();
         }
 
-        return redirect('/checkout')->with('success', 'Your pre-order has been placed successfully.');
+        return redirect('/checkout')
+            ->with('success', 'Your pre-order has been placed successfully.')
+            ->with('placed_order_ids', $placedOrderIds);
     }
 
     public function about(): View
@@ -484,22 +506,9 @@ class WebsiteController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        // The message is already saved above, so a mail/SMTP hiccup never loses it.
-        try {
-            Mail::to(config('marketlink.contact_email'))->send(new ContactMessageMail($contact));
-        } catch (Throwable $e) {
-            // Log with enough context to diagnose (bad app password, blocked login, wrong port...).
-            Log::error('Contact form email failed to send', [
-                'contact_id' => $contact->id,
-                'to' => config('marketlink.contact_email'),
-                'mailer' => config('mail.default'),
-                'host' => config('mail.mailers.smtp.host'),
-                'port' => config('mail.mailers.smtp.port'),
-                'username' => config('mail.mailers.smtp.username'),
-                'exception' => get_class($e),
-                'error' => $e->getMessage(),
-            ]);
-        }
+        // The message is already saved above (and shown in the admin inbox), so a
+        // mail/SMTP hiccup never loses it. SafeMail logs the real error.
+        SafeMail::send(config('marketlink.contact_email'), new ContactMessageMail($contact));
 
         return redirect('/contact')->with('success', $success);
     }
@@ -627,7 +636,7 @@ class WebsiteController extends Controller
 
     public function orders(Request $request): View
     {
-        $query = Auth::user()->orders()->with(['farmer.user', 'pickupSlot.market', 'items']);
+        $query = Auth::user()->orders()->with(['farmer.user', 'pickupSlot.market', 'items.product']);
 
         if ($request->input('status') === 'active') {
             $query->whereIn('status', $this->activeStatuses());
@@ -659,11 +668,12 @@ class WebsiteController extends Controller
         $reviews = Auth::user()->reviews()
             ->with(['farmer.user', 'product', 'reply'])
             ->latest()
-            ->paginate(8);
+            ->paginate(8)
+            ->withQueryString();
 
         $reviewableItems = OrderItem::with('product')
             ->whereHas('order', fn($query) => $query->where('user_id', Auth::id())->where('status', 'picked_up'))
-            ->whereHas('product')->latest('id')->get()->unique('product_id');
+            ->whereHas('product')->latest('id')->limit(200)->get()->unique('product_id');
 
         return view('Website.Dashboard.reviews', compact('reviews', 'reviewableItems'));
     }
@@ -709,7 +719,8 @@ class WebsiteController extends Controller
         $favorites = Auth::user()->favorites()
             ->with(['farmer' => fn($query) => $query->withCount(['products as available_products_count' => fn($products) => $products->where('is_active', true)->where('stock_quantity', '>', 0)]), 'product.farmer'])
             ->latest()
-            ->get();
+            ->paginate(12)
+            ->withQueryString();
 
         return view('Website.Dashboard.favorites', compact('favorites'));
     }
@@ -725,7 +736,8 @@ class WebsiteController extends Controller
     {
         $notifications = Notification::where('user_id', Auth::id())
             ->latest()
-            ->paginate(12);
+            ->paginate(12)
+            ->withQueryString();
 
         return view('Website.Dashboard.notifications', compact('notifications'));
     }

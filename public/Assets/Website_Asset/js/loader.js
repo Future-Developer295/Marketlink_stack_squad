@@ -5,12 +5,15 @@
       const loaderOverlay = document.getElementById("loaderOverlay");
       const websiteContent = document.getElementById("website-content");
 
+      // Loader markup only exists on some pages - do nothing (and never throw) elsewhere.
+      if (!basket || !loaderOverlay) return;
+
       const produceItems = [
         document.getElementById("prod1"),
         document.getElementById("prod2"),
         document.getElementById("prod3"),
         document.getElementById("prod4")
-      ];
+      ].filter(Boolean);
 
       basket.classList.add("pop-in");
 
@@ -31,12 +34,12 @@
       setTimeout(() => {
         basket.classList.remove("shake-full");
         basket.classList.add("drive-across");
-        loadingText.classList.add("fade-out");
+        if (loadingText) loadingText.classList.add("fade-out");
       }, allItemsDroppedTime + 550);
 
       setTimeout(() => {
         loaderOverlay.classList.add("fade-out");
-        websiteContent.classList.add("visible");
+        if (websiteContent) websiteContent.classList.add("visible");
       }, allItemsDroppedTime + 1450);
     });
   

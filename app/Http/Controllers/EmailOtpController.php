@@ -99,7 +99,7 @@ class EmailOtpController extends Controller
             report($e);
 
             throw ValidationException::withMessages([
-                'code' => 'We could not send the email right now. Please try again in a moment.',
+                'code' => EmailOtp::failureMessage($e),
             ]);
         }
 
@@ -126,7 +126,9 @@ class EmailOtpController extends Controller
         }
 
         return redirect()->route('login')
-            ->with('success', 'Email verified! You can now login.');
+            ->with('success', $user->role === 'farmer'
+                ? 'Email verified! You can now login. Your farmer account will be active once an admin approves it - we will email you.'
+                : 'Email verified! You can now login.');
     }
 
     private function maskEmail(string $email): string

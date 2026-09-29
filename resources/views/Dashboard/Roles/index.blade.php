@@ -17,14 +17,21 @@
                 Roles
             </span>
 
+            <div class="panel-tools">
+            <form class="search-box" method="GET" action="{{ route('roles') }}" data-ajax-filter="#roles-list">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search…" />
+                </form>
             <a href="{{ route('role_add') }}" class="btn-primary">
                 <i class="bi bi-plus-lg"></i>
                 Add Role
             </a>
+            </div>
 
         </div>
 
-        <div class="table-responsive">
+        <div id="roles-list" data-ajax-list>
+<div class="table-responsive">
 
             <table class="dtable">
 
@@ -42,13 +49,13 @@
                     @forelse($roles as $role)
                         <tr>
 
-                            <td><span class="id-chip">{{ $loop->iteration }}</span></td>
+                            <td><span class="id-chip">{{ $roles->firstItem() + $loop->index }}</span></td>
 
                             <td><strong>{{ $role->name }}</strong></td>
 
                             <td>
                                 <span class="badge-cat">
-                                    {{ $role->permissions->count() }} permission{{ $role->permissions->count() == 1 ? '' : 's' }}
+                                    {{ $role->permissions_count }} permission{{ $role->permissions_count == 1 ? '' : 's' }}
                                 </span>
                             </td>
 
@@ -62,6 +69,12 @@
                                     <a href="{{ route('role_edit', $role->id) }}" class="btn-ghost sm">
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    @can('delete roles')
+                                        <form action="{{ route('role_delete', $role->id) }}" method="POST" style="display:inline" data-ajax data-ajax-remove="tbody tr" data-confirm="Delete this role?">
+                                            @csrf
+                                            <button class="btn-ghost sm danger" type="submit" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    @endcan
 
                                 </div>
                             </td>
@@ -86,6 +99,8 @@
             </table>
 
         </div>
+@include('Dashboard._pager', ['paginator' => $roles, 'label' => 'roles'])
+</div>
 
     </div>
 

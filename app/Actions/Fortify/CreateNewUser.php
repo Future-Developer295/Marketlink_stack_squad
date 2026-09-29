@@ -40,6 +40,7 @@ class CreateNewUser implements CreatesNewUsers
             'role' => $input['role'],
             'password' => Hash::make($input['password']),
             'is_active' => $input['role'] === 'farmer' ? 0 : 1,
+            'approval_status' => $input['role'] === 'farmer' ? 'pending' : 'approved',
         ]);
 
         Role::firstOrCreate([

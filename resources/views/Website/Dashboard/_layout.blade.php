@@ -3,7 +3,7 @@
 <div class="customer-shell">
 @include('Website.Dashboard._sidebar')
 <div class="customer-content">
-<header class="customer-topbar"><div><span class="customer-eyebrow">MY MARKETLINK</span><span class="customer-page-label">@yield('page_title')</span></div><div class="customer-top-actions"><a href="{{ route('customer_dashboard') }}" class="customer-text-link">Overview ↗</a><a href="{{ url('/cart') }}" class="customer-button customer-button-small"><i class="fa-solid fa-basket-shopping"></i> Basket <span>{{ collect(session('cart', []))->sum() }}</span></a></div></header>
+<header class="customer-topbar"><div><span class="customer-eyebrow">MY MARKETLINK</span><span class="customer-page-label">@yield('page_title')</span></div><div class="customer-top-actions"><a href="{{ route('customer_dashboard') }}" class="customer-text-link">Overview ↗</a><a href="{{ url('/cart') }}" class="customer-button customer-button-small"><i class="fa-solid fa-basket-shopping"></i> Basket <span data-cart-count>{{ collect(session('cart', []))->sum() }}</span></a></div></header>
 @include('Website.Partials.alerts')
 <section class="account-banner"><div><span class="customer-eyebrow">YOUR LITTLE LOCAL WORLD</span><h1>@yield('banner_title')</h1><p>@yield('banner_text')</p></div><span class="account-banner-art" aria-hidden="true"><i class="fa-solid @yield('banner_icon', 'fa-seedling')"></i><b>✳</b></span></section>
 @yield('account_content')

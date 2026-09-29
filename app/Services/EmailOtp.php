@@ -6,6 +6,8 @@ use App\Mail\EmailVerificationCodeMail;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Throwable;
 
 class EmailOtp
 {
@@ -42,6 +44,19 @@ class EmailOtp
             'email_otp_sent_at' => now(),
             'email_otp_attempts' => 0,
         ])->save();
+    }
+
+    /**
+     * Message shown when the code email could not be sent. With APP_DEBUG=true the real
+     * SMTP reason is included so the problem can be fixed; in production it stays generic.
+     */
+    public static function failureMessage(Throwable $e): string
+    {
+        $base = 'We could not send the email right now.';
+
+        return config('app.debug')
+            ? $base.' Reason: '.Str::limit(trim($e->getMessage()), 220)
+            : $base.' Please try again in a moment.';
     }
 
     /**
