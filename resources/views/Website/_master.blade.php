@@ -106,10 +106,11 @@
     @php
         $cartCount = app(\App\Services\Cart::class)->count();
 
-        $favCount = auth()->check()
-            && method_exists(auth()->user(), 'favorites')
-            ? auth()->user()->favorites()->count()
-            : 0;
+        $favCount = 0;
+
+        if (auth()->check() && method_exists(auth()->user(), 'favorites')) {
+            $favCount = auth()->user()->favorites()->count();
+        }
     @endphp
 
     @unless ($__env->hasSection('hide_chrome'))
@@ -238,6 +239,7 @@
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </a>
 
+                        {{-- Favorite --}}
                         <a
                             href="{{
                                 auth()->check()
@@ -263,20 +265,24 @@
                             }} fa-heart"></i>
 
                             <span
-                                class="ml-cart-badge ml-fav-badge"
+                                class="ml-fav-badge"
                                 data-fav-count
-                                @if (!$favCount) hidden @endif
+                                @if (!$favCount)
+                                    hidden
+                                @endif
                             >
                                 {{ $favCount }}
                             </span>
 
                         </a>
 
+                        {{-- Cart --}}
                         <a
                             href="{{ url('/cart') }}"
                             class="ml-icon-btn"
                             aria-label="Cart"
                         >
+
                             <i class="fa-solid fa-cart-shopping"></i>
 
                             <span
@@ -285,6 +291,7 @@
                             >
                                 {{ $cartCount }}
                             </span>
+
                         </a>
 
                         @auth
@@ -298,9 +305,11 @@
                                     data-bs-toggle="dropdown"
                                     aria-expanded="false"
                                 >
+
                                     <span class="ml-avatar-circle">
                                         <i class="fa-solid fa-user"></i>
                                     </span>
+
                                 </button>
 
                                 <ul
@@ -342,6 +351,7 @@
                                             method="POST"
                                             class="m-0"
                                         >
+
                                             @csrf
 
                                             <button
@@ -477,7 +487,6 @@
 
                     </div>
 
-
                     <div class="col-6 col-lg-2">
 
                         <h6>Explore</h6>
@@ -496,7 +505,6 @@
 
                     </div>
 
-
                     <div class="col-6 col-lg-2">
 
                         <h6>Company</h6>
@@ -514,7 +522,6 @@
                         </a>
 
                     </div>
-
 
                     <div class="col-6 col-lg-2">
 
@@ -535,7 +542,6 @@
                     </div>
 
                 </div>
-
 
                 <div class="ml-footer-bottom">
 
@@ -570,8 +576,8 @@
 
     <script
         src="{{ asset('Assets/Shared/ajax.js') }}"
-        defer
-    ></script>
+        defer>
+    </script>
 
     @auth
         @include('Website.Partials.welcome-back')
