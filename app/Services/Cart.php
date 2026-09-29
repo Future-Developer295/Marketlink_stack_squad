@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Models\CartItem;
 use App\Models\Product;
-use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
@@ -14,7 +14,7 @@ class Cart
 {
     protected string $sessionKey = 'cart';
 
-    /** null = not checked yet. Avoids a crash (and repeated queries) if `php artisan migrate` was not run. */
+    /** null = not checked yet. */
     protected static ?bool $tableReady = null;
 
     protected function tableReady(): bool
@@ -23,11 +23,16 @@ class Cart
     }
 
     /**
-     * @param  int|null  $userId  Owner of the saved basket. Defaults to the logged-in user.
-     *                            (During the Login event Auth::id() is still null, so it can be passed in.)
+     * @param  int|null  $userId  Login event ke waqt Auth::id() null hota hai, isliye yahan pass karein.
      */
     public function __construct(protected ?int $userId = null)
     {
+    }
+
+    /** Cart ka malik: pass kiya gaya user, warna logged-in user. */
+    protected function ownerId(): ?int
+    {
+        return $this->userId ?? Auth::id();
     }
 
     public function add(int $productId, int $quantity = 1): void
@@ -51,10 +56,6 @@ class Cart
         }
 
         $cart[$productId] = $newQuantity;
-
-        if ($cart[$productId] <= 0) {
-            unset($cart[$productId]);
-        }
 
         $this->save($cart);
     }
@@ -98,8 +99,8 @@ class Cart
     }
 
     /**
-     * Called right after a customer logs in: merge the basket they saved last time
-     * (database) with anything they added as a guest (session), and keep both in sync.
+     * Login ke baad: database wali purani basket + guest session basket merge karo
+     * aur dono ko sync kar do.
      */
     public function restoreSaved(): Collection
     {
@@ -117,9 +118,10 @@ class Cart
             $merged[$productId] = ($merged[$productId] ?? 0) + (int) $quantity;
         }
 
-        session([$this->sessionKey => $merged]);
+        // save() session + database dono update karta hai.
+        $this->save($merged);
 
-        // items() drops unavailable products, caps quantities to stock, then saves.
+        // items() unavailable products hata deta hai aur quantity stock tak cap karta hai.
         return $this->items();
     }
 
@@ -161,13 +163,14 @@ class Cart
             ->filter()
             ->values();
 
-        $this->save(
-            $items->mapWithKeys(
-                fn($item) => [
-                    $item['product']->id => $item['quantity']
-                ]
-            )->all()
-        );
+        $clean = $items->mapWithKeys(
+            fn ($item) => [$item['product']->id => $item['quantity']]
+        )->all();
+
+        // Sirf tab save karo jab kuch badla ho (har page view par DB write nahi).
+        if ($clean != $raw) {
+            $this->save($clean);
+        }
 
         return $items;
     }
@@ -175,7 +178,7 @@ class Cart
     public function groupedByFarmer(): Collection
     {
         return $this->items()
-            ->groupBy(fn($item) => $item['product']->farmer_id);
+            ->groupBy(fn ($item) => $item['product']->farmer_id);
     }
 
     public function total(): float
@@ -186,5 +189,46 @@ class Cart
     protected function save(array $cart): void
     {
         session([$this->sessionKey => $cart]);
+
+        $this->persist($cart);
+    }
+
+    /** Logged-in customer ki basket database mein likho, taake logout ke baad bhi rahe. */
+    protected function persist(array $cart): void
+    {
+        $userId = $this->ownerId();
+
+        if (! $userId || ! $this->tableReady()) {
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($userId, $cart) {
+                if (empty($cart)) {
+                    CartItem::where('user_id', $userId)->delete();
+                    return;
+                }
+
+                CartItem::where('user_id', $userId)
+                    ->whereNotIn('product_id', array_keys($cart))
+                    ->delete();
+
+                $now = now();
+
+                CartItem::upsert(
+                    collect($cart)->map(fn ($quantity, $productId) => [
+                        'user_id' => $userId,
+                        'product_id' => (int) $productId,
+                        'quantity' => (int) $quantity,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ])->values()->all(),
+                    ['user_id', 'product_id'],
+                    ['quantity', 'updated_at']
+                );
+            });
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }

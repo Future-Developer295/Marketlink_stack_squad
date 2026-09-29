@@ -46,7 +46,7 @@ class UsersTableSeeder extends Seeder
             ],
             [
                 'name' => 'Ahmed Customer',
-                'email' => 'customer@marketlink.com',
+                'email' => 'customer@gmail.com',
                 'password' => Hash::make('password123'),
                 'phone' => '03001234569',
                 'address' => 'Karachi, Pakistan',
