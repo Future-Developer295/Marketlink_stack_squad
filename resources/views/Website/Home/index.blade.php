@@ -102,11 +102,33 @@
         <div class="swiper home-category-slider" aria-label="Explore product categories"><div class="swiper-wrapper">
             @forelse($categories as $category)
             @php($categoryPhoto = match (true) {
-                str_contains(strtolower($category->name), 'fruit') => 'fruits/Fresh-apple.png',
-                str_contains(strtolower($category->name), 'veget') => 'vegetables/carrot.jpg',
-                str_contains(strtolower($category->name), 'grain') => 'grains/rice.jpg',
-                default => 'vegetables/mix.jpg'
-            })
+    str_contains(strtolower($category->name), 'fruit') =>
+        'fruits/Fresh-apple.jpg',
+
+    str_contains(strtolower($category->name), 'veget') =>
+        'vegetables/carrot.jpg',
+
+    str_contains(strtolower($category->name), 'grain') =>
+        'grains/black rice.jpg',
+
+    str_contains(strtolower($category->name), 'dairy') =>
+        'dairy/milk.jpg',
+
+    str_contains(strtolower($category->name), 'herb') =>
+        'herbs/herb1.png',
+
+    str_contains(strtolower($category->name), 'spice') =>
+        'spices/red chilli.jpg',
+
+    str_contains(strtolower($category->name), 'organic') =>
+        'metabolism.jpg',
+
+    str_contains(strtolower($category->name), 'pulse') =>
+        'pulses/pulses.jpg',
+
+    default =>
+        'vegetables/mix.jpg'
+})
             <a class="swiper-slide home-category-slide" href="{{ url('/products').'?category_id='.$category->id }}"><img src="{{ asset('Assets/Website_Asset/images/'.$categoryPhoto) }}" alt="" loading="lazy" width="600" height="600"><span class="home-category-caption"><small>{{ $category->products_count }} available picks</small><strong>{{ $category->name }}</strong><span aria-hidden="true">↗</span></span></a>
             @empty<div class="swiper-slide home-category-slide"><img src="{{ asset('Assets/Website_Asset/images/vegetables/mix.jpg') }}" alt="Fresh seasonal vegetables" loading="lazy"><span class="home-category-caption"><strong>A new season is coming.</strong></span></div>@endforelse
         </div></div>

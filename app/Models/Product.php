@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -72,32 +74,80 @@ class Product extends Model
 
     public function imageUrl(): string
     {
+        $placeholder = asset('Assets/Website_Asset/images/product-placeholder.svg');
+
         if (!$this->image) {
-            return asset('Assets/Website_Asset/images/product-placeholder.svg');
+            return $placeholder;
         }
 
         if (filter_var($this->image, FILTER_VALIDATE_URL)) {
             return $this->image;
         }
 
-        $image = basename($this->image);
+        $path = ltrim(str_replace('\\', '/', $this->image), '/');
 
-        $folders = [
-            'fruits',
-            'vegetables',
-            'grains',
-        ];
-
-        foreach ($folders as $folder) {
-            $file = 'Assets/Website_Asset/images/' . $folder . '/' . $image;
-
-            if (file_exists(public_path($file))) {
-                return asset($file);
-            }
+        // Uploaded via storage (needs: php artisan storage:link)
+        if (Storage::disk('public')->exists($path)) {
+            return asset('storage/' . $path);
         }
 
-        return asset('Assets/Website_Asset/images/product-placeholder.svg');
+        // Path already relative to /public
+        if (is_file(public_path($path))) {
+            return asset($path);
+        }
+
+        $index = static::imageIndex();
+
+        // Exact filename, then normalized name (plural/extension/case-insensitive)
+        $match = $index['exact'][strtolower(basename($path))]
+            ?? $index['stem'][static::imageStem($path)]
+            ?? null;
+
+        return $match
+            ? asset('Assets/Website_Asset/images/' . $match)
+            : $placeholder;
     }
+
+    protected static function imageStem(string $name): string
+    {
+        $stem = preg_replace('/[^a-z0-9]/', '', strtolower(pathinfo($name, PATHINFO_FILENAME)));
+
+        return Str::singular($stem);
+    }
+
+    protected static function imageIndex(): array
+    {
+        static $index = null;
+
+        if ($index !== null) {
+            return $index;
+        }
+
+        $index = ['exact' => [], 'stem' => []];
+        $root = public_path('Assets/Website_Asset/images');
+
+        if (!is_dir($root)) {
+            return $index;
+        }
+
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($files as $file) {
+            if (!$file->isFile() || !preg_match('/\.(jpe?g|png|webp|gif|avif)$/i', $file->getFilename())) {
+                continue;
+            }
+
+            $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
+
+            $index['exact'][strtolower($file->getFilename())] ??= $relative;
+            $index['stem'][static::imageStem($file->getFilename())] ??= $relative;
+        }
+
+        return $index;
+    }
+
     public function farmer(): BelongsTo
     {
         return $this->belongsTo(FarmerProfile::class, 'farmer_id');
