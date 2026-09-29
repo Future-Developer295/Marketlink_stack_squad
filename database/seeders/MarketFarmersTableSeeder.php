@@ -9,19 +9,32 @@ class MarketFarmersTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // updateOrInsert keyed on the unique ('market_id','farmer_id') pair, so
-        // reseeding an already-seeded database doesn't throw a duplicate-entry error.
-        $links = [
-            ['market_id' => 1, 'farmer_id' => 1, 'is_active' => true],
-            ['market_id' => 2, 'farmer_id' => 2, 'is_active' => true],
-            ['market_id' => 3, 'farmer_id' => 1, 'is_active' => true],
+        // farmer email => markets they sell at
+        // NOTE: market_farmers.farmer_id references USERS.id (not farmer_profile.id)
+        $map = [
+            'farmer@gmail.com'       => ['Lahore Farmers Market'],
+            'farmer2@marketlink.com' => ['Multan Fresh Market', 'Lahore Farmers Market'],
+            'sanafarmer@gmail.com'   => ['Rawalpindi Fresh Bazaar', 'Lahore Farmers Market'],
+            'alifarmer@gmail.com'    => ['Karachi Organic Market'],
         ];
 
-        foreach ($links as $link) {
-            DB::table('market_farmers')->updateOrInsert(
-                ['market_id' => $link['market_id'], 'farmer_id' => $link['farmer_id']],
-                $link + ['updated_at' => now(), 'created_at' => now()]
-            );
+        foreach ($map as $email => $marketNames) {
+            $userId = DB::table('users')->where('email', $email)->value('id');
+            if (! $userId) {
+                continue;
+            }
+
+            foreach ($marketNames as $marketName) {
+                $marketId = DB::table('markets')->where('name', $marketName)->value('id');
+                if (! $marketId) {
+                    continue;
+                }
+
+                DB::table('market_farmers')->updateOrInsert(
+                    ['market_id' => $marketId, 'farmer_id' => $userId],
+                    ['is_active' => true, 'created_at' => now(), 'updated_at' => now()]
+                );
+            }
         }
     }
 }

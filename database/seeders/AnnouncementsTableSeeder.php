@@ -9,34 +9,32 @@ class AnnouncementsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('announcement')->insert([
-            [
-                'admin_id' => 1,
-                'title' => 'MarketLink New Update',
-                'message' => 'MarketLink platform has been updated with new features.',
-                'is_active' => true,
-                'published_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'admin_id' => 1,
-                'title' => 'Farmers Market Schedule',
-                'message' => 'New market schedules are now available for customers.',
-                'is_active' => true,
-                'published_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'admin_id' => 1,
-                'title' => 'Fresh Products Available',
-                'message' => 'Fresh fruits, vegetables and grains are now available.',
-                'is_active' => true,
-                'published_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        $adminId = DB::table('users')->where('role', 'admin')->value('id');
+        $farmerUserId = DB::table('users')->where('email', 'farmer@gmail.com')->value('id');
+
+        // audience: all | all_farmers | farmer (a single farmer -> farmer_id = users.id)
+        $announcements = [
+            ['MarketLink New Update',      'MarketLink platform has been updated with new features.',      'all',         null],
+            ['Farmers Market Schedule',    'New market schedules are now available for customers.',        'all',         null],
+            ['Fresh Products Available',   'Fresh fruits, vegetables and grains are now available.',       'all',         null],
+            ['Farmer Guidelines',          'Please keep your weekly stock and pickup slots up to date.',   'all_farmers', null],
+            ['Your Profile Is Live',       'Your stall is now visible to customers. Add more products!',   'farmer',      $farmerUserId],
+        ];
+
+        foreach ($announcements as [$title, $message, $audience, $farmerId]) {
+            DB::table('announcement')->updateOrInsert(
+                ['title' => $title],
+                [
+                    'admin_id'     => $adminId,
+                    'message'      => $message,
+                    'audience'     => $audience,
+                    'farmer_id'    => $farmerId,
+                    'is_active'    => true,
+                    'published_at' => now(),
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
+                ]
+            );
+        }
     }
 }

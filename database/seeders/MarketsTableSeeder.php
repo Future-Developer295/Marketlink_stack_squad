@@ -9,49 +9,23 @@ class MarketsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('markets')->insert([
-            [
-                'name' => 'Lahore Farmers Market',
-                'address' => 'Main Market Road',
-                'city' => 'Lahore',
-                'state' => 'Punjab',
-                'country' => 'Pakistan',
-                'latitude' => 31.5204,
-                'longitude' => 74.3587,
-                'operating_days' => 'Mon, Tue, Wed, Thu, Fri',
-                'start_time' => '08:00:00',
-                'end_time' => '18:00:00',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Multan Fresh Market',
-                'address' => 'Bosan Road',
-                'city' => 'Multan',
-                'state' => 'Punjab',
-                'country' => 'Pakistan',
-                'latitude' => 30.1575,
-                'longitude' => 71.5249,
-                'operating_days' => 'Mon, Wed, Fri, Sat',
-                'start_time' => '09:00:00',
-                'end_time' => '19:00:00',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Karachi Organic Market',
-                'address' => 'University Road',
-                'city' => 'Karachi',
-                'state' => 'Sindh',
-                'country' => 'Pakistan',
-                'latitude' => 24.9207,
-                'longitude' => 67.0882,
-                'operating_days' => 'Tue, Thu, Sat, Sun',
-                'start_time' => '08:00:00',
-                'end_time' => '17:00:00',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        $markets = [
+            ['Lahore Farmers Market',    'Main Market Road', 'Lahore',     'Punjab', 31.5204, 74.3587, 'Mon, Tue, Wed, Thu, Fri', '08:00:00', '18:00:00'],
+            ['Multan Fresh Market',      'Bosan Road',       'Multan',     'Punjab', 30.1575, 71.5249, 'Mon, Wed, Fri, Sat',      '09:00:00', '19:00:00'],
+            ['Karachi Organic Market',   'University Road',  'Karachi',    'Sindh',  24.9207, 67.0882, 'Tue, Thu, Sat, Sun',      '08:00:00', '17:00:00'],
+            ['Rawalpindi Fresh Bazaar',  'Committee Chowk',  'Rawalpindi', 'Punjab', 33.5984, 73.0441, 'Mon, Wed, Fri, Sat',      '09:00:00', '18:00:00'],
+        ];
+
+        foreach ($markets as [$name, $address, $city, $state, $lat, $lng, $days, $start, $end]) {
+            DB::table('markets')->updateOrInsert(
+                ['name' => $name],
+                [
+                    'address' => $address, 'city' => $city, 'state' => $state, 'country' => 'Pakistan',
+                    'latitude' => $lat, 'longitude' => $lng, 'operating_days' => $days,
+                    'start_time' => $start, 'end_time' => $end,
+                    'created_at' => now(), 'updated_at' => now(),
+                ]
+            );
+        }
     }
 }

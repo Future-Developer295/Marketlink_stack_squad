@@ -9,40 +9,41 @@ class PickupSlotsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('pickup_slots')->insert([
-            [
-                'farmer_id' => 1,
-                'market_id' => 1,
-                'date' => '2026-10-01',
-                'start_time' => '08:00:00',
-                'end_time' => '10:00:00',
-                'capacity' => 20,
-                'is_available' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'farmer_id' => 2,
-                'market_id' => 2,
-                'date' => '2026-10-02',
-                'start_time' => '10:00:00',
-                'end_time' => '12:00:00',
-                'capacity' => 15,
-                'is_available' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'farmer_id' => 1,
-                'market_id' => 3,
-                'date' => '2026-10-03',
-                'start_time' => '14:00:00',
-                'end_time' => '16:00:00',
-                'capacity' => 25,
-                'is_available' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        // Past days (for completed orders) + upcoming days (for new orders).
+        $dayOffsets = [-3, -1, 1, 2, 3, 5];
+        $windows    = [['09:00:00', '11:00:00', 20], ['14:00:00', '16:00:00', 15]];
+
+        foreach (DB::table('farmer_profile')->orderBy('id')->get() as $farmer) {
+            // pickup_slots.farmer_id = farmer_profile.id
+            // market_farmers.farmer_id = users.id
+            $marketIds = DB::table('market_farmers')
+                ->where('farmer_id', $farmer->user_id)
+                ->where('is_active', true)
+                ->pluck('market_id');
+
+            foreach ($marketIds as $marketId) {
+                foreach ($dayOffsets as $offset) {
+                    $date = now()->addDays($offset)->toDateString();
+
+                    foreach ($windows as [$start, $end, $capacity]) {
+                        DB::table('pickup_slots')->updateOrInsert(
+                            [
+                                'farmer_id'  => $farmer->id,
+                                'market_id'  => $marketId,
+                                'date'       => $date,
+                                'start_time' => $start,
+                            ],
+                            [
+                                'end_time'     => $end,
+                                'capacity'     => $capacity,
+                                'is_available' => $offset >= 0,
+                                'created_at'   => now(),
+                                'updated_at'   => now(),
+                            ]
+                        );
+                    }
+                }
+            }
+        }
     }
 }
