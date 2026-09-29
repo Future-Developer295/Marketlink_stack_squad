@@ -8,15 +8,16 @@
         <div class="panel-header">
             <span class="panel-title"><i class="bi bi-clock-history"></i> Pickup Slots</span>
             <div class="panel-tools">
-                <form class="search-box">
+                <form class="search-box" method="GET" action="{{ route('slots') }}" data-ajax-filter="#slots-list">
                     <i class="bi bi-search"></i>
-                    <input type="text" name="q" placeholder="Search…" />
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search…" />
                 </form>
                 <a class="btn-primary" href="{{ route('slot_add') }}"><i class="bi bi-plus-lg"></i> Add Slot</a>
             </div>
         </div>
 
-        <div class="tbl-wrap">
+        <div id="slots-list" data-ajax-list>
+<div class="tbl-wrap">
             <table class="dtable">
                 <thead>
                     <tr>
@@ -30,20 +31,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-
-            $index = 1;
-            ?>
-
-                    @foreach ($slots as $slot)
+                    @forelse ($slots as $slot)
 
                         <tr>
                             <td>
-                                <span class="id-chip">{{ $index++ }}</span>
+                                <span class="id-chip">{{ $slots->firstItem() + $loop->index }}</span>
                             </td>
 
                             <td>
-                                <strong>{{ $slot->market->name }}</strong>
+                                <strong>{{ $slot->market?->name ?? 'N/A' }}</strong>
                             </td>
 
                             <td>
@@ -75,7 +71,7 @@
                                         <i class="bi bi-pencil"></i>
                                     </a>
 
-                                    <form action="{{ route('slot_delete', $slot->id) }}" method="POST">
+                                    <form action="{{ route('slot_delete', $slot->id) }}" method="POST" style="display:inline" data-ajax data-ajax-remove="tbody tr" data-confirm="Delete this pickup slot?">
                                         @csrf
 
                                         <button class="btn-ghost sm danger" type="submit">
@@ -87,9 +83,15 @@
                             </td>
                         </tr>
 
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="7" style="text-align:center; padding:30px;">No pickup slots found.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
+@include('Dashboard._pager', ['paginator' => $slots, 'label' => 'slots'])
+</div>
     </div>
 @endsection

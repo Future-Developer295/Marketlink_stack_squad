@@ -63,6 +63,7 @@ class FortifyServiceProvider extends ServiceProvider
                         $otp->send($user);
                     } catch (Throwable $e) {
                         report($e);
+                        $request->session()->flash('warning', EmailOtp::failureMessage($e).' Use "Resend code" to try again.');
                     }
                 }
 

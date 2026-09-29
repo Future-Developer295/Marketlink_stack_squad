@@ -227,7 +227,7 @@
                 <div class="contact-form-main">
                     @include('Website.Partials.alerts')
 
-                    <form method="POST" action="{{ url('/contact') }}" id="contactForm">
+                    <form method="POST" action="{{ url('/contact') }}" id="contactForm" data-ajax data-ajax-reset>
                         @csrf
 
                         {{-- Honeypot (hidden from humans, catches bots) --}}
@@ -421,6 +421,7 @@
     // Form: prevent double submit
     var form = document.getElementById('contactForm');
     form.addEventListener('submit', function () {
+        if (form.hasAttribute('data-ajax')) return; // the shared AJAX layer shows its own busy state
         var b = form.querySelector('button[type=submit]');
         b.classList.add('is-loading');
         b.querySelector('span').textContent = 'Sending…';

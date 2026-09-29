@@ -4,7 +4,7 @@
 @section('banner_text', 'Keep your details current for an easier market day.')
 @section('banner_icon', 'fa-sliders')
 @section('account_content')
-<div class="account-settings">                <form method="POST" action="{{ route('customer_profile_update') }}">
+<div class="account-settings">                <form method="POST" action="{{ route('customer_profile_update') }}" data-ajax id="profile-form">
                     @csrf
                     @method('PUT')
 
@@ -50,4 +50,10 @@
 
                     <button type="submit" class="customer-button"><i class="fa-solid fa-check"></i> Save Changes</button>
                 </form></div>
+<script>
+    // After an AJAX save, never leave the password fields filled in.
+    document.getElementById('profile-form')?.addEventListener('ml:ajax:success', function (event) {
+        event.currentTarget.querySelectorAll('input[type=password]').forEach(function (input) { input.value = ''; });
+    });
+</script>
 @endsection

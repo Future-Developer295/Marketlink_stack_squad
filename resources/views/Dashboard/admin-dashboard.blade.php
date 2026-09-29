@@ -174,37 +174,25 @@ active
     <div class="panel">
         <div class="panel-header">
             <span class="panel-title"><i class="bi bi-person-workspace"></i> Pending Farmer Approvals</span>
-            <a class="btn-ghost" href="{{ route('users') }}">View all <i class="bi bi-arrow-right"></i></a>
+            <a class="btn-ghost" href="{{ route('farmers') }}">View all <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="tbl-wrap">
             <table class="dtable">
                 <thead>
-                    <tr><th>#ID</th><th>Stall Name</th><th>Owner</th><th>Email</th><th>Submitted</th><th>Status</th><th>Action</th></tr>
+                    <tr><th>#ID</th><th>Stall Name</th><th>Owner</th><th>Submitted</th><th>Status</th></tr>
                 </thead>
                 <tbody>
-                    @forelse ($pendingFarmerList as $farmer)
+                    @forelse ($pendingFarmerList as $fp)
                     <tr>
                         <td><span class="id-chip">{{ $loop->iteration }}</span></td>
-                        <td><strong>{{ $farmer->farmerProfile?->stall_name ?? '—' }}</strong></td>
-                        <td>{{ $farmer->name }}</td>
-                        <td>{{ $farmer->email }}</td>
-                        <td>{{ $farmer->created_at?->format('Y-m-d') }}</td>
+                        <td><strong>{{ $fp->stall_name }}</strong></td>
+                        <td>{{ $fp->user?->name ?? 'N/A' }}</td>
+                        <td>{{ $fp->created_at?->format('Y-m-d') }}</td>
                         <td><span class="badge-status bs-in"><i class="bi bi-circle-fill"></i> Pending</span></td>
-                        <td>
-                            @can('edit users')
-                            <div class="action-wrap">
-                                <form action="{{ route('user_approve', $farmer->id) }}" method="post" onsubmit="return confirm('Approve {{ e($farmer->name) }}? An approval email will be sent to the farmer.');">
-                                    @csrf
-                                    <button class="btn-primary" type="submit"><i class="bi bi-check-lg"></i> Approve</button>
-                                </form>
-                                <a class="btn-ghost sm" href="{{ route('user_edit', $farmer->id) }}" title="Edit"><i class="bi bi-pencil"></i></a>
-                            </div>
-                            @endcan
-                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" style="text-align:center; color:var(--muted); padding:20px">No pending farmer approvals.</td>
+                        <td colspan="5" style="text-align:center; color:var(--muted); padding:20px">No pending farmer approvals.</td>
                     </tr>
                     @endforelse
                 </tbody>

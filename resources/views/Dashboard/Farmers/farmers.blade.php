@@ -8,14 +8,15 @@
         <div class="panel-header">
             <span class="panel-title"><i class="bi bi-person-workspace"></i> Farmers</span>
             <div class="panel-tools">
-                <form class="search-box">
+                <form class="search-box" method="GET" action="{{ route('farmers') }}" data-ajax-filter="#farmers-list">
                     <i class="bi bi-search"></i>
-                    <input type="text" name="q" placeholder="Search…" />
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search…" />
                 </form>
             </div>
         </div>
 
-        <div class="tbl-wrap">
+        <div id="farmers-list" data-ajax-list>
+<div class="tbl-wrap">
             <table class="dtable">
                 <thead>
                     <tr>
@@ -27,10 +28,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($farmers as $farmer)
+                    @forelse ($farmers as $farmer)
                         <tr>
                             <td>
-                                <span class="id-chip">{{ $loop->iteration }}</span>
+                                <span class="id-chip">{{ $farmers->firstItem() + $loop->index }}</span>
                             </td>
 
                             <td>
@@ -63,10 +64,15 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding:30px;">No farmers found.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="hr-thin"></div>
-        <div style="padding:14px 22px; color:var(--muted); font-size:13px">
-    @endsection
+@include('Dashboard._pager', ['paginator' => $farmers, 'label' => 'farmers'])
+</div>
+    </div>
+@endsection

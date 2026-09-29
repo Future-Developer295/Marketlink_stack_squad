@@ -1,46 +1,590 @@
 @extends('Website._master')
+
 @section('page_title', $product->name)
+
 @section('body')
-@php($farmer = $product->farmer)
-<div class="ml-container product-story">
-    <nav class="detail-breadcrumb" aria-label="Breadcrumb"><a href="{{ url('/products') }}">← The harvest</a><span>/</span><a href="{{ url('/products').'?category_id='.$product->category_id }}">{{ $product->category->name ?? 'Fresh picks' }}</a><span>/</span><span>{{ $product->name }}</span></nav>
-    @include('Website.Partials.alerts')
-    <section class="detail-stage" aria-labelledby="product-title">
-        <div class="detail-gallery">
-            <div class="shop-detail-visual"><img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}"><span class="detail-photo-label"><i class="fa-solid fa-seedling"></i> A little closer to the source</span></div>
-            <div class="detail-origin-strip"><i class="fa-solid fa-tractor"></i><div><span>FROM YOUR LOCAL GROWER</span><strong>{{ $farmer->stall_name ?? 'Local farm' }}</strong></div><a href="#meet-your-grower" aria-label="Meet this grower">↗</a></div>
-        </div>
-        <div class="detail-product-info">
-            <div class="detail-topline"><a class="detail-category" href="{{ url('/products').'?category_id='.$product->category_id }}"><i class="fa-solid fa-leaf"></i>{{ $product->category->name ?? 'Local harvest' }} <span>↗</span></a><a href="#product-reviews" class="detail-rating"><i class="fa-solid fa-star"></i> {{ $ratingCount ? $ratingAverage.' / 5' : 'New pick' }} <span>({{ $ratingCount }} reviews)</span></a></div>
-            <h1 id="product-title" class="shop-detail-title">{{ $product->name }}</h1>
-            <p class="detail-description">{{ $product->description }}</p>
-            <div class="detail-price"><strong>Rs. {{ number_format($product->price, 0) }}</strong><span>per {{ $product->unit }}</span><span class="detail-stock {{ $product->stock_quantity < 1 ? 'sold-out' : '' }}">● {{ $product->stock_quantity > 0 ? $product->stock_quantity.' '.$product->unit.' available' : 'Currently sold out' }}</span></div>
-            <form method="POST" class="shop-detail-purchase" id="choose-quantity" data-cart-form action="{{ url('/cart/add/'.$product->id) }}">@csrf
-                <div class="detail-quantity-row"><div><label for="product-quantity">Make it yours</label><div class="ml-quantity" data-quantity data-min="1" data-max="{{ max($product->stock_quantity, 1) }}"><button type="button" data-decrement aria-label="Decrease quantity">−</button><input id="product-quantity" type="text" name="quantity" value="1" aria-label="Quantity" readonly><button type="button" aria-label="Increase quantity">+</button></div></div><div class="detail-subtotal"><span>Your subtotal</span><strong class="shop-detail-subtotal" data-unit-price="{{ $product->price }}">Rs. {{ number_format($product->price, 0) }}</strong></div></div>
-                <div class="detail-purchase-actions"><button type="submit" class="shop-pill detail-add" @disabled($product->stock_quantity < 1)><i class="fa-solid fa-basket-shopping"></i>{{ $product->stock_quantity > 0 ? 'Add to basket' : 'Out of stock' }}<span>↗</span></button><a class="shop-outline" href="{{ url('/cart') }}">View basket <i class="fa-solid fa-arrow-right"></i></a></div>
-                <p class="detail-payment-note"><i class="fa-solid fa-circle-check"></i> Reserve online. Pay in person at pickup.</p>
-            </form>
-            @include('Website.Partials.save-favorite', ['kind'=>'product', 'favoriteId'=>$product->id, 'favoriteLabel'=>'Save this fresh pick'])
-            <div class="detail-promises"><div><i class="fa-solid fa-store"></i><span>Market collection<strong>No delivery fees</strong></span></div><div><i class="fa-regular fa-handshake"></i><span>Direct from growers<strong>A more personal shop</strong></span></div></div>
-        </div>
-    </section>
-    <section class="grower-story" id="meet-your-grower" aria-labelledby="grower-heading" data-aos="fade-up">
-        <div class="grower-story-profile"><span class="shop-kicker">THE PEOPLE BEHIND YOUR PRODUCE</span><h2 id="grower-heading">Good food has<br><em>a familiar face.</em></h2><div class="grower-identity">
-            @if($farmer?->farmer_image && is_file(public_path('farmer_images/'.basename($farmer->farmer_image))))<img src="{{ asset('farmer_images/'.basename($farmer->farmer_image)) }}" alt="{{ $farmer->user->name ?? 'Your grower' }}">@else<span class="grower-avatar" aria-hidden="true">{{ mb_substr($farmer->user->name ?? 'G', 0, 1) }}</span>@endif
-            <div><strong>{{ $farmer->user->name ?? 'Your local grower' }}</strong><span>{{ $farmer->stall_name ?? '' }}</span>@if($farmer?->approval_status === 'approved')<small><i class="fa-solid fa-circle-check"></i> Approved MarketLink grower</small>@endif</div>
-        </div><p>{{ $farmer->description ?? 'Get to know the grower behind your next market basket.' }}</p><a class="shop-outline" href="{{ url('/farmers/'.$product->farmer_id) }}">Explore this farm <i class="fa-solid fa-arrow-up-right-from-square"></i></a></div>
-        <div class="grower-pickup"><div class="pickup-illustration" aria-hidden="true"><div class="pickup-hill hill-one"></div><div class="pickup-hill hill-two"></div><i class="fa-solid fa-location-dot"></i><span>YOUR NEXT MARKET STOP</span></div><div class="pickup-info"><span class="shop-kicker">WE'LL SEE YOU HERE</span><h3>{{ $farmer->city ?? 'Market' }} pickup</h3><p>{{ $farmer->address ?? 'Ask your grower for pickup details.' }}@if($farmer?->state), {{ $farmer->state }}@endif</p><div class="pickup-schedule"><i class="fa-regular fa-clock"></i><div><strong>{{ $farmer->operating_days ?? 'Check with your grower' }}</strong><span>{{ $farmer?->start_time?->format('H:i') }} – {{ $farmer?->end_time?->format('H:i') }}</span></div></div>
-            @if($farmer?->address)<a class="pickup-directions" href="https://www.google.com/maps/search/?api=1&amp;query={{ urlencode($farmer->address.', '.$farmer->city.', '.$farmer->country) }}" target="_blank" rel="noopener noreferrer">Get directions <i class="fa-solid fa-arrow-up-right-from-square"></i></a>@endif
-        </div></div>
-    </section>
-    @if($pickupSlots->isNotEmpty())
-    <section class="detail-pickup-dates"><div><span class="shop-kicker">PLAN A LITTLE FRESH AIR</span><h2>Your next pickup.</h2><p>Choose a time at checkout.</p></div><div class="pickup-date-list">@foreach($pickupSlots->take(4) as $slot)<div class="pickup-date"><span>{{ $slot->date->format('D') }}</span><strong>{{ $slot->date->format('d') }}</strong><span>{{ $slot->date->format('M') }}</span><small>{{ substr($slot->start_time, 0, 5) }} – {{ substr($slot->end_time, 0, 5) }}</small></div>@endforeach</div></section>
-    @endif
-    <section class="detail-reviews" id="product-reviews" aria-labelledby="reviews-heading">
-        <div class="shop-section-heading"><div><span class="shop-kicker">FROM OUR MARKET COMMUNITY</span><h2 id="reviews-heading">Honest food. Honest words.</h2></div><a class="shop-outline" href="{{ auth()->check() ? route('customer_reviews') : url('/login') }}">{{ auth()->check() ? 'My reviews' : 'Sign in to your account' }} <i class="fa-solid fa-arrow-right"></i></a></div>
-        <div class="review-layout"><aside class="review-score"><span class="review-score-value">{{ $ratingCount ? $ratingAverage : '—' }}<small>/ 5</small></span><div class="review-stars" aria-label="{{ $ratingCount ? $ratingAverage.' out of 5 stars' : 'No ratings yet' }}">@for($i = 1; $i <= 5; $i++)<i class="{{ $i <= round($ratingAverage) ? 'fa-solid' : 'fa-regular' }} fa-star"></i>@endfor</div><strong>{{ $ratingCount }} {{ \Illuminate\Support\Str::plural('customer review', $ratingCount) }}</strong><p>Real experiences from people who shop local.</p></aside>
-        <div class="review-list">@forelse($reviews as $review)<article class="community-review"><header><span class="review-avatar">{{ mb_substr($review->user->name ?? 'C', 0, 1) }}</span><div><strong>{{ $review->user->name ?? 'Customer' }}</strong><span>{{ $review->created_at->format('d M Y') }}</span></div><span class="review-rating"><i class="fa-solid fa-star"></i> {{ $review->rating }} / 5</span></header><p>{{ $review->comment }}</p>@if($review->reply)<div class="grower-reply"><strong>A note from your grower</strong><p>{{ $review->reply->response }}</p></div>@endif</article>@empty<div class="review-empty"><i class="fa-regular fa-comments"></i><h3>A fresh pick. A story to come.</h3><p>No reviews yet. Your experience can help the next shopper after pickup.</p><a href="#choose-quantity" class="shop-outline">Make your first pick <i class="fa-solid fa-arrow-up"></i></a></div>@endforelse</div></div>
-    </section>
-    <section class="detail-related"><div class="shop-section-heading"><div><span class="shop-kicker">GOOD COMPANY FOR YOUR BASKET</span><h2>Keep the goodness going.</h2></div><a href="{{ url('/products') }}" class="shop-outline">Shop the harvest <i class="fa-solid fa-arrow-right"></i></a></div><div class="shop-related" tabindex="0" aria-label="Related products">@forelse($relatedProducts as $related)@include('Website.Partials.shop-product', ['product' => $related])@empty<p>More fresh picks are on their way.</p>@endforelse</div></section>
-</div>
+
+    @php($farmer = $product->farmer)
+
+    <div class="ml-container product-story">
+
+        <nav class="detail-breadcrumb" aria-label="Breadcrumb">
+            <a href="{{ url('/products') }}">
+                ← The harvest
+            </a>
+
+            <span>/</span>
+
+            <a href="{{ url('/products') . '?category_id=' . $product->category_id }}">
+                {{ $product->category->name ?? 'Fresh picks' }}
+            </a>
+
+            <span>/</span>
+
+            <span>{{ $product->name }}</span>
+        </nav>
+
+        @include('Website.Partials.alerts')
+
+        <section class="detail-stage" aria-labelledby="product-title">
+
+            <div class="detail-gallery">
+
+                <div class="shop-detail-visual">
+                    <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}">
+
+                    <span class="detail-photo-label">
+                        <i class="fa-solid fa-seedling"></i>
+                        A little closer to the source
+                    </span>
+                </div>
+
+                <div class="detail-origin-strip">
+
+                    <i class="fa-solid fa-tractor"></i>
+
+                    <div>
+                        <span>FROM YOUR LOCAL GROWER</span>
+
+                        <strong>
+                            {{ $farmer->stall_name ?? 'Local farm' }}
+                        </strong>
+                    </div>
+
+                    <a href="#meet-your-grower" aria-label="Meet this grower">
+                        ↗
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="detail-product-info">
+
+                <div class="detail-topline">
+
+                    <a class="detail-category" href="{{ url('/products') . '?category_id=' . $product->category_id }}">
+                        <i class="fa-solid fa-leaf"></i>
+
+                        {{ $product->category->name ?? 'Local harvest' }}
+
+                        <span>↗</span>
+                    </a>
+
+                    <a href="#product-reviews" class="detail-rating">
+                        <i class="fa-solid fa-star"></i>
+
+                        {{ $ratingCount ? $ratingAverage . ' / 5' : 'New pick' }}
+
+                        <span>
+                            ({{ $ratingCount }} reviews)
+                        </span>
+                    </a>
+
+                </div>
+
+                <h1 id="product-title" class="shop-detail-title">
+                    {{ $product->name }}
+                </h1>
+
+                <p class="detail-description">
+                    {{ $product->description }}
+                </p>
+
+                <div class="detail-price">
+
+                    <strong>
+                        Rs. {{ number_format($product->price, 0) }}
+                    </strong>
+
+                    <span>
+                        per {{ $product->unit }}
+                    </span>
+
+                    <span class="detail-stock {{ $product->stock_quantity < 1 ? 'sold-out' : '' }}">
+                        ●
+
+                        @if ($product->stock_quantity > 0)
+                            {{ $product->stock_quantity }}
+                            {{ $product->unit }} available
+                        @else
+                            Currently sold out
+                        @endif
+                    </span>
+
+                </div>
+
+                <form method="POST" class="shop-detail-purchase" id="choose-quantity" data-cart-form
+                    action="{{ url('/cart/add/' . $product->id) }}">
+
+                    @csrf
+
+                    <div class="detail-quantity-row">
+
+                        <div>
+
+                            <label for="product-quantity">
+                                Make it yours
+                            </label>
+
+                            <div class="ml-quantity" data-quantity data-min="1"
+                                data-max="{{ $product->stock_quantity }}">
+
+                                <button type="button" data-decrement aria-label="Decrease quantity"
+                                    @disabled($product->stock_quantity < 1)>
+                                    −
+                                </button>
+
+                                <input id="product-quantity" type="number" name="quantity" value="1" min="1"
+                                    max="{{ $product->stock_quantity }}" step="1" inputmode="numeric"
+                                    aria-label="Quantity" @disabled($product->stock_quantity < 1)>
+
+                                <button type="button" data-increment aria-label="Increase quantity"
+                                    @disabled($product->stock_quantity < 1)>
+                                    +
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div class="detail-subtotal">
+
+                            <span>
+                                Your subtotal
+                            </span>
+
+                            <strong class="shop-detail-subtotal" data-unit-price="{{ $product->price }}">
+                                Rs. {{ number_format($product->price, 0) }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    <div class="detail-purchase-actions">
+
+                        <button type="submit" class="shop-pill detail-add" @disabled($product->stock_quantity < 1)>
+
+                            <i class="fa-solid fa-basket-shopping"></i>
+
+                            {{ $product->stock_quantity > 0 ? 'Add to basket' : 'Out of stock' }}
+
+                            <span>↗</span>
+
+                        </button>
+
+                        <a class="shop-outline" href="{{ url('/cart') }}">
+                            View basket
+
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+
+                    </div>
+
+                    <p class="detail-payment-note">
+                        <i class="fa-solid fa-circle-check"></i>
+                        Reserve online. Pay in person at pickup.
+                    </p>
+
+                </form>
+
+                @include('Website.Partials.save-favorite', [
+                    'kind' => 'product',
+                    'favoriteId' => $product->id,
+                    'favoriteLabel' => 'Save this fresh pick',
+                ])
+
+                <div class="detail-promises">
+
+                    <div>
+                        <i class="fa-solid fa-store"></i>
+
+                        <span>
+                            Market collection
+                            <strong>No delivery fees</strong>
+                        </span>
+                    </div>
+
+                    <div>
+                        <i class="fa-regular fa-handshake"></i>
+
+                        <span>
+                            Direct from growers
+                            <strong>A more personal shop</strong>
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="grower-story" id="meet-your-grower" aria-labelledby="grower-heading" data-aos="fade-up">
+
+            <div class="grower-story-profile">
+
+                <span class="shop-kicker">
+                    THE PEOPLE BEHIND YOUR PRODUCE
+                </span>
+
+                <h2 id="grower-heading">
+                    Good food has<br>
+                    <em>a familiar face.</em>
+                </h2>
+
+                <div class="grower-identity">
+
+                    @if ($farmer?->farmer_image && is_file(public_path('farmer_images/' . basename($farmer->farmer_image))))
+                        <img src="{{ asset('farmer_images/' . basename($farmer->farmer_image)) }}"
+                            alt="{{ $farmer->user->name ?? 'Your grower' }}">
+                    @else
+                        <span class="grower-avatar" aria-hidden="true">
+                            {{ mb_substr($farmer->user->name ?? 'G', 0, 1) }}
+                        </span>
+                    @endif
+
+                    <div>
+
+                        <strong>
+                            {{ $farmer->user->name ?? 'Your local grower' }}
+                        </strong>
+
+                        <span>
+                            {{ $farmer->stall_name ?? '' }}
+                        </span>
+
+                        @if ($farmer?->approval_status === 'approved')
+                            <small>
+                                <i class="fa-solid fa-circle-check"></i>
+                                Approved MarketLink grower
+                            </small>
+                        @endif
+
+                    </div>
+
+                </div>
+
+                <p>
+                    {{ $farmer->description ?? 'Get to know the grower behind your next market basket.' }}
+                </p>
+
+                <a class="shop-outline" href="{{ url('/farmers/' . $product->farmer_id) }}">
+                    Explore this farm
+
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+
+            </div>
+
+            <div class="grower-pickup">
+
+                <div class="pickup-illustration" aria-hidden="true">
+
+                    <div class="pickup-hill hill-one"></div>
+                    <div class="pickup-hill hill-two"></div>
+
+                    <i class="fa-solid fa-location-dot"></i>
+
+                    <span>
+                        YOUR NEXT MARKET STOP
+                    </span>
+
+                </div>
+
+                <div class="pickup-info">
+
+                    <span class="shop-kicker">
+                        WE'LL SEE YOU HERE
+                    </span>
+
+                    <h3>
+                        {{ $farmer->city ?? 'Market' }} pickup
+                    </h3>
+
+                    <p>
+
+                        {{ $farmer->address ?? 'Ask your grower for pickup details.' }}
+
+                        @if ($farmer?->state)
+                            , {{ $farmer->state }}
+                        @endif
+
+                    </p>
+
+                    <div class="pickup-schedule">
+
+                        <i class="fa-regular fa-clock"></i>
+
+                        <div>
+
+                            <strong>
+                                {{ $farmer->operating_days ?? 'Check with your grower' }}
+                            </strong>
+
+                            <span>
+                                {{ $farmer?->start_time?->format('H:i') }}
+                                –
+                                {{ $farmer?->end_time?->format('H:i') }}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    @if ($farmer?->address)
+                        <a class="pickup-directions"
+                            href="https://www.google.com/maps/search/?api=1&query={{ urlencode($farmer->address . ', ' . $farmer->city . ', ' . $farmer->country) }}"
+                            target="_blank" rel="noopener noreferrer">
+                            Get directions
+
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    @endif
+
+                </div>
+
+            </div>
+
+        </section>
+
+        @if ($pickupSlots->isNotEmpty())
+
+            <section class="detail-pickup-dates">
+
+                <div>
+
+                    <span class="shop-kicker">
+                        PLAN A LITTLE FRESH AIR
+                    </span>
+
+                    <h2>
+                        Your next pickup.
+                    </h2>
+
+                    <p>
+                        Choose a time at checkout.
+                    </p>
+
+                </div>
+
+                <div class="pickup-date-list">
+
+                    @foreach ($pickupSlots->take(4) as $slot)
+                        <div class="pickup-date">
+
+                            <span>
+                                {{ $slot->date->format('D') }}
+                            </span>
+
+                            <strong>
+                                {{ $slot->date->format('d') }}
+                            </strong>
+
+                            <span>
+                                {{ $slot->date->format('M') }}
+                            </span>
+
+                            <small>
+                                {{ substr($slot->start_time, 0, 5) }}
+                                –
+                                {{ substr($slot->end_time, 0, 5) }}
+                            </small>
+
+                        </div>
+                    @endforeach
+
+                </div>
+
+            </section>
+
+        @endif
+
+        <section class="detail-reviews" id="product-reviews" aria-labelledby="reviews-heading">
+
+            <div class="shop-section-heading">
+
+                <div>
+
+                    <span class="shop-kicker">
+                        FROM OUR MARKET COMMUNITY
+                    </span>
+
+                    <h2 id="reviews-heading">
+                        Honest food. Honest words.
+                    </h2>
+
+                </div>
+
+                <a class="shop-outline" href="{{ auth()->check() ? route('customer_reviews') : url('/login') }}">
+                    {{ auth()->check() ? 'My reviews' : 'Sign in to your account' }}
+
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+
+            </div>
+
+            <div class="review-layout">
+
+                <aside class="review-score">
+
+                    <span class="review-score-value">
+
+                        {{ $ratingCount ? $ratingAverage : '—' }}
+
+                        <small>
+                            / 5
+                        </small>
+
+                    </span>
+
+                    <div class="review-stars"
+                        aria-label="{{ $ratingCount ? $ratingAverage . ' out of 5 stars' : 'No ratings yet' }}">
+
+                        @for ($i = 1; $i <= 5; $i++)
+                            <i class="{{ $i <= round($ratingAverage) ? 'fa-solid' : 'fa-regular' }} fa-star"></i>
+                        @endfor
+
+                    </div>
+
+                    <strong>
+
+                        {{ $ratingCount }}
+
+                        {{ \Illuminate\Support\Str::plural('customer review', $ratingCount) }}
+
+                    </strong>
+
+                    <p>
+                        Real experiences from people who shop local.
+                    </p>
+
+                </aside>
+
+                <div class="review-list">
+
+                    @forelse ($reviews as $review)
+                        <article class="community-review">
+
+                            <header>
+
+                                <span class="review-avatar">
+                                    {{ mb_substr($review->user->name ?? 'C', 0, 1) }}
+                                </span>
+
+                                <div>
+
+                                    <strong>
+                                        {{ $review->user->name ?? 'Customer' }}
+                                    </strong>
+
+                                    <span>
+                                        {{ $review->created_at->format('d M Y') }}
+                                    </span>
+
+                                </div>
+
+                                <span class="review-rating">
+
+                                    <i class="fa-solid fa-star"></i>
+
+                                    {{ $review->rating }}
+                                    / 5
+
+                                </span>
+
+                            </header>
+
+                            <p>
+                                {{ $review->comment }}
+                            </p>
+
+                            @if ($review->reply)
+                                <div class="grower-reply">
+
+                                    <strong>
+                                        A note from your grower
+                                    </strong>
+
+                                    <p>
+                                        {{ $review->reply->response }}
+                                    </p>
+
+                                </div>
+                            @endif
+
+                        </article>
+
+                    @empty
+
+                        <div class="review-empty">
+
+                            <i class="fa-regular fa-comments"></i>
+
+                            <h3>
+                                A fresh pick. A story to come.
+                            </h3>
+
+                            <p>
+                                No reviews yet. Your experience can help the next shopper after pickup.
+                            </p>
+
+                            <a href="#choose-quantity" class="shop-outline">
+                                Make your first pick
+
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </a>
+
+                        </div>
+                    @endforelse
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="detail-related">
+
+            <div class="shop-section-heading">
+
+                <div>
+
+                    <span class="shop-kicker">
+                        GOOD COMPANY FOR YOUR BASKET
+                    </span>
+
+                    <h2>
+                        Keep the goodness going.
+                    </h2>
+
+                </div>
+
+                <a href="{{ url('/products') }}" class="shop-outline">
+                    Shop the harvest
+
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+
+            </div>
+
+            <div class="shop-related" tabindex="0" aria-label="Related products">
+
+                @forelse ($relatedProducts as $related)
+                    @include('Website.Partials.shop-product', ['product' => $related])
+
+                @empty
+
+                    <p>
+                        More fresh picks are on their way.
+                    </p>
+                @endforelse
+
+            </div>
+
+        </section>
+
+    </div>
+
 @endsection

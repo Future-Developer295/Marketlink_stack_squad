@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>MarketLink — @yield('page_title', 'Dashboard')</title>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet" />
@@ -19,6 +20,8 @@
     <link rel="stylesheet" href="{{ asset('Assets/Dashboard_Asset/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('Assets/Dashboard_Asset/css/responsive.css') }}">
     <link rel="stylesheet" href="{{ asset('Assets/Dashboard_Asset/css/emerald-theme.css') }}">
+
+    <link rel="stylesheet" href="{{ asset('Assets/Shared/ajax.css') }}">
 
     @stack('styles')
 </head>
@@ -434,7 +437,7 @@
 
 
                 {{-- ENGAGEMENT --}}
-                @canany(['view reviews', 'view announcements', 'add announcements', 'view reports'])
+                @canany(['view reviews', 'view contact messages', 'view announcements', 'add announcements', 'view reports'])
                     <div class="nav-group-label">ENGAGEMENT</div>
                 @endcanany
 
@@ -444,6 +447,19 @@
                     <a class="nav-link-custom @yield('nav_reviews')" href="{{ route('reviews') }}">
                         <i class="bi bi-star-fill"></i>
                         Reviews
+                    </a>
+                @endcan
+
+
+                {{-- CONTACT MESSAGES --}}
+                @can('view contact messages')
+                    @php($unreadContact = rescue(fn () => \App\Models\ContactMessage::whereNull('read_at')->count(), 0, false))
+                    <a class="nav-link-custom @yield('nav_contact_messages')" href="{{ route('contact_messages') }}">
+                        <i class="bi bi-envelope-fill"></i>
+                        Contact Messages
+                        @if ($unreadContact > 0)
+                            <span class="badge bg-success" style="margin-left:auto;">{{ $unreadContact }}</span>
+                        @endif
                     </a>
                 @endcan
 
@@ -610,12 +626,6 @@
             {{-- PAGE BODY --}}
             <div class="page-body">
 
-                @if (session('success') || session('error'))
-                    <div style="margin-bottom:16px;padding:12px 16px;border-radius:8px;font-size:14px;border:1px solid {{ session('error') ? '#e6b8b8' : '#b9d9c3' }};background:{{ session('error') ? '#fbeaea' : '#eaf6ee' }};color:{{ session('error') ? '#8a2b2b' : '#1f5a37' }};">
-                        {{ session('error') ?? session('success') }}
-                    </div>
-                @endif
-
                 @yield('body')
 
             </div>
@@ -625,6 +635,7 @@
 
         {{-- JS --}}
         <script src="{{ asset('Assets/Dashboard_Asset/js/theme-change.js') }}"></script>
+        <script src="{{ asset('Assets/Shared/ajax.js') }}"></script>
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 

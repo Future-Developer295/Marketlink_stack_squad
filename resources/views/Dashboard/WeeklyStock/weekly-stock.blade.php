@@ -19,10 +19,10 @@ active
 
         <div class="panel-tools">
 
-            <form class="search-box">
-                <i class="bi bi-search"></i>
-                <input type="text" name="q" placeholder="Search…" />
-            </form>
+            <form class="search-box" method="GET" action="{{ route('stock') }}" data-ajax-filter="#stock-list">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search…" />
+                </form>
 
             <a class="btn-primary" href="{{ route('stock_add') }}">
                 <i class="bi bi-plus-lg"></i>
@@ -34,7 +34,8 @@ active
     </div>
 
 
-    <div class="tbl-wrap">
+    <div id="stock-list" data-ajax-list>
+<div class="tbl-wrap">
 
         <table class="dtable">
 
@@ -53,24 +54,20 @@ active
 
             <tbody>
 
-            <?php
-
-            $index = 1;
-            ?>
-                @foreach ($weekly_stock as $stock)
+            @forelse ($weekly_stock as $stock)
 
                 <tr>
 
                     <td>
                         <span class="id-chip">
-                            {{ $index++ }}
+                            {{ $weekly_stock->firstItem() + $loop->index }}
                         </span>
                     </td>
 
 
                     <td>
                         <strong>
-                            {{ $stock->product->name }}
+                            {{ $stock->product?->name ?? 'N/A' }}
                         </strong>
                     </td>
 
@@ -133,10 +130,7 @@ active
                             </a>
 
 
-                            <form
-                                action="{{ route('stock_delete', $stock->id) }}"
-                                method="POST"
-                            >
+                            <form action="{{ route('stock_delete', $stock->id) }}" method="POST" style="display:inline" data-ajax data-ajax-remove="tbody tr" data-confirm="Delete this weekly stock schedule?">
 
                                 @csrf
 
@@ -155,13 +149,19 @@ active
 
                 </tr>
 
-                @endforeach
+                @empty
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:30px;">No weekly stock found.</td>
+                </tr>
+                @endforelse
 
             </tbody>
 
         </table>
 
     </div>
+@include('Dashboard._pager', ['paginator' => $weekly_stock, 'label' => 'schedules'])
+</div>
 
 </div>
 

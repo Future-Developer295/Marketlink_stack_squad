@@ -18,7 +18,7 @@ active
 
         <div class="panel-tools">
 
-            <form class="search-box" method="GET" action="{{ route('my_markets') }}">
+            <form class="search-box" method="GET" action="{{ route('my_markets') }}" data-ajax-filter="#my-markets-list">
                 <i class="bi bi-search"></i>
 
                 <input
@@ -38,7 +38,8 @@ active
     </div>
 
 
-    <div class="tbl-wrap">
+    <div id="my-markets-list" data-ajax-list>
+<div class="tbl-wrap">
 
         <table class="dtable">
 
@@ -103,10 +104,7 @@ active
 
                             <div class="action-wrap">
 
-                                <form
-                                    action="{{ route('my_markets_leave', $item->market->id) }}"
-                                    method="POST"
-                                >
+                                <form action="{{ route('my_markets_leave', $item->market->id) }}" method="POST" style="display:inline" data-ajax data-ajax-remove="tbody tr" data-confirm="Leave this market?">
 
                                     @csrf
 
@@ -141,6 +139,8 @@ active
         </table>
 
     </div>
+@include('Dashboard._pager', ['paginator' => $myMarkets, 'label' => 'markets'])
+</div>
 
 </div>
 

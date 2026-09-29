@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('prod2'),
     document.getElementById('prod3'),
     document.getElementById('prod4')
-  ];
+  ].filter(Boolean);
 
   if (!basket || !loadingText || !loaderOverlay) {
     document.documentElement.classList.remove('loader-lock');
@@ -25,20 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
   basket.classList.add('pop-in');
 
   const dropDelay = 450;
+  const itemDelay = 200;
 
-  produceItems.forEach((item, index) => {
-    if (!item) {
-      return;
-    }
-
+  for (let index = 0; index < produceItems.length; index++) {
     setTimeout(() => {
-      item.classList.add('drop');
-    }, dropDelay + (index * 200));
-  });
+      produceItems[index].classList.add('drop');
+    }, dropDelay + (index * itemDelay));
+  }
 
   const allItemsDroppedTime =
     dropDelay +
-    (produceItems.length * 200) +
+    (produceItems.length * itemDelay) +
     200;
 
   setTimeout(() => {
@@ -49,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     basket.classList.remove('shake-full');
     basket.classList.add('drive-across');
-
     loadingText.classList.add('fade-out');
   }, allItemsDroppedTime + 550);
 

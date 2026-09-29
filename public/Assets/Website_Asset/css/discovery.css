@@ -691,6 +691,8 @@
     border-radius: 15px;
     background: #eaf0df;
     margin: 12px 0 22px;
+    overflow: hidden;
+    z-index: 0;
 }
 .location-panel > small {
     display: block;
