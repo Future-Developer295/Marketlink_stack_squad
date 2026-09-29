@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\FarmerProfile;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -9,22 +10,20 @@ class ProductsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $farmers = DB::table('farmer_profile')->orderBy('id')->pluck('id')->values();
+        $farmers = FarmerProfile::orderBy('id')
+            ->take(2)
+            ->pluck('id')
+            ->values();
 
-        if ($farmers->isEmpty()) {
-            throw new \RuntimeException('Seed farmer profiles before products.');
+        if ($farmers->count() < 2) {
+            throw new \RuntimeException(
+                'At least 2 farmer profiles are required before seeding products.'
+            );
         }
-
-        $adminId = DB::table('users')->where('role', 'admin')->value('id');
-
-        // Original list is written for 2 farmers ($farmers[0] / $farmers[1]);
-        // we re-map them so all farmers get products.
-        $farmerCount = $farmers->count();
-        $pick = fn (int $i) => $farmers[$i % $farmerCount];
 
         $products = [
             [
-                'farmer_id' => $pick(0),
+                'farmer_id' => $farmers[0],
                 'category_id' => 1,
                 'name' => 'Fresh Garlic',
                 'description' => 'Fresh locally grown garlic.',
@@ -36,7 +35,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(1),
+                'farmer_id' => $farmers[1],
                 'category_id' => 1,
                 'name' => 'Fresh Tomatoes',
                 'description' => 'Fresh and juicy tomatoes from local farms.',
@@ -48,7 +47,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(2),
+                'farmer_id' => $farmers[0],
                 'category_id' => 1,
                 'name' => 'Fresh Spinach',
                 'description' => 'Fresh green spinach from local farms.',
@@ -60,7 +59,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(3),
+                'farmer_id' => $farmers[1],
                 'category_id' => 1,
                 'name' => 'Fresh Carrots',
                 'description' => 'Fresh and naturally grown carrots.',
@@ -72,7 +71,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(4),
+                'farmer_id' => $farmers[0],
                 'category_id' => 1,
                 'name' => 'Fresh Beetroot',
                 'description' => 'Fresh quality beetroot.',
@@ -84,7 +83,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(5),
+                'farmer_id' => $farmers[1],
                 'category_id' => 1,
                 'name' => 'Fresh Bell Pepper',
                 'description' => 'Fresh and colorful bell peppers.',
@@ -96,7 +95,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(6),
+                'farmer_id' => $farmers[0],
                 'category_id' => 2,
                 'name' => 'Fresh Apples',
                 'description' => 'Fresh and high quality apples.',
@@ -108,7 +107,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(7),
+                'farmer_id' => $farmers[1],
                 'category_id' => 2,
                 'name' => 'Fresh Apricot',
                 'description' => 'Sweet and fresh apricots.',
@@ -120,7 +119,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(8),
+                'farmer_id' => $farmers[0],
                 'category_id' => 2,
                 'name' => 'Fresh Bananas',
                 'description' => 'Fresh naturally sweet bananas.',
@@ -132,7 +131,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(9),
+                'farmer_id' => $farmers[1],
                 'category_id' => 2,
                 'name' => 'Fresh Mangoes',
                 'description' => 'Juicy and naturally sweet mangoes.',
@@ -144,7 +143,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(10),
+                'farmer_id' => $farmers[0],
                 'category_id' => 2,
                 'name' => 'Fresh Oranges',
                 'description' => 'Juicy fresh oranges.',
@@ -156,7 +155,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(11),
+                'farmer_id' => $farmers[1],
                 'category_id' => 2,
                 'name' => 'Fresh Strawberries',
                 'description' => 'Fresh and naturally sweet strawberries.',
@@ -168,7 +167,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(12),
+                'farmer_id' => $farmers[0],
                 'category_id' => 3,
                 'name' => 'Black Rice',
                 'description' => 'Nutritious black rice from local farms.',
@@ -180,7 +179,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(13),
+                'farmer_id' => $farmers[1],
                 'category_id' => 3,
                 'name' => 'Buckwheat',
                 'description' => 'Fresh quality buckwheat.',
@@ -192,7 +191,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(14),
+                'farmer_id' => $farmers[0],
                 'category_id' => 3,
                 'name' => 'Fresh Corn Grain',
                 'description' => 'Fresh quality corn grain.',
@@ -204,7 +203,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(15),
+                'farmer_id' => $farmers[1],
                 'category_id' => 3,
                 'name' => 'Organic Oats',
                 'description' => 'Healthy and naturally grown oats.',
@@ -216,7 +215,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(16),
+                'farmer_id' => $farmers[0],
                 'category_id' => 3,
                 'name' => 'Red Rice',
                 'description' => 'Premium quality red rice.',
@@ -228,7 +227,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(17),
+                'farmer_id' => $farmers[1],
                 'category_id' => 3,
                 'name' => 'Premium Wheat',
                 'description' => 'Premium quality wheat from local farms.',
@@ -240,7 +239,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(18),
+                'farmer_id' => $farmers[0],
                 'category_id' => 4,
                 'name' => 'Fresh Milk',
                 'description' => 'Fresh and pure farm milk.',
@@ -252,7 +251,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(19),
+                'farmer_id' => $farmers[1],
                 'category_id' => 4,
                 'name' => 'Fresh Cheese',
                 'description' => 'Fresh farm-made cheese.',
@@ -264,7 +263,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(20),
+                'farmer_id' => $farmers[0],
                 'category_id' => 5,
                 'name' => 'Fresh Mixed Herbs',
                 'description' => 'Fresh aromatic mixed herbs.',
@@ -276,7 +275,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(21),
+                'farmer_id' => $farmers[1],
                 'category_id' => 5,
                 'name' => 'Fresh Garden Herbs',
                 'description' => 'Fresh garden herbs.',
@@ -288,7 +287,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(22),
+                'farmer_id' => $farmers[0],
                 'category_id' => 5,
                 'name' => 'Premium Fresh Herbs',
                 'description' => 'Premium fresh herbs.',
@@ -300,7 +299,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(23),
+                'farmer_id' => $farmers[0],
                 'category_id' => 6,
                 'name' => 'Red Chilli',
                 'description' => 'Fresh quality red chilli.',
@@ -312,7 +311,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(24),
+                'farmer_id' => $farmers[1],
                 'category_id' => 6,
                 'name' => 'Fresh Turmeric',
                 'description' => 'Natural turmeric from local farms.',
@@ -324,7 +323,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(25),
+                'farmer_id' => $farmers[0],
                 'category_id' => 7,
                 'name' => 'Organic Fresh Produce',
                 'description' => 'Fresh organically grown produce.',
@@ -336,7 +335,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(26),
+                'farmer_id' => $farmers[1],
                 'category_id' => 7,
                 'name' => 'Organic Farm Selection',
                 'description' => 'Premium organic farm selection.',
@@ -348,7 +347,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(27),
+                'farmer_id' => $farmers[0],
                 'category_id' => 8,
                 'name' => 'Fresh Pulses',
                 'description' => 'Quality pulses from local farmers.',
@@ -360,7 +359,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(28),
+                'farmer_id' => $farmers[1],
                 'category_id' => 8,
                 'name' => 'Premium Pulses Mix',
                 'description' => 'Premium quality pulses mix.',
@@ -372,7 +371,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(29),
+                'farmer_id' => $farmers[0],
                 'category_id' => 8,
                 'name' => 'Farm Fresh Pulses',
                 'description' => 'Fresh nutritious pulses.',
@@ -384,7 +383,7 @@ class ProductsTableSeeder extends Seeder
             ],
 
             [
-                'farmer_id' => $pick(30),
+                'farmer_id' => $farmers[1],
                 'category_id' => 8,
                 'name' => 'Premium Farm Pulses',
                 'description' => 'High quality farm pulses.',
@@ -396,23 +395,35 @@ class ProductsTableSeeder extends Seeder
             ],
         ];
 
+        $selectedImages = collect($products)
+            ->pluck('image')
+            ->toArray();
+
+        DB::table('products')
+            ->whereIn('category_id', [1, 2, 3, 4, 5, 6, 7, 8])
+            ->whereNotIn('image', $selectedImages)
+            ->delete();
+
         foreach ($products as $product) {
             DB::table('products')->updateOrInsert(
                 [
                     'category_id' => $product['category_id'],
-                    'name'        => $product['name'],
+                    'name' => $product['name'],
                 ],
-                $product + [
-                    'approval_status'  => 'approved',
-                    'rejection_reason' => null,
-                    'approved_by'      => $adminId,
-                    'approved_at'      => now(),
-                    'created_at'       => now(),
-                    'updated_at'       => now(),
+                [
+                    'farmer_id' => $product['farmer_id'],
+                    'description' => $product['description'],
+                    'price' => $product['price'],
+                    'stock_quantity' => $product['stock_quantity'],
+                    'unit' => $product['unit'],
+                    'image' => $product['image'],
+                    'is_active' => $product['is_active'],
+                    'updated_at' => now(),
                 ]
             );
         }
 
-        $this->command->info('Products seeded: ' . count($products));
+        $this->command->info('Selected products synced successfully.');
+        $this->command->info('Total selected products: ' . count($products));
     }
 }

@@ -9,34 +9,35 @@ class NotificationsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('notifications')->insert([
-            [
-                'user_id' => 4,
-                'type' => 'order',
-                'title' => 'Order Confirmed',
-                'message' => 'Your order has been confirmed successfully.',
-                'is_read' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'user_id' => 5,
-                'type' => 'pickup',
-                'title' => 'Pickup Reminder',
-                'message' => 'Your pickup slot is scheduled for tomorrow.',
-                'is_read' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'user_id' => 6,
-                'type' => 'review',
-                'title' => 'Review Added',
-                'message' => 'Your review has been submitted successfully.',
-                'is_read' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        // [email, type, title, message, is_read]
+        $notifications = [
+            ['customer@gmail.com',       'order',   'Order Confirmed',      'Your order has been confirmed successfully.',        false],
+            ['customer@gmail.com',       'pickup',  'Pickup Reminder',      'Your pickup slot is scheduled for tomorrow.',        false],
+            ['customer2@marketlink.com', 'order',   'Order Ready',          'Your order is ready for pickup at the market.',      false],
+            ['customer3@marketlink.com', 'review',  'Review Added',         'Your review has been submitted successfully.',       true],
+            ['customer4@marketlink.com', 'order',   'Order Received',       'We received your order and sent it to the farmer.',  false],
+            ['farmer@gmail.com',         'order',   'New Order',            'You have received a new pre-order.',                 false],
+            ['sanafarmer@gmail.com',     'review',  'New Review',           'A customer left a review on your stall.',            false],
+            ['farmer2@marketlink.com',   'account', 'Profile Approved',     'Your farmer profile has been approved by admin.',    true],
+            ['admin@gmail.com',          'system',  'New Farmer Signup',    'A new farmer is waiting for approval.',              false],
+        ];
+
+        foreach ($notifications as [$email, $type, $title, $message, $read]) {
+            $userId = DB::table('users')->where('email', $email)->value('id');
+            if (! $userId) {
+                continue;
+            }
+
+            DB::table('notifications')->updateOrInsert(
+                ['user_id' => $userId, 'title' => $title],
+                [
+                    'type'       => $type,
+                    'message'    => $message,
+                    'is_read'    => $read,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
     }
 }
