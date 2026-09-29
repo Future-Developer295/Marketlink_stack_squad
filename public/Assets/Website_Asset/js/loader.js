@@ -1,45 +1,61 @@
+document.documentElement.classList.add('loader-lock');
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const basket = document.getElementById("basketWrapper");
-      const loadingText = document.getElementById("loadingText");
-      const loaderOverlay = document.getElementById("loaderOverlay");
-      const websiteContent = document.getElementById("website-content");
+document.addEventListener('DOMContentLoaded', () => {
+  const basket = document.getElementById('basketWrapper');
+  const loadingText = document.getElementById('loadingText');
+  const loaderOverlay = document.getElementById('loaderOverlay');
 
-      // Loader markup only exists on some pages - do nothing (and never throw) elsewhere.
-      if (!basket || !loaderOverlay) return;
+  const produceItems = [
+    document.getElementById('prod1'),
+    document.getElementById('prod2'),
+    document.getElementById('prod3'),
+    document.getElementById('prod4')
+  ].filter(Boolean);
 
-      const produceItems = [
-        document.getElementById("prod1"),
-        document.getElementById("prod2"),
-        document.getElementById("prod3"),
-        document.getElementById("prod4")
-      ].filter(Boolean);
+  if (!basket || !loadingText || !loaderOverlay) {
+    document.documentElement.classList.remove('loader-lock');
 
-      basket.classList.add("pop-in");
+    window.dispatchEvent(
+      new CustomEvent('marketlink:loader-finished')
+    );
 
-      let dropDelay = 450;
-      produceItems.forEach((item, index) => {
-        setTimeout(() => {
-          item.classList.add("drop");
-        }, dropDelay + (index * 200));
-      });
+    return;
+  }
 
-      const allItemsDroppedTime = dropDelay + (produceItems.length * 200) + 200;
+  basket.classList.add('pop-in');
 
-      setTimeout(() => {
-        basket.classList.remove("pop-in");
-        basket.classList.add("shake-full");
-      }, allItemsDroppedTime);
+  const dropDelay = 450;
+  const itemDelay = 200;
 
-      setTimeout(() => {
-        basket.classList.remove("shake-full");
-        basket.classList.add("drive-across");
-        if (loadingText) loadingText.classList.add("fade-out");
-      }, allItemsDroppedTime + 550);
+  for (let index = 0; index < produceItems.length; index++) {
+    setTimeout(() => {
+      produceItems[index].classList.add('drop');
+    }, dropDelay + (index * itemDelay));
+  }
 
-      setTimeout(() => {
-        loaderOverlay.classList.add("fade-out");
-        if (websiteContent) websiteContent.classList.add("visible");
-      }, allItemsDroppedTime + 1450);
-    });
-  
+  const allItemsDroppedTime =
+    dropDelay +
+    (produceItems.length * itemDelay) +
+    200;
+
+  setTimeout(() => {
+    basket.classList.remove('pop-in');
+    basket.classList.add('shake-full');
+  }, allItemsDroppedTime);
+
+  setTimeout(() => {
+    basket.classList.remove('shake-full');
+    basket.classList.add('drive-across');
+    loadingText.classList.add('fade-out');
+  }, allItemsDroppedTime + 550);
+
+  setTimeout(() => {
+    loaderOverlay.classList.add('fade-out');
+
+    document.documentElement.classList.remove('loader-lock');
+
+    window.dispatchEvent(
+      new CustomEvent('marketlink:loader-finished')
+    );
+  }, allItemsDroppedTime + 1450);
+});
