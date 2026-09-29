@@ -27,6 +27,7 @@ class FarmerApprovedMail extends Mailable
     {
         return new Content(
             view: 'emails.farmer-approved',
+            text: 'emails.farmer-approved-text',
             with: ['loginUrl' => route('login')],
         );
     }

@@ -19,7 +19,7 @@
 
             <div class="panel-tools">
 
-                <form method="GET" action="{{ route('products') }}" class="d-flex align-items-center gap-2">
+                <form method="GET" action="{{ route('products') }}" class="d-flex align-items-center gap-2" data-ajax-filter="#products-list">
 
                     <div class="search-box">
                         <i class="bi bi-search"></i>
@@ -92,9 +92,20 @@
 
         </div>
 
-        {{-- success/error flash now rendered by Dashboard._master --}}
+        @if(session('success'))
+            <div style="padding:12px 22px; color:green;">
+                {{ session('success') }}
+            </div>
+        @endif
 
-        <div class="tbl-wrap">
+        @if(session('error'))
+            <div style="padding:12px 22px; color:red;">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        <div id="products-list" data-ajax-list>
+<div class="tbl-wrap">
 
             <table class="dtable">
 
@@ -265,62 +276,38 @@
                                     @endcan
 
                                     @canany(['approve products', 'reject products'])
-
                                         @if($product->approval_status === 'pending')
-
-                                            <div style="display:inline-block; position:relative;">
-
-                                                <select
-                                                    class="form-select form-select-sm"
-                                                    style="width:150px;"
-                                                    onchange="handleProductApproval(this, {{ $product->id }})"
+                                            @can('approve products')
+                                                <form
+                                                    action="{{ route('product_approve', $product->id) }}"
+                                                    method="POST"
+                                                    style="display:inline"
+                                                    data-ajax
+                                                    data-ajax-refresh="#products-list"
+                                                    data-confirm="Approve this product?"
                                                 >
-                                                    <option value="">
-                                                        Select Action
-                                                    </option>
-
-                                                    @can('approve products')
-                                                        <option value="approve">
-                                                            Approve
-                                                        </option>
-                                                    @endcan
-
-                                                    @can('reject products')
-                                                        <option value="reject">
-                                                            Not Approve
-                                                        </option>
-                                                    @endcan
-
-                                                </select>
-
-                                                @can('approve products')
-
-                                                    <form
-                                                        id="approve-form-{{ $product->id }}"
-                                                        action="{{ route('product_approve', $product->id) }}"
-                                                        method="POST"
-                                                        style="display:none;"
-                                                    >
-                                                        @csrf
-                                                    </form>
-
-                                                @endcan
-
-                                                @can('reject products')
-
-                                                    <div
-                                                        id="reject-box-{{ $product->id }}"
-                                                        style="display:none; position:absolute; right:0; top:42px; z-index:50; width:260px; background:#fff; border:1px solid #ddd; border-radius:10px; padding:12px; box-shadow:0 8px 24px rgba(0,0,0,0.12);"
-                                                    >
-
+                                                    @csrf
+                                                    <button class="btn-ghost sm" type="submit" title="Approve">
+                                                        <i class="bi bi-check-lg"></i>
+                                                        Approve
+                                                    </button>
+                                                </form>
+                                            @endcan
+                                            @can('reject products')
+                                                <details style="display:inline-block; position:relative;">
+                                                    <summary class="btn-ghost sm danger" title="Not approve">
+                                                        <i class="bi bi-x-lg"></i>
+                                                        Not Approve
+                                                    </summary>
+                                                    <div style="position:absolute; right:0; top:42px; z-index:50; width:260px; background:#fff; border:1px solid #ddd; border-radius:10px; padding:12px; box-shadow:0 8px 24px rgba(0,0,0,0.12);">
                                                         <form
                                                             action="{{ route('product_reject', $product->id) }}"
                                                             method="POST"
-                                                            onsubmit="return confirm('Reject this product?')"
+                                                            data-ajax
+                                                            data-ajax-refresh="#products-list"
+                                                            data-confirm="Reject this product?"
                                                         >
-
                                                             @csrf
-
                                                             <textarea
                                                                 name="rejection_reason"
                                                                 rows="3"
@@ -328,7 +315,6 @@
                                                                 placeholder="Enter rejection reason..."
                                                                 required
                                                             ></textarea>
-
                                                             <button
                                                                 type="submit"
                                                                 class="btn btn-danger btn-sm mt-2"
@@ -337,27 +323,16 @@
                                                                 <i class="bi bi-x-circle"></i>
                                                                 Not Approve
                                                             </button>
-
                                                         </form>
-
                                                     </div>
-
-                                                @endcan
-
-                                            </div>
-
+                                                </details>
+                                            @endcan
                                         @endif
-
                                     @endcanany
 
                                     @can('delete products')
 
-                                        <form
-                                            action="{{ route('product_delete', $product->id) }}"
-                                            method="POST"
-                                            style="display:inline"
-                                            onsubmit="return confirm('Are you sure you want to delete this product?')"
-                                        >
+                                        <form action="{{ route('product_delete', $product->id) }}" method="POST" style="display:inline" data-ajax data-ajax-remove="tbody tr" data-confirm="Delete this product?">
 
                                             @csrf
 
@@ -416,56 +391,9 @@
             </table>
 
         </div>
-
-        @if($products->hasPages())
-
-            <div class="hr-thin"></div>
-
-            <div style="padding:14px 22px;">
-                {{ $products->links() }}
-            </div>
-
-        @endif
-
-        <div class="hr-thin"></div>
-
-        <div style="padding:14px 22px; color:var(--muted); font-size:13px;">
-            Showing {{ $products->count() }} of {{ $products->total() }} products.
-        </div>
+@include('Dashboard._pager', ['paginator' => $products, 'label' => 'products'])
+</div>
 
     </div>
 
 @endsection
-
-@push('scripts')
-<script>
-    function handleProductApproval(select, productId) {
-        const rejectBox = document.getElementById('reject-box-' + productId);
-        const approveForm = document.getElementById('approve-form-' + productId);
-
-        if (rejectBox) {
-            rejectBox.style.display = 'none';
-        }
-
-        if (select.value === 'approve') {
-            if (confirm('Approve this product?')) {
-                approveForm.submit();
-            } else {
-                select.value = '';
-            }
-        }
-
-        if (select.value === 'reject') {
-            if (rejectBox) {
-                rejectBox.style.display = 'block';
-            }
-        }
-
-        if (select.value === '') {
-            if (rejectBox) {
-                rejectBox.style.display = 'none';
-            }
-        }
-    }
-</script>
-@endpush

@@ -13,8 +13,9 @@ Route::middleware('auth')->group(function () {
 });
 Route::redirect('/password/reset', '/forgot-password');
 Route::get('/farmer/pending', [WebsiteController::class, 'farmerPending'])
+    ->middleware('auth')
     ->name('farmer_pending');
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'farmer.approved'])->group(function () {
 
     Route::get('/dashboard/farmer', [DashboardController::class, 'farmerDashboard'])
         ->name('farmer_dashboard')
@@ -40,7 +41,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
     Route::post('/dashboard/my-markets/{market}/leave', [DashboardController::class, 'myMarketsLeave'])
         ->middleware('permission:leave markets')
-        ->name('my_markets_leave');
+        ->name('my_markets_leave')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/categories', [DashboardController::class, 'categories'])
         ->name('categories')
@@ -59,7 +61,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('permission:edit categories');
     Route::post('/dashboard/categories/delete/{id}', [DashboardController::class, 'categoryDelete'])
         ->name('category_delete')
-        ->middleware('permission:delete categories');
+        ->middleware('permission:delete categories')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/products', [DashboardController::class, 'products'])
         ->name('products')
@@ -81,15 +84,18 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('permission:edit products');
     Route::post('/dashboard/products/delete/{id}', [DashboardController::class, 'productDelete'])
         ->name('product_delete')
-        ->middleware('permission:delete products');
+        ->middleware('permission:delete products')
+        ->middleware('throttle:60,1');
 
     Route::post('/dashboard/products/approve/{id}', [DashboardController::class, 'productApprove'])
         ->name('product_approve')
-        ->middleware('permission:approve products');
+        ->middleware('permission:approve products')
+        ->middleware('throttle:60,1');
 
     Route::post('/dashboard/products/reject/{id}', [DashboardController::class, 'productReject'])
         ->name('product_reject')
-        ->middleware('permission:reject products');
+        ->middleware('permission:reject products')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/weekly-stock', [DashboardController::class, 'stock'])
         ->name('stock')
@@ -108,7 +114,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('permission:edit weekly stock');
     Route::post('/dashboard/weekly-stock/delete/{id}', [DashboardController::class, 'stockDelete'])
         ->name('stock_delete')
-        ->middleware('permission:delete weekly stock');
+        ->middleware('permission:delete weekly stock')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/orders', [DashboardController::class, 'orders'])
         ->name('orders')
@@ -118,7 +125,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('permission:view order');
     Route::post('/dashboard/orders/status/{id}', [DashboardController::class, 'orderStatusUpdate'])
         ->name('order_status_update')
-        ->middleware('permission:update order status');
+        ->middleware('permission:update order status')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/pickup-slots', [DashboardController::class, 'slots'])
         ->name('slots')
@@ -137,7 +145,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('permission:edit pickup slots');
     Route::post('/dashboard/pickup-slots/delete/{id}', [DashboardController::class, 'slotDelete'])
         ->name('slot_delete')
-        ->middleware('permission:delete pickup slots');
+        ->middleware('permission:delete pickup slots')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/markets', [DashboardController::class, 'markets'])
         ->name('markets')
@@ -156,7 +165,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('permission:edit markets');
     Route::post('/dashboard/markets/delete/{id}', [DashboardController::class, 'marketDelete'])
         ->name('market_delete')
-        ->middleware('permission:delete markets');
+        ->middleware('permission:delete markets')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/users', [DashboardController::class, 'users'])
         ->name('users')
@@ -173,12 +183,18 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::post('/dashboard/users/update/{id}', [DashboardController::class, 'userUpdate'])
         ->name('user_update')
         ->middleware('permission:edit users');
-    Route::post('/dashboard/users/approve/{id}', [DashboardController::class, 'userApprove'])
+    Route::post('/dashboard/users/approve/{id}', [DashboardController::class, 'farmerApprove'])
         ->name('user_approve')
-        ->middleware('permission:edit users');
+        ->middleware('permission:edit users')
+        ->middleware('throttle:60,1');
+    Route::post('/dashboard/users/reject/{id}', [DashboardController::class, 'farmerReject'])
+        ->name('user_reject')
+        ->middleware('permission:edit users')
+        ->middleware('throttle:60,1');
     Route::post('/dashboard/users/delete/{id}', [DashboardController::class, 'userDelete'])
         ->name('user_delete')
-        ->middleware('permission:delete users');
+        ->middleware('permission:delete users')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/roles', [DashboardController::class, 'roles'])
         ->name('roles')
@@ -206,7 +222,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
     Route::post('/dashboard/roles/delete/{id}', [DashboardController::class, 'roleDelete'])
         ->name('role_delete')
-        ->middleware('permission:delete roles');
+        ->middleware('permission:delete roles')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/permissions', [DashboardController::class, 'permissions'])
         ->name('permissions')
@@ -234,7 +251,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
     Route::post('/dashboard/permissions/delete/{id}', [DashboardController::class, 'permissionDelete'])
         ->name('permission_delete')
-        ->middleware('permission:delete permissions');
+        ->middleware('permission:delete permissions')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/farmers', [DashboardController::class, 'farmers'])
         ->name('farmers')
@@ -264,10 +282,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('permission:view reviews');
     Route::post('/dashboard/reviews/flag/{id}', [DashboardController::class, 'reviewFlag'])
         ->name('review_flag')
-        ->middleware('permission:flag reviews');
+        ->middleware('permission:flag reviews')
+        ->middleware('throttle:60,1');
     Route::post('/dashboard/reviews/delete/{id}', [DashboardController::class, 'reviewDelete'])
         ->name('review_delete')
-        ->middleware('permission:delete reviews');
+        ->middleware('permission:delete reviews')
+        ->middleware('throttle:60,1');
 
     Route::get('/dashboard/reports', [DashboardController::class, 'reports'])
         ->name('reports')
@@ -299,7 +319,18 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         ->middleware('permission:edit announcements');
     Route::post('/dashboard/announcements/delete/{id}', [DashboardController::class, 'announcementDelete'])
         ->name('announcement_delete')
-        ->middleware('permission:delete announcements');
+        ->middleware('permission:delete announcements')
+        ->middleware('throttle:60,1');
+    Route::get('/dashboard/contact-messages', [DashboardController::class, 'contactMessages'])
+        ->name('contact_messages')
+        ->middleware('permission:view contact messages');
+    Route::get('/dashboard/contact-messages/{id}', [DashboardController::class, 'contactMessageShow'])
+        ->name('contact_message_show')
+        ->middleware('permission:view contact messages');
+    Route::post('/dashboard/contact-messages/delete/{id}', [DashboardController::class, 'contactMessageDelete'])
+        ->name('contact_message_delete')
+        ->middleware('permission:delete contact messages')
+        ->middleware('throttle:60,1');
        Route::post('/dashboard/my-markets/join', [DashboardController::class, 'myMarketsJoinStore'])
     ->name('my_markets_store')
     ->middleware('permission:join markets');
@@ -353,7 +384,8 @@ Route::middleware('auth')->group(function () {
             ->name('customer_profile');
 
         Route::put('/profile', [WebsiteController::class, 'updateProfile'])
-            ->name('customer_profile_update');
+            ->name('customer_profile_update')
+        ->middleware('throttle:60,1');
 
         Route::get('/orders', [WebsiteController::class, 'orders'])
             ->name('customer_orders');
@@ -362,13 +394,17 @@ Route::middleware('auth')->group(function () {
             ->name('customer_order_detail');
 
         Route::post('/orders/{order}/cancel', [WebsiteController::class, 'cancelOrder'])
-            ->name('customer_order_cancel');
+            ->name('customer_order_cancel')
+        ->middleware('throttle:60,1');
 
         Route::post('/reorder/{item}', [WebsiteController::class, 'reorderItem'])
-            ->name('customer_reorder');
+            ->name('customer_reorder')
+        ->middleware('throttle:60,1');
 
-        Route::post('/reviews', [WebsiteController::class, 'storeReview'])->name('customer_review_store');
-        Route::post('/favorites', [WebsiteController::class, 'saveFavorite'])->name('customer_favorite_save');
+        Route::post('/reviews', [WebsiteController::class, 'storeReview'])->name('customer_review_store')
+        ->middleware('throttle:60,1');
+        Route::post('/favorites', [WebsiteController::class, 'saveFavorite'])->name('customer_favorite_save')
+        ->middleware('throttle:60,1');
 
         Route::get('/reviews', [WebsiteController::class, 'reviews'])
             ->name('customer_reviews');
@@ -377,13 +413,15 @@ Route::middleware('auth')->group(function () {
             ->name('customer_favorites');
 
         Route::delete('/favorites/{favorite}', [WebsiteController::class, 'removeFavorite'])
-            ->name('customer_favorite_remove');
+            ->name('customer_favorite_remove')
+        ->middleware('throttle:60,1');
 
         Route::get('/notifications', [WebsiteController::class, 'notifications'])
             ->name('customer_notifications');
 
         Route::post('/notifications/{notification}/read', [WebsiteController::class, 'markNotificationRead'])
-            ->name('customer_notification_read');
+            ->name('customer_notification_read')
+        ->middleware('throttle:60,1');
     });
 });
 

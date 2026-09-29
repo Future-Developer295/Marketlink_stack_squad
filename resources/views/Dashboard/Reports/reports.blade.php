@@ -273,7 +273,8 @@
         </style>
 
 
-        <div class="tbl-wrap">
+        <div id="reports-list" data-ajax-list>
+<div class="tbl-wrap">
 
             <table class="dtable">
 
@@ -390,6 +391,8 @@
             </table>
 
         </div>
+@include('Dashboard._pager', ['paginator' => $reports, 'label' => 'reports'])
+</div>
 
     </div>
 

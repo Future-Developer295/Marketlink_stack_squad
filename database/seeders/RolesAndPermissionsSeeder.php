@@ -53,6 +53,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'generate reports',
             'download reports',
 
+            'view contact messages',
+            'delete contact messages',
+
             'view announcements',
             'add announcements',
             'edit announcements',

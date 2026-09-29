@@ -24,6 +24,7 @@ class RegisterResponse implements RegisterResponseContract
         $user = Auth::user();
         $email = $user?->email;
         $sent = false;
+        $failure = null;
 
         // Email the 6-digit code. If SMTP fails, registration still succeeds and
         // the user can press "Resend code" on the verification page.
@@ -33,6 +34,7 @@ class RegisterResponse implements RegisterResponseContract
                 $sent = true;
             } catch (Throwable $e) {
                 report($e);
+                $failure = EmailOtp::failureMessage($e);
             }
         }
 
@@ -48,6 +50,6 @@ class RegisterResponse implements RegisterResponseContract
 
         return $sent
             ? $redirect->with('success', 'Account created! We have emailed you a 6-digit verification code.')
-            : $redirect->with('warning', 'Account created, but we could not send the code email. Please press "Resend code".');
+            : $redirect->with('warning', 'Account created. '.($failure ?? 'We could not send the code email.').' Please press "Resend code".');
     }
 }

@@ -186,19 +186,13 @@ active
         </a>
 
 
-        <form
-            action="{{ route('product_delete', $product->id) }}"
-            method="POST"
-            style="display:inline"
-        >
+        <form action="{{ route('product_delete', $product->id) }}" method="POST" style="display:inline" data-confirm="Remove this product?">
 
             @csrf
-            @method('DELETE')
 
             <button
                 class="btn-ghost sm danger"
                 type="submit"
-                onclick="return confirm('Are you sure you want to remove this product?')"
             >
                 <i class="bi bi-trash"></i>
                 Remove Product

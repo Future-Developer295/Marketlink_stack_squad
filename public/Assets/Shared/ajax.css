@@ -1,0 +1,19 @@
+/* Toasts, confirm dialog and list loading state shared by Website + Dashboard */
+#ml-toasts { position: fixed; right: 18px; bottom: 18px; z-index: 20000; display: grid; gap: 10px; max-width: min(380px, calc(100vw - 36px)); }
+.ml-toast { padding: 13px 16px; border-radius: 12px; color: #fff; font: 500 14px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; background: #2f6b4f; box-shadow: 0 10px 30px rgba(0, 0, 0, .18); opacity: 0; transform: translateY(10px); transition: opacity .25s, transform .25s; }
+.ml-toast.is-in { opacity: 1; transform: none; }
+.ml-toast-error { background: #b3382c; }
+.ml-toast-warning { background: #a06a12; }
+
+.ml-confirm { position: fixed; inset: 0; z-index: 20001; background: rgba(20, 30, 22, .5); display: grid; place-items: center; padding: 16px; }
+.ml-confirm-box { background: #fff; color: #1f2d24; border-radius: 18px; padding: 24px; width: min(420px, 100%); box-shadow: 0 20px 60px rgba(0, 0, 0, .3); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+.ml-confirm-box p { margin: 0 0 20px; font-size: 16px; line-height: 1.5; }
+.ml-confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.ml-confirm-actions button { border-radius: 30px; padding: 10px 20px; font-size: 14px; font-weight: 600; border: 1px solid #2f6b4f; cursor: pointer; }
+.ml-confirm-actions [data-no] { background: #fff; color: #2f6b4f; }
+.ml-confirm-actions [data-yes] { background: #2f6b4f; color: #fff; }
+
+[data-ajax-list].ml-loading { opacity: .5; pointer-events: none; transition: opacity .15s; }
+button.is-loading { opacity: .6; cursor: progress; }
+.ml-field-error { color: #b3382c; font-size: 13px; margin-top: 4px; }
+.favorite-save-form button.is-saved i { color: #d64545; }

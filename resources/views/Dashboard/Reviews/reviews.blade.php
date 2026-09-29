@@ -11,10 +11,15 @@ active
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-star-fill"></i> Reviews</span>
         <div class="panel-tools">
+            <form class="search-box" method="GET" action="{{ route('reviews') }}" data-ajax-filter="#reviews-list">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search…" />
+                </form>
         </div>
     </div>
 
-    <div class="tbl-wrap">
+    <div id="reviews-list" data-ajax-list>
+<div class="tbl-wrap">
         <table class="dtable">
             <thead>
                 <tr>
@@ -33,7 +38,7 @@ active
                 @forelse ($reviews as $review)
                 <tr>
                     <td>
-                        <span class="id-chip">{{ $loop->iteration }}</span>
+                        <span class="id-chip">{{ $reviews->firstItem() + $loop->index }}</span>
                     </td>
 
                     <td>{{ $review->user?->name ?? 'N/A' }}</td>
@@ -61,14 +66,14 @@ active
 
                     <td>
                         <div class="action-wrap">
-                            <form action="{{ route('review_flag', $review->id) }}" method="post">
+                            <form action="{{ route('review_flag', $review->id) }}" method="post" data-ajax data-ajax-refresh="#reviews-list">
                                 @csrf
                                 <button class="btn-ghost sm" type="submit" title="Toggle flag">
                                     <i class="bi bi-flag"></i>
                                 </button>
                             </form>
 
-                            <form action="{{ route('review_delete', $review->id) }}" method="post" onsubmit="return confirm('Delete this review?');">
+                            <form action="{{ route('review_delete', $review->id) }}" method="POST" style="display:inline" data-ajax data-ajax-remove="tbody tr" data-confirm="Delete this review?">
                                 @csrf
                                 <button class="btn-ghost sm danger" type="submit">
                                     <i class="bi bi-trash"></i>
@@ -88,6 +93,8 @@ active
             </tbody>
         </table>
     </div>
+@include('Dashboard._pager', ['paginator' => $reviews, 'label' => 'reviews'])
+</div>
 
     <div class="hr-thin"></div>
 

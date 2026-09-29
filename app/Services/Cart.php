@@ -2,13 +2,33 @@
 
 namespace App\Services;
 
+use App\Models\CartItem;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class Cart
 {
     protected string $sessionKey = 'cart';
+
+    /** null = not checked yet. Avoids a crash (and repeated queries) if `php artisan migrate` was not run. */
+    protected static ?bool $tableReady = null;
+
+    protected function tableReady(): bool
+    {
+        return self::$tableReady ??= Schema::hasTable('cart_items');
+    }
+
+    /**
+     * @param  int|null  $userId  Owner of the saved basket. Defaults to the logged-in user.
+     *                            (During the Login event Auth::id() is still null, so it can be passed in.)
+     */
+    public function __construct(protected ?int $userId = null)
+    {
+    }
 
     public function add(int $productId, int $quantity = 1): void
     {
@@ -71,6 +91,36 @@ class Cart
     public function clear(): void
     {
         session()->forget($this->sessionKey);
+
+        if (($userId = $this->ownerId()) && $this->tableReady()) {
+            CartItem::where('user_id', $userId)->delete();
+        }
+    }
+
+    /**
+     * Called right after a customer logs in: merge the basket they saved last time
+     * (database) with anything they added as a guest (session), and keep both in sync.
+     */
+    public function restoreSaved(): Collection
+    {
+        $userId = $this->ownerId();
+
+        if (! $userId) {
+            return collect();
+        }
+
+        $merged = $this->tableReady()
+            ? CartItem::where('user_id', $userId)->pluck('quantity', 'product_id')->all()
+            : [];
+
+        foreach ($this->raw() as $productId => $quantity) {
+            $merged[$productId] = ($merged[$productId] ?? 0) + (int) $quantity;
+        }
+
+        session([$this->sessionKey => $merged]);
+
+        // items() drops unavailable products, caps quantities to stock, then saves.
+        return $this->items();
     }
 
     public function raw(): array
@@ -135,8 +185,6 @@ class Cart
 
     protected function save(array $cart): void
     {
-        session([
-            $this->sessionKey => $cart
-        ]);
+        session([$this->sessionKey => $cart]);
     }
 }

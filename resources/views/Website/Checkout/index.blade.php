@@ -16,6 +16,39 @@
                     href="{{ session('success') ? route('customer_dashboard') : url('/products') }}">{{ session('success') ? 'Go to my account' : 'Explore the harvest' }}
                     ↗</a>
             </div>
+            @if ($placedOrders->isNotEmpty())
+                <div class="placed-orders">
+                    <h2 class="placed-orders-title">What you ordered</h2>
+                    @foreach ($placedOrders as $placed)
+                        <section class="basket-grower">
+                            <header class="basket-grower-head"><i class="fa-solid fa-tractor"></i>
+                                <div><strong>Pre-order #{{ $placed->id }} · {{ $placed->farmer?->stall_name ?? 'Local grower' }}</strong>
+                                    <span>{{ $placed->pickupSlot?->date?->format('D, d M Y') }}
+                                        @if ($placed->pickupSlot)
+                                            · {{ substr($placed->pickupSlot->start_time, 0, 5) }} – {{ substr($placed->pickupSlot->end_time, 0, 5) }}
+                                        @endif
+                                        @if ($placed->pickupSlot?->market)
+                                            · {{ $placed->pickupSlot->market->name }}
+                                        @endif
+                                    </span></div>
+                            </header>
+                            @foreach ($placed->items as $line)
+                                <div class="checkout-item">
+                                    @if ($line->product)
+                                        <img src="{{ $line->product->imageUrl() }}" alt="{{ $line->product->name }}">
+                                    @endif
+                                    <div><strong>{{ $line->product?->name ?? 'Unavailable product' }}</strong><small>{{ $line->quantity }}
+                                            {{ $line->product?->unit }} · Rs. {{ number_format($line->price, 0) }} each</small></div>
+                                    <b>Rs. {{ number_format($line->subtotal, 0) }}</b>
+                                </div>
+                            @endforeach
+                            <div class="placed-order-total"><span>Total · pay at pickup</span><strong>Rs. {{ number_format($placed->total_amount, 0) }}</strong></div>
+                            <a class="placed-order-link" href="{{ route('customer_order_detail', $placed) }}">View pre-order details ↗</a>
+                        </section>
+                    @endforeach
+                    <div class="placed-order-total placed-order-grand"><span>All pre-orders</span><strong>Rs. {{ number_format($placedOrders->sum('total_amount'), 0) }}</strong></div>
+                </div>
+            @endif
         @else
             @php($missingSlots = $farmerGroups->keys()->contains(fn($id) => $pickupSlotsByFarmer->get($id, collect())->isEmpty()))
             <form method="POST" action="{{ url('/checkout') }}">@csrf

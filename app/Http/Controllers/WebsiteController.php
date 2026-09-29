@@ -15,6 +15,7 @@ use App\Models\PickupSlot;
 use App\Models\Product;
 use App\Models\Review;
 use App\Services\Cart;
+use App\Services\SafeMail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -22,12 +23,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use Throwable;
 
 class WebsiteController extends Controller
 {
@@ -49,7 +46,7 @@ class WebsiteController extends Controller
                                     ->select('farmer_id')
                             );
                     });
-            }
+            },
         ])
             ->orderBy('name')
             ->get();
@@ -85,7 +82,6 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function dashboardRedirect(): RedirectResponse
     {
         $user = Auth::user();
@@ -105,12 +101,19 @@ class WebsiteController extends Controller
         };
     }
 
-
-    public function farmerPending(): View
+    public function farmerPending(): View|RedirectResponse
     {
-        return view('Website.Auth.farmer-pending');
-    }
+        $user = Auth::user();
 
+        if ($user->role !== 'farmer' || $user->is_active) {
+            return redirect()->route('dashboard');
+        }
+
+        return view(
+            'Website.Auth.farmer-pending',
+            ['user' => $user]
+        );
+    }
 
     public function markets(Request $request): View
     {
@@ -121,7 +124,7 @@ class WebsiteController extends Controller
         ]);
 
         $query = Market::withCount([
-            'marketFarmers' => fn($members) => $members
+            'marketFarmers' => fn ($members) => $members
                 ->where('is_active', true)
                 ->whereIn(
                     'farmer_id',
@@ -133,14 +136,12 @@ class WebsiteController extends Controller
         ]);
 
         if ($request->filled('q')) {
-
             $search = $request
                 ->string('q')
                 ->trim()
                 ->toString();
 
             $query->where(function ($inner) use ($search) {
-
                 $inner
                     ->where('name', 'like', "%{$search}%")
                     ->orWhere('city', 'like', "%{$search}%")
@@ -151,14 +152,14 @@ class WebsiteController extends Controller
         $query
             ->when(
                 $request->filled('city'),
-                fn($q) => $q->where(
+                fn ($q) => $q->where(
                     'city',
                     $request->input('city')
                 )
             )
             ->when(
                 $request->filled('day'),
-                fn($q) => $q->where(
+                fn ($q) => $q->where(
                     'operating_days',
                     'like',
                     '%' . substr(
@@ -170,24 +171,16 @@ class WebsiteController extends Controller
             );
 
         match ($request->input('sort')) {
-
-            'most_farmers' =>
-            $query->orderByDesc('market_farmers_count'),
-
-            'newest' =>
-            $query->latest(),
-
-            default =>
-            $query->orderBy('name'),
+            'most_farmers' => $query->orderByDesc('market_farmers_count'),
+            'newest' => $query->latest(),
+            default => $query->orderBy('name'),
         };
 
-        $markets =
-            $query
+        $markets = $query
             ->paginate(9)
             ->withQueryString();
 
-        $cities =
-            Market::distinct()
+        $cities = Market::distinct()
             ->orderBy('city')
             ->pluck('city');
 
@@ -199,7 +192,6 @@ class WebsiteController extends Controller
             )
         );
     }
-
 
     protected function discoveryFarmers(): Builder
     {
@@ -217,35 +209,31 @@ class WebsiteController extends Controller
             ->with([
                 'user',
 
-                'products' => fn($q) => $q
+                'products' => fn ($q) => $q
                     ->where('is_active', true)
                     ->with('category')
                     ->limit(3),
             ])
             ->withCount([
-                'products' => fn($q) =>
-                $q->where('is_active', true),
+                'products' => fn ($q) =>
+                    $q->where('is_active', true),
 
-                'reviews' => fn($q) =>
-                $q->where('is_active', true),
+                'reviews' => fn ($q) =>
+                    $q->where('is_active', true),
             ])
             ->withAvg([
-                'reviews' => fn($q) =>
-                $q->where('is_active', true),
+                'reviews' => fn ($q) =>
+                    $q->where('is_active', true),
             ], 'rating');
     }
-
 
     public function marketDetail(
         Request $request,
         string $market
     ): View {
+        $market = Market::findOrFail($market);
 
-        $market =
-            Market::findOrFail($market);
-
-        $farmerQuery =
-            $this->discoveryFarmers()
+        $farmerQuery = $this->discoveryFarmers()
             ->whereIn(
                 'user_id',
                 $market
@@ -254,24 +242,17 @@ class WebsiteController extends Controller
                     ->select('farmer_id')
             );
 
-        $farmerCount =
-            (clone $farmerQuery)->count();
+        $farmerCount = (clone $farmerQuery)->count();
 
-        $farmerIds =
-            (clone $farmerQuery)->pluck('id');
+        $farmerIds = (clone $farmerQuery)->pluck('id');
 
-        $farmers =
-            $farmerQuery
+        $farmers = $farmerQuery
             ->orderBy('stall_name')
             ->take(6)
             ->get();
 
-        $products =
-            Product::where('is_active', true)
-            ->whereIn(
-                'farmer_id',
-                $farmerIds
-            )
+        $products = Product::where('is_active', true)
+            ->whereIn('farmer_id', $farmerIds)
             ->with([
                 'farmer.user',
                 'category',
@@ -281,38 +262,21 @@ class WebsiteController extends Controller
             ->take(6)
             ->get();
 
-        $productCount =
-            Product::where('is_active', true)
-            ->whereIn(
-                'farmer_id',
-                $farmerIds
-            )
+        $productCount = Product::where('is_active', true)
+            ->whereIn('farmer_id', $farmerIds)
             ->count();
 
-        $pickupSlots =
-            $market
+        $pickupSlots = $market
             ->pickupSlots()
-            ->whereIn(
-                'farmer_id',
-                $farmerIds
-            )
+            ->whereIn('farmer_id', $farmerIds)
             ->with('farmer')
             ->where('is_available', true)
             ->where(function ($q) {
-
                 $q
-                    ->where(
-                        'date',
-                        '>',
-                        today()
-                    )
+                    ->where('date', '>', today())
                     ->orWhere(function ($today) {
-
                         $today
-                            ->where(
-                                'date',
-                                today()
-                            )
+                            ->where('date', today())
                             ->where(
                                 'start_time',
                                 '>',
@@ -338,7 +302,6 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function farmers(Request $request): View
     {
         $request->validate([
@@ -350,19 +313,15 @@ class WebsiteController extends Controller
             'min_rating' => 'nullable|numeric|between:1,5',
         ]);
 
-        $query =
-            $this->discoveryFarmers();
+        $query = $this->discoveryFarmers();
 
         if ($request->filled('q')) {
-
-            $search =
-                $request
+            $search = $request
                 ->string('q')
                 ->trim()
                 ->toString();
 
             $query->where(function ($q) use ($search) {
-
                 $q
                     ->where(
                         'stall_name',
@@ -381,7 +340,7 @@ class WebsiteController extends Controller
                     )
                     ->orWhereHas(
                         'user',
-                        fn($user) => $user->where(
+                        fn ($user) => $user->where(
                             'name',
                             'like',
                             "%{$search}%"
@@ -393,14 +352,14 @@ class WebsiteController extends Controller
         $query
             ->when(
                 $request->filled('city'),
-                fn($q) => $q->where(
+                fn ($q) => $q->where(
                     'city',
                     $request->input('city')
                 )
             )
             ->when(
                 $request->filled('day'),
-                fn($q) => $q->where(
+                fn ($q) => $q->where(
                     'operating_days',
                     'like',
                     '%' . substr(
@@ -412,7 +371,7 @@ class WebsiteController extends Controller
             )
             ->when(
                 $request->filled('market_id'),
-                fn($q) => $q->whereIn(
+                fn ($q) => $q->whereIn(
                     'user_id',
                     MarketFarmer::where(
                         'market_id',
@@ -428,23 +387,23 @@ class WebsiteController extends Controller
             ->when(
                 $request->filled('category_id') ||
                     $request->boolean('in_stock_only'),
-                fn($q) => $q->whereHas(
+                fn ($q) => $q->whereHas(
                     'products',
-                    fn($products) => $products
+                    fn ($products) => $products
                         ->where(
                             'is_active',
                             true
                         )
                         ->when(
                             $request->filled('category_id'),
-                            fn($p) => $p->where(
+                            fn ($p) => $p->where(
                                 'category_id',
                                 $request->input('category_id')
                             )
                         )
                         ->when(
                             $request->boolean('in_stock_only'),
-                            fn($p) => $p->where(
+                            fn ($p) => $p->where(
                                 'stock_quantity',
                                 '>',
                                 0
@@ -454,7 +413,6 @@ class WebsiteController extends Controller
             );
 
         if ($request->filled('min_rating')) {
-
             $query->whereIn(
                 'id',
                 Review::where(
@@ -466,39 +424,27 @@ class WebsiteController extends Controller
                     ->havingRaw(
                         'AVG(rating) >= CAST(? AS DECIMAL(3, 2))',
                         [
-                            $request->input(
-                                'min_rating'
-                            ),
+                            $request->input('min_rating'),
                         ]
                     )
             );
         }
 
         match ($request->input('sort', 'top_rated')) {
-
-            'name' =>
-            $query->orderBy('stall_name'),
-
-            'newest' =>
-            $query->latest(),
-
-            'most_products' =>
-            $query->orderByDesc('products_count'),
-
-            default =>
-            $query->orderByDesc('reviews_avg_rating'),
+            'name' => $query->orderBy('stall_name'),
+            'newest' => $query->latest(),
+            'most_products' => $query->orderByDesc('products_count'),
+            default => $query->orderByDesc('reviews_avg_rating'),
         };
 
-        $farmers =
-            $query
+        $farmers = $query
             ->paginate(8)
             ->withQueryString();
 
-        $cities =
-            FarmerProfile::where(
-                'approval_status',
-                'approved'
-            )
+        $cities = FarmerProfile::where(
+            'approval_status',
+            'approved'
+        )
             ->whereIn(
                 'user_id',
                 MarketFarmer::where('is_active', true)
@@ -508,16 +454,11 @@ class WebsiteController extends Controller
             ->orderBy('city')
             ->pluck('city');
 
-        $markets =
-            Market::orderBy('name')
-            ->get();
+        $markets = Market::orderBy('name')->get();
 
-        $categories =
-            Category::orderBy('name')
-            ->get();
+        $categories = Category::orderBy('name')->get();
 
-        $selectedMarket =
-            $request->filled('market_id')
+        $selectedMarket = $request->filled('market_id')
             ? $markets->firstWhere(
                 'id',
                 $request->integer('market_id')
@@ -536,24 +477,20 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function farmerDetail(
         Request $request,
         string $farmer
     ): View {
-
         $request->validate([
             'q' => 'nullable|string|max:120',
             'category_id' => 'nullable|integer|exists:categories,id',
             'max_price' => 'nullable|numeric|min:0',
         ]);
 
-        $farmer =
-            $this->discoveryFarmers()
+        $farmer = $this->discoveryFarmers()
             ->findOrFail($farmer);
 
-        $query =
-            $farmer
+        $query = $farmer
             ->products()
             ->where('is_active', true)
             ->with([
@@ -564,7 +501,7 @@ class WebsiteController extends Controller
         $query
             ->when(
                 $request->filled('q'),
-                fn($q) => $q->where(
+                fn ($q) => $q->where(
                     'name',
                     'like',
                     '%' . $request->input('q') . '%'
@@ -572,14 +509,14 @@ class WebsiteController extends Controller
             )
             ->when(
                 $request->filled('category_id'),
-                fn($q) => $q->where(
+                fn ($q) => $q->where(
                     'category_id',
                     $request->input('category_id')
                 )
             )
             ->when(
                 $request->filled('max_price'),
-                fn($q) => $q->where(
+                fn ($q) => $q->where(
                     'price',
                     '<=',
                     $request->input('max_price')
@@ -587,7 +524,7 @@ class WebsiteController extends Controller
             )
             ->when(
                 $request->boolean('in_stock_only'),
-                fn($q) => $q->where(
+                fn ($q) => $q->where(
                     'stock_quantity',
                     '>',
                     0
@@ -595,43 +532,28 @@ class WebsiteController extends Controller
             );
 
         match ($request->input('sort')) {
-
-            'price_low' =>
-            $query->orderBy('price'),
-
-            'price_high' =>
-            $query->orderByDesc('price'),
-
-            default =>
-            $query->latest(),
+            'price_low' => $query->orderBy('price'),
+            'price_high' => $query->orderByDesc('price'),
+            default => $query->latest(),
         };
 
-        $products =
-            $query
+        $products = $query
             ->paginate(9)
             ->withQueryString();
 
-        $categories =
-            Category::whereIn(
-                'id',
-                $farmer
-                    ->products()
-                    ->where(
-                        'is_active',
-                        true
-                    )
-                    ->select('category_id')
-            )
+        $categories = Category::whereIn(
+            'id',
+            $farmer
+                ->products()
+                ->where('is_active', true)
+                ->select('category_id')
+        )
             ->orderBy('name')
             ->get();
 
-        $reviews =
-            $farmer
+        $reviews = $farmer
             ->reviews()
-            ->where(
-                'is_active',
-                true
-            )
+            ->where('is_active', true)
             ->with([
                 'user',
                 'reply',
@@ -640,67 +562,43 @@ class WebsiteController extends Controller
             ->take(6)
             ->get();
 
-        $ratingAverage =
-            round(
-                (float) $farmer->reviews_avg_rating,
-                1
-            );
+        $ratingAverage = round(
+            (float) $farmer->reviews_avg_rating,
+            1
+        );
 
-        $ratingCount =
-            $farmer->reviews_count;
+        $ratingCount = $farmer->reviews_count;
 
-        $markets =
-            Market::whereIn(
-                'id',
-                MarketFarmer::where(
-                    'farmer_id',
-                    $farmer->user_id
-                )
-                    ->where(
-                        'is_active',
-                        true
-                    )
-                    ->select('market_id')
-            )->get();
-
-        $weeklyStock =
-            $farmer
-            ->weeklyStockTemplates()
-            ->where(
-                'is_active',
-                true
+        $markets = Market::whereIn(
+            'id',
+            MarketFarmer::where(
+                'farmer_id',
+                $farmer->user_id
             )
-            ->where(function ($q) {
+                ->where(
+                    'is_active',
+                    true
+                )
+                ->select('market_id')
+        )->get();
 
+        $weeklyStock = $farmer
+            ->weeklyStockTemplates()
+            ->where('is_active', true)
+            ->where(function ($q) {
                 $q
-                    ->whereNull(
-                        'start_date'
-                    )
-                    ->orWhere(
-                        'start_date',
-                        '<=',
-                        today()
-                    );
+                    ->whereNull('start_date')
+                    ->orWhere('start_date', '<=', today());
             })
             ->where(function ($q) {
-
                 $q
-                    ->whereNull(
-                        'end_date'
-                    )
-                    ->orWhere(
-                        'end_date',
-                        '>=',
-                        today()
-                    );
+                    ->whereNull('end_date')
+                    ->orWhere('end_date', '>=', today());
             })
             ->whereHas(
                 'product',
-                fn($q) => $q
-                    ->where(
-                        'is_active',
-                        true
-                    )
+                fn ($q) => $q
+                    ->where('is_active', true)
                     ->where(
                         'farmer_id',
                         $farmer->id
@@ -710,29 +608,16 @@ class WebsiteController extends Controller
             ->orderBy('day_of_week')
             ->get();
 
-        $pickupSlots =
-            $farmer
+        $pickupSlots = $farmer
             ->pickupSlots()
             ->with('market')
-            ->where(
-                'is_available',
-                true
-            )
+            ->where('is_available', true)
             ->where(function ($q) {
-
                 $q
-                    ->where(
-                        'date',
-                        '>',
-                        today()
-                    )
+                    ->where('date', '>', today())
                     ->orWhere(function ($today) {
-
                         $today
-                            ->where(
-                                'date',
-                                today()
-                            )
+                            ->where('date', today())
                             ->where(
                                 'start_time',
                                 '>',
@@ -761,7 +646,6 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function products(Request $request): View
     {
         $request->validate([
@@ -771,19 +655,15 @@ class WebsiteController extends Controller
             'day' => 'nullable|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
         ]);
 
-        $marketOptions =
-            Market::orderBy('name')
-            ->get();
+        $marketOptions = Market::orderBy('name')->get();
 
-        $query =
-            Product::where(
-                'is_active',
-                true
-            )
+        $query = Product::where(
+            'is_active',
+            true
+        )
             ->whereHas(
                 'farmer',
                 function ($farmer) {
-
                     $farmer
                         ->where(
                             'approval_status',
@@ -804,12 +684,9 @@ class WebsiteController extends Controller
             ]);
 
         if ($request->filled('q')) {
-
-            $search =
-                $request->input('q');
+            $search = $request->input('q');
 
             $query->where(function ($inner) use ($search) {
-
                 $inner
                     ->where(
                         'name',
@@ -819,7 +696,6 @@ class WebsiteController extends Controller
                     ->orWhereHas(
                         'farmer',
                         function ($farmerQuery) use ($search) {
-
                             $farmerQuery
                                 ->where(
                                     'stall_name',
@@ -837,7 +713,6 @@ class WebsiteController extends Controller
         }
 
         if ($request->filled('category_id')) {
-
             $query->where(
                 'category_id',
                 $request->input('category_id')
@@ -845,7 +720,6 @@ class WebsiteController extends Controller
         }
 
         if ($request->filled('max_price')) {
-
             $query->where(
                 'price',
                 '<=',
@@ -854,7 +728,6 @@ class WebsiteController extends Controller
         }
 
         if ($request->boolean('in_stock_only')) {
-
             $query->where(
                 'stock_quantity',
                 '>',
@@ -865,15 +738,13 @@ class WebsiteController extends Controller
         $query
             ->when(
                 $request->filled('market_id'),
-                fn($q) => $q->whereHas(
+                fn ($q) => $q->whereHas(
                     'farmer',
-                    fn($farmer) => $farmer->whereIn(
+                    fn ($farmer) => $farmer->whereIn(
                         'user_id',
                         MarketFarmer::where(
                             'market_id',
-                            $request->input(
-                                'market_id'
-                            )
+                            $request->input('market_id')
                         )
                             ->where(
                                 'is_active',
@@ -885,16 +756,16 @@ class WebsiteController extends Controller
             )
             ->when(
                 $request->filled('farmer_id'),
-                fn($q) => $q->where(
+                fn ($q) => $q->where(
                     'farmer_id',
                     $request->input('farmer_id')
                 )
             )
             ->when(
                 $request->filled('day'),
-                fn($q) => $q->whereHas(
+                fn ($q) => $q->whereHas(
                     'farmer',
-                    fn($farmer) => $farmer->where(
+                    fn ($farmer) => $farmer->where(
                         'operating_days',
                         'like',
                         '%' . substr(
@@ -906,58 +777,47 @@ class WebsiteController extends Controller
                 )
             );
 
-        $sort =
-            $request->input(
-                'sort',
-                'newest'
-            );
+        $sort = $request->input(
+            'sort',
+            'newest'
+        );
 
         match ($sort) {
-
-            'price_low' =>
-            $query->orderBy('price'),
-
-            'price_high' =>
-            $query->orderByDesc('price'),
-
-            default =>
-            $query->latest(),
+            'price_low' => $query->orderBy('price'),
+            'price_high' => $query->orderByDesc('price'),
+            default => $query->latest(),
         };
 
-        $products =
-            $query
+        $products = $query
             ->paginate(9)
             ->withQueryString();
 
-        $categories =
-            Category::withCount([
-                'products' => function ($inner) {
-
-                    $inner
-                        ->where(
-                            'is_active',
-                            true
-                        )
-                        ->whereHas(
-                            'farmer',
-                            function ($farmer) {
-
-                                $farmer
-                                    ->where(
-                                        'approval_status',
-                                        'approved'
-                                    )
-                                    ->whereIn(
-                                        'user_id',
-                                        MarketFarmer::where(
-                                            'is_active',
-                                            true
-                                        )->select('farmer_id')
-                                    );
-                            }
-                        );
-                },
-            ])
+        $categories = Category::withCount([
+            'products' => function ($inner) {
+                $inner
+                    ->where(
+                        'is_active',
+                        true
+                    )
+                    ->whereHas(
+                        'farmer',
+                        function ($farmer) {
+                            $farmer
+                                ->where(
+                                    'approval_status',
+                                    'approved'
+                                )
+                                ->whereIn(
+                                    'user_id',
+                                    MarketFarmer::where(
+                                        'is_active',
+                                        true
+                                    )->select('farmer_id')
+                                );
+                        }
+                    );
+            },
+        ])
             ->orderBy('name')
             ->get();
 
@@ -971,17 +831,14 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function productDetail(
         Request $request,
         string $product
     ): View {
-
-        $product =
-            Product::with([
-                'farmer.user',
-                'category',
-            ])
+        $product = Product::with([
+            'farmer.user',
+            'category',
+        ])
             ->where(
                 'is_active',
                 true
@@ -989,7 +846,6 @@ class WebsiteController extends Controller
             ->whereHas(
                 'farmer',
                 function ($farmer) {
-
                     $farmer
                         ->where(
                             'approval_status',
@@ -1006,8 +862,7 @@ class WebsiteController extends Controller
             )
             ->findOrFail($product);
 
-        $reviews =
-            $product
+        $reviews = $product
             ->reviews()
             ->where(
                 'is_active',
@@ -1021,20 +876,18 @@ class WebsiteController extends Controller
             ->take(6)
             ->get();
 
-        $ratingAverage =
-            round(
-                (float) $product
-                    ->reviews()
-                    ->where(
-                        'is_active',
-                        true
-                    )
-                    ->avg('rating'),
-                1
-            );
+        $ratingAverage = round(
+            (float) $product
+                ->reviews()
+                ->where(
+                    'is_active',
+                    true
+                )
+                ->avg('rating'),
+            1
+        );
 
-        $ratingCount =
-            $product
+        $ratingCount = $product
             ->reviews()
             ->where(
                 'is_active',
@@ -1042,15 +895,13 @@ class WebsiteController extends Controller
             )
             ->count();
 
-        $relatedProducts =
-            Product::where(
-                'is_active',
-                true
-            )
+        $relatedProducts = Product::where(
+            'is_active',
+            true
+        )
             ->whereHas(
                 'farmer',
                 function ($farmer) {
-
                     $farmer
                         ->where(
                             'approval_status',
@@ -1071,7 +922,6 @@ class WebsiteController extends Controller
                 $product->id
             )
             ->where(function ($inner) use ($product) {
-
                 $inner
                     ->where(
                         'farmer_id',
@@ -1089,11 +939,10 @@ class WebsiteController extends Controller
             ->take(4)
             ->get();
 
-        $pickupSlots =
-            PickupSlot::where(
-                'farmer_id',
-                $product->farmer_id
-            )
+        $pickupSlots = PickupSlot::where(
+            'farmer_id',
+            $product->farmer_id
+        )
             ->where(
                 'is_available',
                 true
@@ -1119,19 +968,15 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function cart(): View
     {
         $cart = new Cart;
 
-        $cartItems =
-            $cart->items();
+        $cartItems = $cart->items();
 
-        $farmerGroups =
-            $cart->groupedByFarmer();
+        $farmerGroups = $cart->groupedByFarmer();
 
-        $cartTotal =
-            $cart->total();
+        $cartTotal = $cart->total();
 
         return view(
             'Website.Cart.index',
@@ -1143,189 +988,129 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function addToCart(
         Request $request,
         string $product
-    ) {
-
+    ): JsonResponse {
         $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
 
         try {
-
-            $cart =
-                new Cart();
+            $cart = new Cart();
 
             $cart->add(
                 (int) $product,
-                (int) $request->input(
-                    'quantity'
-                )
+                (int) $request->input('quantity')
             );
 
             return response()->json([
                 'success' => true,
-                'message' =>
-                'Product added to your cart.',
-                'count' =>
-                $cart->count(),
+                'message' => 'Product added to your cart.',
+                'count' => $cart->count(),
             ]);
-        } catch (
-            \Illuminate\Validation\ValidationException $e
-        ) {
-
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' =>
-                $e->validator
+                'message' => $e->validator
                     ->errors()
                     ->first('quantity'),
-                'errors' =>
-                $e->errors(),
+                'errors' => $e->errors(),
             ], 422);
         }
     }
-
 
     public function updateCartItem(
         Request $request,
         string $product
     ): JsonResponse {
-
         $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $cart =
-            new Cart();
+        $cart = new Cart();
 
         $cart->update(
             (int) $product,
-            (int) $request->input(
-                'quantity'
-            )
+            (int) $request->input('quantity')
         );
 
-        $items =
-            $cart->items();
+        $items = $cart->items();
 
         $updatedItem = null;
 
         foreach ($items as $item) {
-
             if (
                 (int) $item['product']->id ===
                 (int) $product
             ) {
-
-                $updatedItem =
-                    $item;
-
+                $updatedItem = $item;
                 break;
             }
         }
 
         return response()->json([
             'success' => true,
-
-            'quantity' =>
-            (int) (
+            'quantity' => (int) (
                 $updatedItem['quantity'] ?? 0
             ),
-
-            'subtotal' =>
-            (float) (
+            'subtotal' => (float) (
                 $updatedItem['subtotal'] ?? 0
             ),
-
-            'cart_total' =>
-            (float) $cart->total(),
-
-            'cart_count' =>
-            (int) $items->sum('quantity'),
-
-            'count' =>
-            (int) $cart->count(),
+            'cart_total' => (float) $cart->total(),
+            'cart_count' => (int) $items->sum('quantity'),
+            'count' => (int) $cart->count(),
         ]);
     }
-
 
     public function removeFromCart(
         string $product
     ): JsonResponse {
-
-        $cart =
-            new Cart();
+        $cart = new Cart();
 
         $cart->remove(
             (int) $product
         );
 
-        $items =
-            $cart->items();
+        $items = $cart->items();
 
         return response()->json([
             'success' => true,
-
-            'message' =>
-            'Product removed from your cart.',
-
-            'cart_total' =>
-            (float) $cart->total(),
-
-            'cart_count' =>
-            (int) $items->sum('quantity'),
-
-            'count' =>
-            (int) $cart->count(),
+            'message' => 'Product removed from your cart.',
+            'cart_total' => (float) $cart->total(),
+            'cart_count' => (int) $items->sum('quantity'),
+            'count' => (int) $cart->count(),
         ]);
     }
-
 
     protected function cartResponse(
         string $message
     ): JsonResponse {
+        $cart = new Cart;
 
-        $cart =
-            new Cart;
-
-        $items =
-            $cart->items();
+        $items = $cart->items();
 
         return response()->json([
-            'message' =>
-            $message,
-
-            'count' =>
-            $items->sum('quantity'),
-
-            'total' =>
-            $items->sum('subtotal'),
+            'message' => $message,
+            'count' => $items->sum('quantity'),
+            'total' => $items->sum('subtotal'),
         ]);
     }
 
-
     public function checkout(): View
     {
-        $cart =
-            new Cart;
+        $cart = new Cart;
 
-        $cartItems =
-            $cart->items();
+        $cartItems = $cart->items();
 
-        $farmerGroups =
-            $cart->groupedByFarmer();
+        $farmerGroups = $cart->groupedByFarmer();
 
-        $cartTotal =
-            $cart->total();
+        $cartTotal = $cart->total();
 
-        $pickupSlotsByFarmer =
-            PickupSlot::whereIn(
-                'farmer_id',
-                $farmerGroups->keys()
-            )
+        $pickupSlotsByFarmer = PickupSlot::whereIn(
+            'farmer_id',
+            $farmerGroups->keys()
+        )
             ->where(
                 'is_available',
                 true
@@ -1339,8 +1124,27 @@ class WebsiteController extends Controller
             ->get()
             ->groupBy('farmer_id');
 
-        $customer =
-            Auth::user();
+        $customer = Auth::user();
+
+        $placedOrders = collect();
+
+        if (
+            Auth::check() &&
+            session()->has('placed_order_ids')
+        ) {
+            $placedOrders = Auth::user()
+                ->orders()
+                ->whereIn(
+                    'id',
+                    (array) session('placed_order_ids')
+                )
+                ->with([
+                    'farmer.user',
+                    'pickupSlot.market',
+                    'items.product',
+                ])
+                ->get();
+        }
 
         return view(
             'Website.Checkout.index',
@@ -1349,43 +1153,32 @@ class WebsiteController extends Controller
                 'farmerGroups',
                 'pickupSlotsByFarmer',
                 'cartTotal',
-                'customer'
+                'customer',
+                'placedOrders'
             )
         );
     }
 
-
     public function placeOrder(
         Request $request
     ): RedirectResponse {
-
         if (! Auth::check()) {
-            return redirect()
-                ->guest(
-                    route('login')
-                );
+            return redirect()->guest(
+                route('login')
+            );
         }
 
-        $validated =
-            $request->validate([
-                'notes' =>
-                'nullable|string|max:1000',
+        $validated = $request->validate([
+            'notes' => 'nullable|string|max:1000',
+            'pickup_slot' => 'nullable|array',
+            'pickup_slot.*' => 'nullable|integer|exists:pickup_slots,id',
+        ]);
 
-                'pickup_slot' =>
-                'nullable|array',
+        $cart = new Cart();
 
-                'pickup_slot.*' =>
-                'nullable|integer|exists:pickup_slots,id',
-            ]);
-
-        $cart =
-            new Cart;
-
-        $itemsByFarmer =
-            $cart->groupedByFarmer();
+        $itemsByFarmer = $cart->groupedByFarmer();
 
         if ($itemsByFarmer->isEmpty()) {
-
             return redirect('/cart')
                 ->with(
                     'warning',
@@ -1393,15 +1186,11 @@ class WebsiteController extends Controller
                 );
         }
 
-        foreach (
-            $itemsByFarmer as $farmerId => $items
-        ) {
-
-            $slot =
-                PickupSlot::where(
-                    'farmer_id',
-                    $farmerId
-                )
+        foreach ($itemsByFarmer as $farmerId => $items) {
+            $slot = PickupSlot::where(
+                'farmer_id',
+                $farmerId
+            )
                 ->where(
                     'is_available',
                     true
@@ -1416,101 +1205,91 @@ class WebsiteController extends Controller
                 );
 
             if (! $slot) {
-
                 throw ValidationException::withMessages([
                     'pickup_slot.' . $farmerId =>
-                    'Choose an available pickup time for each grower.',
+                        'Choose an available pickup time for each grower.',
                 ]);
             }
         }
 
-        if (
-            Auth::check() &&
-            $itemsByFarmer->isNotEmpty()
+        $placedOrderIds = [];
+
+        DB::transaction(function () use (
+            $itemsByFarmer,
+            $validated,
+            &$placedOrderIds
         ) {
+            foreach ($itemsByFarmer as $farmerId => $items) {
+                $slot = PickupSlot::where(
+                    'farmer_id',
+                    $farmerId
+                )
+                    ->where(
+                        'is_available',
+                        true
+                    )
+                    ->where(
+                        'date',
+                        '>=',
+                        now()->toDateString()
+                    )
+                    ->find(
+                        $validated['pickup_slot'][$farmerId] ?? null
+                    );
 
-            DB::transaction(
-                function () use (
-                    $itemsByFarmer,
-                    $validated
-                ) {
-
-                    foreach (
-                        $itemsByFarmer as $farmerId => $items
-                    ) {
-
-                        $totalAmount =
-                            $items->sum('subtotal');
-
-                        $order =
-                            Order::create([
-                                'user_id' =>
-                                Auth::id(),
-
-                                'farmer_id' =>
-                                $farmerId,
-
-                                'pickup_slot_id' =>
-                                $validated['pickup_slot'][$farmerId] ?? null,
-
-                                'total_amount' =>
-                                $totalAmount,
-
-                                'status' =>
-                                'pending',
-
-                                'order_date' =>
-                                now(),
-
-                                'notes' =>
-                                $validated['notes'] ?? null,
-                            ]);
-
-                        foreach (
-                            $items as $item
-                        ) {
-
-                            OrderItem::create([
-                                'order_id' =>
-                                $order->id,
-
-                                'product_id' =>
-                                $item['product']->id,
-
-                                'quantity' =>
-                                $item['quantity'],
-
-                                'price' =>
-                                $item['product']->price,
-
-                                'subtotal' =>
-                                $item['subtotal'],
-                            ]);
-                        }
-                    }
+                if (! $slot) {
+                    throw ValidationException::withMessages([
+                        'pickup_slot.' . $farmerId =>
+                            'Choose an available pickup time for each grower.',
+                    ]);
                 }
-            );
 
-            $cart->clear();
-        }
+                $totalAmount = $items->sum('subtotal');
+
+                $order = Order::create([
+                    'user_id' => Auth::id(),
+                    'farmer_id' => $farmerId,
+                    'pickup_slot_id' => $slot->id,
+                    'total_amount' => $totalAmount,
+                    'status' => 'pending',
+                    'order_date' => now(),
+                    'notes' => $validated['notes'] ?? null,
+                ]);
+
+                $placedOrderIds[] = $order->id;
+
+                foreach ($items as $item) {
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_id' => $item['product']->id,
+                        'quantity' => $item['quantity'],
+                        'price' => $item['product']->price,
+                        'subtotal' => $item['subtotal'],
+                    ]);
+                }
+            }
+        });
+
+        $cart->clear();
 
         return redirect('/checkout')
             ->with(
                 'success',
                 'Your pre-order has been placed successfully.'
+            )
+            ->with(
+                'placed_order_ids',
+                $placedOrderIds
             );
     }
 
-
     public function about(): View
     {
-        $markets =
-            Market::latest()
+        $markets = Market::latest()
             ->take(3)
             ->get();
 
-        $reviews =
-            $this->communityReviews()
+        $reviews = $this->communityReviews()
             ->take(8)
             ->get();
 
@@ -1522,7 +1301,6 @@ class WebsiteController extends Controller
             )
         );
     }
-
 
     protected function communityReviews(): Builder
     {
@@ -1538,13 +1316,10 @@ class WebsiteController extends Controller
                 'is_flagged',
                 false
             )
-            ->whereHas(
-                'user'
-            )
+            ->whereHas('user')
             ->whereHas(
                 'farmer',
                 function (Builder $query) {
-
                     $query
                         ->where(
                             'approval_status',
@@ -1562,7 +1337,6 @@ class WebsiteController extends Controller
             ->latest('id');
     }
 
-
     public function contact(): View
     {
         return view(
@@ -1570,133 +1344,43 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function submitContact(
         Request $request
     ): RedirectResponse {
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string|max:5000',
+        ]);
 
-        $validated =
-            $request->validate([
-                'full_name' =>
-                'required|string|max:255',
+        $contact = ContactMessage::create(
+            $validated + [
+                'user_id' => Auth::id(),
+                'ip_address' => $request->ip(),
+            ]
+        );
 
-                'email' =>
-                'required|email|max:255',
-
-                'subject' => [
-                    'required',
-                    'string',
-                    Rule::in([
-                        'Market & Pickup Questions',
-                        'Farmer Onboarding',
-                        'Platform Feedback',
-                        'Other',
-                    ]),
-                ],
-
-                'message' =>
-                'required|string|min:10|max:2000',
-            ]);
-
-        $success =
-            'Thanks! Your message has been sent to the MarketLink team. We will reply by email soon.';
-
-        if (
-            $request->filled(
-                'website'
-            )
-        ) {
-
-            return redirect('/contact')
-                ->with(
-                    'success',
-                    $success
-                );
-        }
-
-        $contact =
-            ContactMessage::create(
-                $validated + [
-                    'user_id' =>
-                    Auth::id(),
-
-                    'ip_address' =>
-                    $request->ip(),
-                ]
-            );
-
-        try {
-
-            Mail::to(
-                config(
-                    'marketlink.contact_email'
-                )
-            )->send(
-                new ContactMessageMail(
-                    $contact
-                )
-            );
-        } catch (Throwable $e) {
-
-            Log::error(
-                'Contact form email failed to send',
-                [
-                    'contact_id' =>
-                    $contact->id,
-
-                    'to' =>
-                    config(
-                        'marketlink.contact_email'
-                    ),
-
-                    'mailer' =>
-                    config(
-                        'mail.default'
-                    ),
-
-                    'host' =>
-                    config(
-                        'mail.mailers.smtp.host'
-                    ),
-
-                    'port' =>
-                    config(
-                        'mail.mailers.smtp.port'
-                    ),
-
-                    'username' =>
-                    config(
-                        'mail.mailers.smtp.username'
-                    ),
-
-                    'exception' =>
-                    get_class($e),
-
-                    'error' =>
-                    $e->getMessage(),
-                ]
-            );
-        }
+        SafeMail::send(
+            config('marketlink.contact_email'),
+            new ContactMessageMail($contact)
+        );
 
         return redirect('/contact')
             ->with(
                 'success',
-                $success
+                'Your message has been sent successfully.'
             );
     }
 
-
     public function index(): View
     {
-        $user =
-            Auth::user();
+        $user = Auth::user();
 
         $stats = [
-            'total_orders' =>
-            $user->orders()->count(),
+            'total_orders' => $user->orders()->count(),
 
-            'active_orders' =>
-            $user
+            'active_orders' => $user
                 ->orders()
                 ->whereIn(
                     'status',
@@ -1704,8 +1388,7 @@ class WebsiteController extends Controller
                 )
                 ->count(),
 
-            'completed_orders' =>
-            $user
+            'completed_orders' => $user
                 ->orders()
                 ->whereIn(
                     'status',
@@ -1713,14 +1396,12 @@ class WebsiteController extends Controller
                 )
                 ->count(),
 
-            'favorites' =>
-            $user
+            'favorites' => $user
                 ->favorites()
                 ->count(),
         ];
 
-        $activeOrders =
-            $user
+        $activeOrders = $user
             ->orders()
             ->whereIn(
                 'status',
@@ -1750,13 +1431,12 @@ class WebsiteController extends Controller
             ->take(4)
             ->get();
 
-        $reorderItems =
-            OrderItem::with(
-                'product.farmer'
-            )
+        $reorderItems = OrderItem::with(
+            'product.farmer'
+        )
             ->whereHas(
                 'order',
-                fn($query) => $query
+                fn ($query) => $query
                     ->where(
                         'user_id',
                         $user->id
@@ -1768,7 +1448,7 @@ class WebsiteController extends Controller
             )
             ->whereHas(
                 'product',
-                fn($query) => $query
+                fn ($query) => $query
                     ->where(
                         'is_active',
                         true
@@ -1780,42 +1460,39 @@ class WebsiteController extends Controller
             ->unique('product_id')
             ->take(8);
 
-        $savedFavorites =
-            $user
+        $savedFavorites = $user
             ->favorites()
             ->with([
                 'product.farmer',
 
-                'farmer' => fn($query) =>
-                $query->withCount([
-                    'products as available_products_count' =>
-                    fn($products) => $products
-                        ->where(
-                            'is_active',
-                            true
-                        )
-                        ->where(
-                            'stock_quantity',
-                            '>',
-                            0
-                        ),
-                ]),
+                'farmer' => fn ($query) =>
+                    $query->withCount([
+                        'products as available_products_count' =>
+                            fn ($products) => $products
+                                ->where(
+                                    'is_active',
+                                    true
+                                )
+                                ->where(
+                                    'stock_quantity',
+                                    '>',
+                                    0
+                                ),
+                    ]),
             ])
             ->latest()
             ->take(8)
             ->get();
 
-        $markets =
-            Market::orderBy('city')
+        $markets = Market::orderBy('city')
             ->orderBy('name')
             ->limit(50)
             ->get();
 
-        $stalls =
-            FarmerProfile::where(
-                'approval_status',
-                'approved'
-            )
+        $stalls = FarmerProfile::where(
+            'approval_status',
+            'approved'
+        )
             ->whereIn(
                 'user_id',
                 MarketFarmer::where(
@@ -1828,87 +1505,50 @@ class WebsiteController extends Controller
             ->limit(50)
             ->get();
 
-        $mapPlaces =
-            $markets
+        $mapPlaces = $markets
             ->map(
-                fn($market) => [
-                    'name' =>
-                    $market->name,
-
-                    'kind' =>
-                    'Market',
-
-                    'city' =>
-                    $market->city,
-
-                    'address' =>
-                    $market->address,
-
-                    'latitude' =>
-                    $market->latitude,
-
-                    'longitude' =>
-                    $market->longitude,
-
-                    'url' =>
-                    url(
-                        '/markets/' .
-                            $market->id
+                fn ($market) => [
+                    'name' => $market->name,
+                    'kind' => 'Market',
+                    'city' => $market->city,
+                    'address' => $market->address,
+                    'latitude' => $market->latitude,
+                    'longitude' => $market->longitude,
+                    'url' => url(
+                        '/markets/' . $market->id
                     ),
                 ]
             )
             ->concat(
                 $stalls->map(
-                    fn($stall) => [
+                    fn ($stall) => [
                         'name' =>
-                        $stall->stall_name
-                            ?: $stall->business_name,
-
-                        'kind' =>
-                        'Farm stall',
-
-                        'city' =>
-                        $stall->city,
-
-                        'address' =>
-                        $stall->address,
-
-                        'latitude' =>
-                        $stall->latitude,
-
-                        'longitude' =>
-                        $stall->longitude,
-
-                        'url' =>
-                        url(
-                            '/farmers/' .
-                                $stall->id
+                            $stall->stall_name
+                                ?: $stall->business_name,
+                        'kind' => 'Farm stall',
+                        'city' => $stall->city,
+                        'address' => $stall->address,
+                        'latitude' => $stall->latitude,
+                        'longitude' => $stall->longitude,
+                        'url' => url(
+                            '/farmers/' . $stall->id
                         ),
                     ]
                 )
             )
             ->filter(
-                fn($place) =>
-                is_numeric(
-                    $place['latitude']
-                ) &&
-                    is_numeric(
-                        $place['longitude']
-                    ) &&
-                    abs(
-                        (float) $place['latitude']
-                    ) <= 90 &&
-                    abs(
-                        (float) $place['longitude']
-                    ) <= 180
+                fn ($place) =>
+                    is_numeric($place['latitude']) &&
+                    is_numeric($place['longitude']) &&
+                    abs((float) $place['latitude']) <= 90 &&
+                    abs((float) $place['longitude']) <= 180
             )
             ->values();
 
-        $unreadUpdates =
-            Notification::where(
-                'user_id',
-                $user->id
-            )
+        $unreadUpdates = Notification::where(
+            'user_id',
+            $user->id
+        )
             ->where(
                 'is_read',
                 false
@@ -1931,34 +1571,26 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function cancelOrder(
         string $order
     ): RedirectResponse {
-
         DB::transaction(
             function () use ($order): void {
-
-                $customerOrder =
-                    Auth::user()
+                $customerOrder = Auth::user()
                     ->orders()
                     ->with('pickupSlot')
                     ->lockForUpdate()
                     ->findOrFail($order);
 
-                if (
-                    ! $customerOrder->canCancel()
-                ) {
-
+                if (! $customerOrder->canCancel()) {
                     throw ValidationException::withMessages([
                         'order' =>
-                        'This pre-order can no longer be cancelled. Contact the grower for help.',
+                            'This pre-order can no longer be cancelled. Contact the grower for help.',
                     ]);
                 }
 
                 $customerOrder->update([
-                    'status' =>
-                    'cancelled',
+                    'status' => 'cancelled',
                 ]);
             }
         );
@@ -1970,25 +1602,22 @@ class WebsiteController extends Controller
             );
     }
 
-
     public function reorderItem(
         string $item,
         Cart $cart
     ): RedirectResponse {
-
-        $orderItem =
-            OrderItem::whereHas(
-                'order',
-                fn($query) => $query
-                    ->where(
-                        'user_id',
-                        Auth::id()
-                    )
-                    ->where(
-                        'status',
-                        'picked_up'
-                    )
-            )
+        $orderItem = OrderItem::whereHas(
+            'order',
+            fn ($query) => $query
+                ->where(
+                    'user_id',
+                    Auth::id()
+                )
+                ->where(
+                    'status',
+                    'picked_up'
+                )
+        )
             ->findOrFail($item);
 
         $cart->add(
@@ -2003,11 +1632,9 @@ class WebsiteController extends Controller
             );
     }
 
-
     public function profile(): View
     {
-        $user =
-            Auth::user();
+        $user = Auth::user();
 
         return view(
             'Website.Dashboard.profile',
@@ -2015,77 +1642,44 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function updateProfile(
         Request $request
     ): RedirectResponse {
+        $user = Auth::user();
 
-        $user =
-            Auth::user();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'phone' => 'required|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'current_password' => 'nullable|string',
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
 
-        $validated =
-            $request->validate([
-                'name' =>
-                'required|string|max:255',
-
-                'email' =>
-                'required|email|unique:users,email,' .
-                    $user->id,
-
-                'phone' =>
-                'required|string|max:20',
-
-                'address' =>
-                'nullable|string|max:255',
-
-                'current_password' =>
-                'nullable|string',
-
-                'password' =>
-                'nullable|string|min:8|confirmed',
-            ]);
-
-        if (
-            $request->filled(
-                'password'
-            )
-        ) {
-
+        if ($request->filled('password')) {
             if (
-                ! $request->filled(
-                    'current_password'
-                ) ||
+                ! $request->filled('current_password') ||
                 ! Hash::check(
-                    $request->input(
-                        'current_password'
-                    ),
+                    $request->input('current_password'),
                     $user->password
                 )
             ) {
-
                 return back()
                     ->withErrors([
                         'current_password' =>
-                        'Your current password is incorrect.',
+                            'Your current password is incorrect.',
                     ])
                     ->withInput();
             }
 
-            $user->password =
-                Hash::make(
-                    $validated['password']
-                );
+            $user->password = Hash::make(
+                $validated['password']
+            );
         }
 
-        $user->name =
-            $validated['name'];
-
-        $user->email =
-            $validated['email'];
-
-        $user->phone =
-            $validated['phone'];
-
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->phone = $validated['phone'];
         $user->address =
             $validated['address']
             ?? $user->address;
@@ -2099,26 +1693,19 @@ class WebsiteController extends Controller
             );
     }
 
-
-    public function orders(
-        Request $request
-    ): View {
-
-        $query =
-            Auth::user()
+    public function orders(Request $request): View
+    {
+        $query = Auth::user()
             ->orders()
             ->with([
                 'farmer.user',
                 'pickupSlot.market',
-                'items',
+                'items.product',
             ]);
 
         if (
-            $request->input(
-                'status'
-            ) === 'active'
+            $request->input('status') === 'active'
         ) {
-
             $query->whereIn(
                 'status',
                 $this->activeStatuses()
@@ -2136,21 +1723,18 @@ class WebsiteController extends Controller
                 true
             )
         ) {
-
             $query->where(
                 'status',
                 $request->input('status')
             );
         }
 
-        $orders =
-            $query
+        $orders = $query
             ->latest('order_date')
             ->paginate(8)
             ->withQueryString();
 
-        $statusCounts =
-            Auth::user()
+        $statusCounts = Auth::user()
             ->orders()
             ->selectRaw(
                 'status, count(*) as total'
@@ -2170,13 +1754,10 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function orderDetail(
         string $order
     ): View {
-
-        $order =
-            Auth::user()
+        $order = Auth::user()
             ->orders()
             ->with([
                 'farmer.user',
@@ -2191,11 +1772,9 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function reviews(): View
     {
-        $reviews =
-            Auth::user()
+        $reviews = Auth::user()
             ->reviews()
             ->with([
                 'farmer.user',
@@ -2203,13 +1782,13 @@ class WebsiteController extends Controller
                 'reply',
             ])
             ->latest()
-            ->paginate(8);
+            ->paginate(8)
+            ->withQueryString();
 
-        $reviewableItems =
-            OrderItem::with('product')
+        $reviewableItems = OrderItem::with('product')
             ->whereHas(
                 'order',
-                fn($query) => $query
+                fn ($query) => $query
                     ->where(
                         'user_id',
                         Auth::id()
@@ -2221,6 +1800,7 @@ class WebsiteController extends Controller
             )
             ->whereHas('product')
             ->latest('id')
+            ->limit(200)
             ->get()
             ->unique('product_id');
 
@@ -2233,41 +1813,32 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function storeReview(
         Request $request
     ): RedirectResponse {
+        $validated = $request->validate([
+            'item_id' => [
+                'required',
+                'integer',
+            ],
 
-        $validated =
-            $request->validate([
-                'item_id' =>
-                [
-                    'required',
-                    'integer',
-                ],
+            'rating' => [
+                'required',
+                'integer',
+                'between:1,5',
+            ],
 
-                'rating' =>
-                [
-                    'required',
-                    'integer',
-                    'between:1,5',
-                ],
+            'comment' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+        ]);
 
-                'comment' =>
-                [
-                    'required',
-                    'string',
-                    'max:2000',
-                ],
-            ]);
-
-        $item =
-            OrderItem::with(
-                'product'
-            )
+        $item = OrderItem::with('product')
             ->whereHas(
                 'order',
-                fn($query) => $query
+                fn ($query) => $query
                     ->where(
                         'user_id',
                         Auth::id()
@@ -2284,24 +1855,14 @@ class WebsiteController extends Controller
 
         Review::updateOrCreate(
             [
-                'user_id' =>
-                Auth::id(),
-
-                'product_id' =>
-                $item->product_id,
+                'user_id' => Auth::id(),
+                'product_id' => $item->product_id,
             ],
             [
-                'farmer_id' =>
-                $item->product->farmer_id,
-
-                'rating' =>
-                $validated['rating'],
-
-                'comment' =>
-                $validated['comment'],
-
-                'is_active' =>
-                true,
+                'farmer_id' => $item->product->farmer_id,
+                'rating' => $validated['rating'],
+                'comment' => $validated['comment'],
+                'is_active' => true,
             ]
         );
 
@@ -2312,30 +1873,24 @@ class WebsiteController extends Controller
             );
     }
 
-
     public function saveFavorite(
         Request $request
     ): RedirectResponse {
+        $validated = $request->validate([
+            'kind' => [
+                'required',
+                'in:product,farmer',
+            ],
 
-        $validated =
-            $request->validate([
-                'kind' =>
-                [
-                    'required',
-                    'in:product,farmer',
-                ],
-
-                'id' =>
-                [
-                    'required',
-                    'integer',
-                ],
-            ]);
+            'id' => [
+                'required',
+                'integer',
+            ],
+        ]);
 
         if (
             $validated['kind'] === 'product'
         ) {
-
             Product::where(
                 'is_active',
                 true
@@ -2343,7 +1898,6 @@ class WebsiteController extends Controller
                 $validated['id']
             );
         } else {
-
             FarmerProfile::where(
                 'approval_status',
                 'approved'
@@ -2356,7 +1910,7 @@ class WebsiteController extends Controller
             ->favorites()
             ->firstOrCreate([
                 $validated['kind'] . '_id' =>
-                $validated['id'],
+                    $validated['id'],
             ]);
 
         return back()
@@ -2366,32 +1920,31 @@ class WebsiteController extends Controller
             );
     }
 
-
     public function favorites(): View
     {
-        $favorites =
-            Auth::user()
+        $favorites = Auth::user()
             ->favorites()
             ->with([
-                'farmer' => fn($query) =>
-                $query->withCount([
-                    'products as available_products_count' =>
-                    fn($products) => $products
-                        ->where(
-                            'is_active',
-                            true
-                        )
-                        ->where(
-                            'stock_quantity',
-                            '>',
-                            0
-                        ),
-                ]),
+                'farmer' => fn ($query) =>
+                    $query->withCount([
+                        'products as available_products_count' =>
+                            fn ($products) => $products
+                                ->where(
+                                    'is_active',
+                                    true
+                                )
+                                ->where(
+                                    'stock_quantity',
+                                    '>',
+                                    0
+                                ),
+                    ]),
 
                 'product.farmer',
             ])
             ->latest()
-            ->get();
+            ->paginate(12)
+            ->withQueryString();
 
         return view(
             'Website.Dashboard.favorites',
@@ -2399,11 +1952,9 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function removeFavorite(
         string $favorite
     ): RedirectResponse {
-
         Auth::user()
             ->favorites()
             ->findOrFail($favorite)
@@ -2416,16 +1967,15 @@ class WebsiteController extends Controller
             );
     }
 
-
     public function notifications(): View
     {
-        $notifications =
-            Notification::where(
-                'user_id',
-                Auth::id()
-            )
+        $notifications = Notification::where(
+            'user_id',
+            Auth::id()
+        )
             ->latest()
-            ->paginate(12);
+            ->paginate(12)
+            ->withQueryString();
 
         return view(
             'Website.Dashboard.notifications',
@@ -2433,11 +1983,9 @@ class WebsiteController extends Controller
         );
     }
 
-
     public function markNotificationRead(
         string $notification
     ): RedirectResponse {
-
         Notification::where(
             'user_id',
             Auth::id()
@@ -2450,7 +1998,6 @@ class WebsiteController extends Controller
         return back();
     }
 
-
     protected function activeStatuses(): array
     {
         return [
@@ -2459,7 +2006,6 @@ class WebsiteController extends Controller
             'ready',
         ];
     }
-
 
     protected function completedStatuses(): array
     {

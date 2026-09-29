@@ -8,15 +8,16 @@ active
     <div class="panel-header">
         <span class="panel-title"><i class="bi bi-shop-window"></i> Markets</span>
         <div class="panel-tools">
-            <form class="search-box">
-                <i class="bi bi-search"></i>
-                <input type="text" name="q" placeholder="Search…" />
-            </form>
+            <form class="search-box" method="GET" action="{{ route('markets') }}" data-ajax-filter="#markets-list">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search…" />
+                </form>
             <a class="btn-primary" href="{{ route('market_add') }}"><i class="bi bi-plus-lg"></i> Add Market</a>
         </div>
     </div>
 
-    <div class="tbl-wrap">
+    <div id="markets-list" data-ajax-list>
+<div class="tbl-wrap">
         <table class="dtable">
             <thead>
                 <tr>
@@ -30,13 +31,10 @@ active
                 </tr>
             </thead>
             <tbody>
-@php
-    $id = 0;
-@endphp
-                @foreach($markets as $market)
+@forelse($markets as $market)
                 <tr>
                     <td>
-                        <span class="id-chip">{{ ++$id }}</span>
+                        <span class="id-chip">{{ $markets->firstItem() + $loop->index }}</span>
                     </td>
 
                     <td>
@@ -52,7 +50,7 @@ active
                     </td>
 
                     <td>
-                        <span class="qty-tag">0</span>
+                        <span class="qty-tag">{{ $market->market_farmers_count }}</span>
                     </td>
 
                     <td>
@@ -63,8 +61,7 @@ active
                                 <i class="bi bi-pencil"></i>
                             </a>
 
-                            <form action="{{ route('market_delete', $market->id) }}"
-                                method="post">
+                            <form action="{{ route('market_delete', $market->id) }}" method="POST" style="display:inline" data-ajax data-ajax-remove="tbody tr" data-confirm="Delete this market?">
                                 @csrf
 
                                 <button class="btn-ghost sm danger" type="submit">
@@ -75,9 +72,15 @@ active
                         </div>
                     </td>
                 </tr>
-                @endforeach
+                @empty
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:30px;">No markets found.</td>
+                </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
+@include('Dashboard._pager', ['paginator' => $markets, 'label' => 'markets'])
+</div>
 </div>
 @endsection
