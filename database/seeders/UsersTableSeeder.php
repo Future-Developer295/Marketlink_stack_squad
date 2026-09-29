@@ -10,73 +10,38 @@ class UsersTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // updateOrInsert (keyed on the unique 'email' column) instead of a raw
-        // batch insert, so re-running `php artisan migrate --seed` on a database
-        // that was already seeded updates these rows instead of throwing a
-        // "Duplicate entry ... users_email_unique" error.
-        // Seeded demo accounts are pre-verified so they can log in without the
-        // email OTP step (email_verified_at is set in the loop below).
         $users = [
-            [
-                'name' => 'Admin User',
-                'email' => 'admin@gmail.com',
-                'password' => Hash::make('admin1234'),
-                'phone' => '03001234567',
-                'address' => 'Karachi, Pakistan',
-                'role' => 'admin',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Ali Farmer',
-                'email' => 'farmer@gmail.com',
-                'password' => Hash::make('12345678'),
-                'phone' => '03001234568',
-                'address' => 'Lahore, Pakistan',
-                'role' => 'farmer',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Ahmed Farmer',
-                'email' => 'farmer2@marketlink.com',
-                'password' => Hash::make('password123'),
-                'phone' => '03001234570',
-                'address' => 'Multan, Pakistan',
-                'role' => 'farmer',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Ahmed Customer',
-                'email' => 'customer@gmail.com',
-                'password' => Hash::make('password123'),
-                'phone' => '03001234569',
-                'address' => 'Karachi, Pakistan',
-                'role' => 'customer',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Sara Customer',
-                'email' => 'customer2@marketlink.com',
-                'password' => Hash::make('password123'),
-                'phone' => '03001234571',
-                'address' => 'Islamabad, Pakistan',
-                'role' => 'customer',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Hina Customer',
-                'email' => 'customer3@marketlink.com',
-                'password' => Hash::make('password123'),
-                'phone' => '03001234572',
-                'address' => 'Rawalpindi, Pakistan',
-                'role' => 'customer',
-                'is_active' => true,
-            ],
+            // ---------- Admin ----------
+            ['Admin User',      'admin@gmail.com',            'admin1234',   '03001234567', 'Karachi, Pakistan',              'admin'],
+
+            // ---------- Farmers ----------
+            ['Ali Farmer',      'farmer@gmail.com',           '12345678',    '03001234568', 'Lahore, Pakistan',               'farmer'],
+            ['Ahmed Farmer',    'farmer2@marketlink.com',     'password123', '03001234570', 'Multan, Pakistan',               'farmer'],
+            ['Sana',            'sanafarmer@gmail.com',       'password',    '03001234573', 'Satellite Town, Rawalpindi',     'farmer'],
+            ['Ali',             'alifarmer@gmail.com',        'password',    '03007654321', 'Gulshan-e-Iqbal, Karachi',       'farmer'],
+
+            // ---------- Customers ----------
+            ['Ahmed Customer',  'customer@gmail.com',         'password123', '03001234569', 'Karachi, Pakistan',              'customer'],
+            ['Sara Customer',   'customer2@marketlink.com',   'password123', '03001234571', 'Islamabad, Pakistan',            'customer'],
+            ['Hina Customer',   'customer3@marketlink.com',   'password123', '03001234572', 'Rawalpindi, Pakistan',           'customer'],
+            ['Usman Customer',  'customer4@marketlink.com',   'password123', '03001234574', 'Lahore, Pakistan',               'customer'],
         ];
 
-        foreach ($users as $user) {
+        foreach ($users as [$name, $email, $password, $phone, $address, $role]) {
             DB::table('users')->updateOrInsert(
-                ['email' => $user['email']],
-                $user + ['email_verified_at' => now(), 'updated_at' => now(), 'created_at' => now()]
+                ['email' => $email],
+                [
+                    'name'              => $name,
+                    'password'          => Hash::make($password),
+                    'phone'             => $phone,
+                    'address'           => $address,
+                    'role'              => $role,
+                    'is_active'         => true,
+                    'approval_status'   => 'approved',
+                    'email_verified_at' => now(),   // demo accounts skip the email OTP step
+                    'created_at'        => now(),
+                    'updated_at'        => now(),
+                ]
             );
         }
     }

@@ -6,44 +6,34 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Order matters: parents first, children after.
-     * Roles run AFTER all users exist so every user gets its Spatie role.
-     */
     public function run(): void
     {
         $this->call([
-            // 1. Core
             UsersTableSeeder::class,
-            FarmerProfileSeeder::class,
             RolesAndPermissionsSeeder::class,
 
-            // 2. Catalogue
+            FarmerProfileSeeder::class,
+
             CategoriesTableSeeder::class,
             MarketsTableSeeder::class,
             MarketFarmersTableSeeder::class,
-            ProductsTableSeeder::class,
 
-            // 3. Stock & pickup
+            ProductsTableSeeder::class,
             WeeklyStockTemplatesTableSeeder::class,
             PickupSlotsTableSeeder::class,
 
-            // 4. Orders
             OrdersTableSeeder::class,
             OrderItemsTableSeeder::class,
-            CartItemsTableSeeder::class,
 
-            // 5. Engagement
             FavoritesTableSeeder::class,
             ReviewsTableSeeder::class,
             ReviewRepliesTableSeeder::class,
 
-            // 6. System
             NotificationsTableSeeder::class,
             ReportsTableSeeder::class,
+
             AnnouncementsTableSeeder::class,
             AnnouncementReadsTableSeeder::class,
-            ContactMessagesTableSeeder::class,
         ]);
     }
 }
