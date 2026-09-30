@@ -7,14 +7,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Makes every existing redirect-style controller action AJAX friendly.
- *
- * When a request asks for JSON (fetch with "Accept: application/json") and the
- * controller answers with a redirect()->back()->with('success', ...), the redirect
- * is turned into a small JSON payload instead. Normal (non-AJAX) requests are
- * not touched, so every form keeps working without JavaScript.
- */
 class AjaxRedirectToJson
 {
     public function handle(Request $request, Closure $next): Response

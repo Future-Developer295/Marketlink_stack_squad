@@ -12,13 +12,6 @@ class ResetUserPassword implements ResetsUserPasswords
 {
     use PasswordValidationRules;
 
-    /**
-     * Validate and reset the user's forgotten password.
-     *
-     * @param  array<string, string>  $input
-     *
-     * @throws ValidationException
-     */
     public function reset(User $user, array $input): void
     {
         Validator::make($input, [
@@ -29,7 +22,6 @@ class ResetUserPassword implements ResetsUserPasswords
             'password' => Hash::make($input['password']),
         ])->save();
 
-        // The reset link was delivered to their inbox, so the email is proven.
         if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }

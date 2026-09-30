@@ -1296,14 +1296,6 @@
     padding: 6px 8px;
 }
 
-/* ==========================================================
-   MARKETS PAGE (image-free redesign)
-   Append to the BOTTOM of discovery.css.
-   Everything is scoped to .markets-page so the farmers page,
-   market detail page and farmer profile are not affected.
-   ========================================================== */
-
-/* ---------- Hero ---------- */
 .markets-page .markets-hero {
     display: grid;
     grid-template-columns: 1.1fr 1fr;
@@ -1357,7 +1349,6 @@
     transform: translate(3px, -3px);
 }
 
-/* Market board (replaces the illustrated landscape) */
 .markets-page .markets-board {
     position: relative;
     isolation: isolate;
@@ -1433,7 +1424,6 @@
     z-index: -1;
 }
 
-/* ---------- Market cards (no art, typographic header) ---------- */
 .markets-page .markets-card-head {
     position: relative;
     display: flex;
@@ -1511,7 +1501,6 @@
     letter-spacing: -0.035em;
 }
 
-/* ---------- Responsive ---------- */
 @media (max-width: 991px) {
     .markets-page .markets-hero {
         gap: 34px;

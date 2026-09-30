@@ -11,7 +11,6 @@ class WeeklyStockTemplatesTableSeeder extends Seeder
     {
         $days = ['Mon', 'Wed', 'Fri'];
 
-        // Only products that belong to the same farmer (ERD rule).
         foreach (DB::table('farmer_profile')->orderBy('id')->pluck('id') as $farmerId) {
             $products = DB::table('products')
                 ->where('farmer_id', $farmerId)

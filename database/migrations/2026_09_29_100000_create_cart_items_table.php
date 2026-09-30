@@ -5,9 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    /**
-     * Saved basket per customer, so the cart survives logout / login.
-     */
     public function up(): void
     {
         Schema::create('cart_items', function (Blueprint $table) {

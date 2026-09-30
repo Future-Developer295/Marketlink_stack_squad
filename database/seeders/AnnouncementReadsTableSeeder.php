@@ -9,7 +9,6 @@ class AnnouncementReadsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // (announcement_id, user_id) is UNIQUE.
         $reads = [
             'MarketLink New Update'    => ['customer@gmail.com', 'customer2@marketlink.com', 'farmer@gmail.com'],
             'Farmers Market Schedule'  => ['customer2@marketlink.com', 'customer3@marketlink.com'],

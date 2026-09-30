@@ -9,7 +9,6 @@ class CartItemsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // Sample carts: customer email => [[product id offset, qty], ...]
         $carts = [
             'customer@gmail.com'       => [[0, 2], [4, 1]],
             'customer3@marketlink.com' => [[7, 3]],

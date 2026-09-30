@@ -119,7 +119,6 @@
             </div>
 
 
-            {{-- Description --}}
             <div class="field">
 
                 <label class="field-label">
@@ -137,7 +136,6 @@
             </div>
 
 
-            {{-- Price, Stock & Unit --}}
             <div class="grid-3">
 
                 <div class="field">
@@ -199,7 +197,6 @@
             </div>
 
 
-            {{-- Availability --}}
             <div class="field">
 
                 <label class="field-label">

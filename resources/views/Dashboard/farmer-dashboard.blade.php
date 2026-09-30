@@ -64,7 +64,6 @@ active
 
     <div class="stats-row">
 
-        {{-- My Products --}}
         <div class="stat-card sc-indigo">
             <div class="stat-icon-wrap">
                 <i class="bi bi-box-seam-fill"></i>
@@ -80,7 +79,6 @@ active
         </div>
 
 
-        {{-- Markets Joined --}}
         <div class="stat-card sc-emerald">
             <div class="stat-icon-wrap">
                 <i class="bi bi-shop-window"></i>
@@ -96,7 +94,6 @@ active
         </div>
 
 
-        {{-- Pending Orders --}}
         <div class="stat-card sc-amber">
             <div class="stat-icon-wrap">
                 <i class="bi bi-cart-check-fill"></i>
@@ -112,7 +109,6 @@ active
         </div>
 
 
-        {{-- Open Pickup Slots --}}
         <div class="stat-card sc-rose">
             <div class="stat-icon-wrap">
                 <i class="bi bi-clock-history"></i>
@@ -128,7 +124,6 @@ active
         </div>
 
 
-        {{-- Average Rating --}}
         <div class="stat-card sc-purple">
             <div class="stat-icon-wrap">
                 <i class="bi bi-star-fill"></i>
@@ -149,7 +144,6 @@ active
     </div>
 
 
-    {{-- Charts row 1: Revenue trend + Order status --}}
     <div class="chart-grid g-2-1">
 
         <div class="chart-panel">
@@ -182,7 +176,6 @@ active
 
     </div>
 
-    {{-- Charts row 2: Top products + Average rating gauge --}}
     <div class="chart-grid g-1-1">
 
         <div class="chart-panel">
@@ -218,7 +211,6 @@ active
 
     </div>
 
-    {{-- Recent Orders --}}
     <div class="panel">
 
         <div class="panel-header">
@@ -327,7 +319,6 @@ document.addEventListener('DOMContentLoaded', function () {
     Chart.defaults.font.family = "'Figtree','Plus Jakarta Sans',sans-serif";
     Chart.defaults.color = cMuted;
 
-    // Revenue & Orders trend
     var revenueEl = document.getElementById('revenueTrendChart');
     if (revenueEl) {
         new Chart(revenueEl, {
@@ -373,7 +364,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Order status donut
     var statusEl = document.getElementById('orderStatusChart');
     if (statusEl) {
         var statusLabels = @json($orderStatusLabels);
@@ -404,7 +394,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Top products bar
     var topProductsEl = document.getElementById('topProductsChart');
     if (topProductsEl) {
         new Chart(topProductsEl, {
@@ -432,7 +421,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Average rating gauge
     var gaugeEl = document.getElementById('ratingGaugeChart');
     if (gaugeEl) {
         var rating = {{ (float) $averageRating }};

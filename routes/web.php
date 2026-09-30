@@ -15,6 +15,14 @@ Route::redirect('/password/reset', '/forgot-password');
 Route::get('/farmer/pending', [WebsiteController::class, 'farmerPending'])
     ->middleware('auth')
     ->name('farmer_pending');
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
+    Route::get('/dashboard/my-profile', [DashboardController::class, 'myProfile'])
+        ->name('my_profile')
+        ->middleware('permission:view profile');
+    Route::post('/dashboard/my-profile/update', [DashboardController::class, 'myProfileUpdate'])
+        ->name('my_profile_update')
+        ->middleware('permission:edit profile');
+});
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'farmer.approved'])->group(function () {
 
     Route::get('/dashboard/farmer', [DashboardController::class, 'farmerDashboard'])
@@ -24,13 +32,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard'])
         ->name('admin_dashboard')
         ->middleware('permission:view admin dashboard');
-
-    Route::get('/dashboard/my-profile', [DashboardController::class, 'myProfile'])
-        ->name('my_profile')
-        ->middleware('permission:view profile');
-    Route::post('/dashboard/my-profile/update', [DashboardController::class, 'myProfileUpdate'])
-        ->name('my_profile_update')
-        ->middleware('permission:edit profile');
 
     Route::get('/dashboard/my-markets', [DashboardController::class, 'myMarkets'])
         ->name('my_markets')
@@ -424,6 +425,4 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:60,1');
     });
 });
-
-// routes/web.php
 

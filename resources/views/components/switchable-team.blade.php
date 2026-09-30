@@ -4,7 +4,6 @@
     @method('PUT')
     @csrf
 
-    <!-- Hidden Team ID -->
     <input type="hidden" name="team_id" value="{{ $team->id }}">
 
     <x-dynamic-component :component="$component" href="#" x-on:click.prevent="$root.submit();">

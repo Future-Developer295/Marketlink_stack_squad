@@ -27,7 +27,6 @@
                     @php
                         $id = 0;
                     @endphp
-                    {{-- @foreach ($categories as $category) --}}
                         <tr>
 
                             <td><span class='id-chip'>1</span></td>
@@ -35,18 +34,15 @@
                             <td><span class='qty-tag'>1</span></td>
                             <td>
                                 <div class='action-wrap'>
-                                   {{-- <form action="{{route('category_edit',['id'=>$category->id])}}" method="GET"> --}}
                                      <button type="submit" class='btn-ghost sm'><i
                                             class='bi bi-pencil'></i></button>
                                    </form>
-                                   {{-- <form action="{{route('category_delete',['id'=>$category->id])}}" method="Post"> --}}
                                      <button type="submit" class='btn-ghost sm'><i
                                             class='bi bi-trash'></i></button>
                                    </form>
                                 </div>
                             </td>
                         </tr>
-                    {{-- @endforeach --}}
 
 
 
