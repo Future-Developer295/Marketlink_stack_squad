@@ -51,7 +51,6 @@
                     <button type="submit" class="customer-button"><i class="fa-solid fa-check"></i> Save Changes</button>
                 </form></div>
 <script>
-    // After an AJAX save, never leave the password fields filled in.
     document.getElementById('profile-form')?.addEventListener('ml:ajax:success', function (event) {
         event.currentTarget.querySelectorAll('input[type=password]').forEach(function (input) { input.value = ''; });
     });

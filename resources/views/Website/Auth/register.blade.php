@@ -18,12 +18,6 @@
 
     <div class="auth-wrap is-wide">
         <div class="auth-card is-wide">
-{{-- =====================================================================
-     Replace the existing <aside class="auth-visual"> ... </aside> block
-     in register.blade.php with this. It adds a market-stall illustration
-     (matching the Markets page hero art) into the empty space between the
-     leaf pattern and the "A little local..." copy.
-     ===================================================================== --}}
 <aside class="auth-visual">
     <a href="{{ url('/') }}" class="auth-back" aria-label="Back to home">
         <i class="fa-solid fa-arrow-left"></i>
@@ -39,18 +33,14 @@
         <i class="fa-solid fa-leaf l6"></i>
     </div>
 
-    {{-- Market-stall illustration filling the empty middle space --}}
     <div class="auth-stall-art" aria-hidden="true">
         <svg viewBox="0 0 300 240" xmlns="http://www.w3.org/2000/svg">
-            <!-- soft sun glow -->
             <circle cx="248" cy="42" r="34" fill="#ffffff14"/>
             <circle cx="248" cy="42" r="20" fill="#dcecac33"/>
 
-            <!-- posts -->
             <rect x="58" y="100" width="7" height="118" rx="3" fill="#cdbb8a"/>
             <rect x="235" y="100" width="7" height="118" rx="3" fill="#cdbb8a"/>
 
-            <!-- awning -->
             <path d="M34 116 L62 66 H238 L266 116 Z" fill="#dcecac"/>
             <path d="M62 66 H238 L266 116 H34 Z" fill="none"/>
             <g fill="#40572c">
@@ -60,33 +50,27 @@
             </g>
             <rect x="60" y="60" width="180" height="7" rx="3.5" fill="#1c2c17"/>
 
-            <!-- hanging sign -->
             <line x1="130" y1="132" x2="130" y2="150" stroke="#cdbb8a" stroke-width="2"/>
             <line x1="172" y1="132" x2="172" y2="150" stroke="#cdbb8a" stroke-width="2"/>
             <rect x="112" y="147" width="78" height="26" rx="8" fill="#fbfaf1"/>
             <text x="151" y="164" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="11" fill="#40572c">Fresh today</text>
 
-            <!-- counter -->
             <rect x="46" y="196" width="208" height="30" rx="6" fill="#c9b481"/>
             <rect x="46" y="196" width="208" height="8" rx="4" fill="#dcecac"/>
 
-            <!-- carrot -->
             <g>
                 <path d="M92 196 L100 170 L108 196 Z" fill="#e2924f"/>
                 <path d="M100 170 l-4 -9 M100 170 l4 -10 M100 170 l8 -6" stroke="#8fae3f" stroke-width="3" stroke-linecap="round"/>
             </g>
-            <!-- apple -->
             <g>
                 <circle cx="150" cy="185" r="15" fill="#c2503a"/>
                 <path d="M150 170 l4 -7" stroke="#6b4a32" stroke-width="2.5" stroke-linecap="round"/>
                 <path d="M152 166 C160 162 165 168 160 173" fill="none" stroke="#8fae3f" stroke-width="3" stroke-linecap="round"/>
             </g>
-            <!-- seedling -->
             <g>
                 <path d="M204 196 C204 178 218 172 222 160 C214 168 202 168 200 180 C198 168 186 166 180 156 C182 172 194 178 200 196Z" fill="#8fae3f"/>
             </g>
 
-            <!-- ground shadow -->
             <ellipse cx="150" cy="230" rx="118" ry="8" fill="#00000022"/>
         </svg>
     </div>

@@ -17,7 +17,6 @@ class ReviewRepliesTableSeeder extends Seeder
             'Sorry for the delay, we will improve our pickup timing.',
         ];
 
-        // One reply per review (review_id is UNIQUE). Flagged reviews get no reply.
         $reviews = DB::table('reviews')->where('is_flagged', false)->orderBy('id')->pluck('id');
 
         foreach ($reviews as $i => $reviewId) {

@@ -18,8 +18,8 @@
         rel="stylesheet" />
 
     <link rel="stylesheet" href="{{ asset('Assets/Dashboard_Asset/css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('Assets/Dashboard_Asset/css/responsive.css') }}">
     <link rel="stylesheet" href="{{ asset('Assets/Dashboard_Asset/css/emerald-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('Assets/Dashboard_Asset/css/responsive.css') }}">
 
     <link rel="stylesheet" href="{{ asset('Assets/Shared/ajax.css') }}">
 
@@ -32,7 +32,6 @@
 
         <aside class="sidebar" id="sidebar">
 
-            {{-- BRAND --}}
             <div class="sidebar-brand">
 
                 <div class="brand-mark">
@@ -48,13 +47,10 @@
             </div>
 
 
-            {{-- SIDEBAR NAV --}}
             <nav class="sidebar-nav">
 
-                {{-- MAIN --}}
                 <div class="nav-group-label">MAIN</div>
 
-                {{-- FARMER DASHBOARD --}}
                 @can('view dashboard')
                     <a class="nav-link-custom @yield('nav_dashboard_farmer')" href="{{ route('farmer_dashboard') }}">
                         <i class="bi bi-grid-1x2-fill"></i>
@@ -63,7 +59,6 @@
                 @endcan
 
 
-                {{-- ADMIN DASHBOARD --}}
                 @can('view admin dashboard')
                     <a class="nav-link-custom @yield('nav_dashboard_admin')" href="{{ route('admin_dashboard') }}">
                         <i class="bi bi-grid-3x3-gap-fill"></i>
@@ -72,7 +67,6 @@
                 @endcan
 
 
-                {{-- ACCOUNT --}}
                 @can('view profile')
                     <div class="nav-group-label">ACCOUNT</div>
 
@@ -83,7 +77,6 @@
                 @endcan
 
 
-                {{-- MY MARKETS - FARMER ONLY --}}
                 @can('join markets')
 
                     <details class="nav-dropdown">
@@ -117,13 +110,11 @@
                 @endcan
 
 
-                {{-- CATALOG --}}
                 @canany(['view categories', 'add categories', 'view products', 'add products'])
                     <div class="nav-group-label">CATALOG</div>
                 @endcanany
 
 
-                {{-- CATEGORIES --}}
                 @canany(['view categories', 'add categories'])
 
                     <details class="nav-dropdown">
@@ -157,7 +148,6 @@
                 @endcanany
 
 
-                {{-- PRODUCTS --}}
                 @canany(['view products', 'add products'])
 
                     <details class="nav-dropdown">
@@ -191,14 +181,12 @@
                 @endcanany
 
 
-                {{-- OPERATIONS --}}
                 @canany(['view weekly stock', 'add weekly stock', 'view orders', 'view pickup slots', 'add pickup
                     slots', 'view markets', 'add markets'])
                     <div class="nav-group-label">OPERATIONS</div>
                 @endcanany
 
 
-                {{-- WEEKLY STOCK --}}
                 @canany(['view weekly stock', 'add weekly stock'])
 
                     <details class="nav-dropdown">
@@ -232,7 +220,6 @@
                 @endcanany
 
 
-                {{-- ORDERS --}}
                 @can('view orders')
                     <a class="nav-link-custom @yield('nav_orders')" href="{{ route('orders') }}">
                         <i class="bi bi-cart-check-fill"></i>
@@ -241,7 +228,6 @@
                 @endcan
 
 
-                {{-- PICKUP SLOTS --}}
                 @canany(['view pickup slots', 'add pickup slots'])
 
                     <details class="nav-dropdown">
@@ -275,7 +261,6 @@
                 @endcanany
 
 
-                {{-- MARKETS - ADMIN --}}
                 @canany(['add markets', 'edit markets', 'delete markets'])
 
                     <details class="nav-dropdown">
@@ -309,14 +294,12 @@
                 @endcanany
 
 
-                {{-- PEOPLE --}}
                 @canany(['view users', 'add users', 'view roles', 'add roles', 'view permissions', 'add permissions',
                     'view farmers', 'view customers'])
                     <div class="nav-group-label">PEOPLE</div>
                 @endcanany
 
 
-                {{-- USERS --}}
                 @canany(['view users', 'add users'])
 
                     <details class="nav-dropdown">
@@ -350,7 +333,6 @@
                 @endcanany
 
 
-                {{-- ROLES --}}
                 @canany(['view roles', 'add roles'])
 
                     <details class="nav-dropdown">
@@ -384,7 +366,6 @@
                 @endcanany
 
 
-                {{-- PERMISSIONS --}}
                 @canany(['view permissions', 'add permissions'])
 
                     <details class="nav-dropdown">
@@ -418,7 +399,6 @@
                 @endcanany
 
 
-                {{-- FARMERS --}}
                 @can('view farmers')
                     <a class="nav-link-custom @yield('nav_farmers')" href="{{ route('farmers') }}">
                         <i class="bi bi-person-workspace"></i>
@@ -427,7 +407,6 @@
                 @endcan
 
 
-                {{-- CUSTOMERS --}}
                 @can('view customers')
                     <a class="nav-link-custom @yield('nav_customers')" href="{{ route('customers') }}">
                         <i class="bi bi-person-lines-fill"></i>
@@ -436,13 +415,11 @@
                 @endcan
 
 
-                {{-- ENGAGEMENT --}}
                 @canany(['view reviews', 'view contact messages', 'view announcements', 'add announcements', 'view reports'])
                     <div class="nav-group-label">ENGAGEMENT</div>
                 @endcanany
 
 
-                {{-- REVIEWS --}}
                 @can('view reviews')
                     <a class="nav-link-custom @yield('nav_reviews')" href="{{ route('reviews') }}">
                         <i class="bi bi-star-fill"></i>
@@ -451,7 +428,6 @@
                 @endcan
 
 
-                {{-- CONTACT MESSAGES --}}
                 @can('view contact messages')
                     @php($unreadContact = rescue(fn () => \App\Models\ContactMessage::whereNull('read_at')->count(), 0, false))
                     <a class="nav-link-custom @yield('nav_contact_messages')" href="{{ route('contact_messages') }}">
@@ -464,7 +440,6 @@
                 @endcan
 
 
-                {{-- ANNOUNCEMENTS --}}
                 @canany(['view announcements', 'add announcements'])
 
                     <details class="nav-dropdown">
@@ -498,7 +473,6 @@
                 @endcanany
 
 
-                {{-- REPORTS --}}
                 @can('view reports')
                     <a class="nav-link-custom @yield('nav_reports')" href="{{ route('reports') }}">
                         <i class="bi bi-bar-chart-line-fill"></i>
@@ -509,14 +483,11 @@
             </nav>
 
 
-            {{-- SIDEBAR FOOTER --}}
             <div class="sidebar-footer">
 
                 <div class="user-row">
 
-                    <div class="user-avatar">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                    </div>
+                    <div class="user-avatar">@include('Dashboard._avatar')</div>
 
                     <div class="user-meta">
 
@@ -536,10 +507,8 @@
         <div class="sidebar-overlay"></div>
 
 
-        {{-- CONTENT --}}
         <div class="content">
 
-            {{-- TOPBAR --}}
             <header class="topbar header">
 
                 <div class="topbar-left">
@@ -580,11 +549,7 @@
 
                     <div class="user-dropdown">
 
-                        <button class="user-avatar" type="button" onclick="toggleUserMenu()">
-
-                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-
-                        </button>
+                        <button class="user-avatar" type="button" onclick="toggleUserMenu()">@include('Dashboard._avatar')</button>
 
 
                         <div class="user-menu" id="userMenu">
@@ -623,7 +588,6 @@
             </header>
 
 
-            {{-- PAGE BODY --}}
             <div class="page-body">
 
                 @yield('body')
@@ -633,8 +597,8 @@
         </div>
 
 
-        {{-- JS --}}
         <script src="{{ asset('Assets/Dashboard_Asset/js/theme-change.js') }}"></script>
+        <script src="{{ asset('Assets/Dashboard_Asset/js/responsive.js') }}"></script>
         <script src="{{ asset('Assets/Shared/ajax.js') }}"></script>
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>

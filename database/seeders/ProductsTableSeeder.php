@@ -17,8 +17,6 @@ class ProductsTableSeeder extends Seeder
 
         $adminId = DB::table('users')->where('role', 'admin')->value('id');
 
-        // Original list is written for 2 farmers ($farmers[0] / $farmers[1]);
-        // we re-map them so all farmers get products.
         $farmerCount = $farmers->count();
         $pick = fn (int $i) => $farmers[$i % $farmerCount];
 

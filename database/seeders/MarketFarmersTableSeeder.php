@@ -9,8 +9,6 @@ class MarketFarmersTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // farmer email => markets they sell at
-        // NOTE: market_farmers.farmer_id references USERS.id (not farmer_profile.id)
         $map = [
             'farmer@gmail.com'       => ['Lahore Farmers Market'],
             'farmer2@marketlink.com' => ['Multan Fresh Market', 'Lahore Farmers Market'],

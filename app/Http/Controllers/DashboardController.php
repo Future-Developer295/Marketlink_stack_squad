@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\FarmerApprovedMail;
 use App\Mail\FarmerRejectedMail;
+use App\Mail\FarmerMarketMembershipMail;
 use App\Models\ContactMessage;
 use App\Models\Market;
 use App\Models\MarketFarmer;
@@ -31,13 +32,8 @@ use App\Services\SafeMail;
 
 class DashboardController extends Controller
 {
-    /** Rows per page on every dashboard list. */
     protected int $perPage = 15;
 
-    /**
-     * The trimmed ?q= search term, or null when empty. Capped so a huge string
-     * can never be turned into an expensive LIKE.
-     */
     protected function searchTerm(Request $request): ?string
     {
         $term = trim((string) $request->query('q', ''));
@@ -45,12 +41,6 @@ class DashboardController extends Controller
         return $term === '' ? null : mb_substr($term, 0, 100);
     }
 
-    /**
-     * Revenue and order count for each of the last 7 days, using ONE grouped
-     * query instead of loading every order of every day.
-     *
-     * @return array{0: array<int,string>, 1: array<int,float>, 2: array<int,int>} labels, revenue, orders
-     */
     protected function lastSevenDaysTrend($orderQuery): array
     {
         $rows = $orderQuery
@@ -77,12 +67,6 @@ class DashboardController extends Controller
         return [$labels, $revenue, $orders];
     }
 
-    /**
-     * Email a farmer that the admin has approved (activated) their account.
-     * Returns the flash [type, message] so the caller can show whether the email went out.
-     *
-     * @return array{0: string, 1: string}
-     */
     protected function notifyFarmerApproved(User $user): array
     {
         $sent = SafeMail::send($user->email, new FarmerApprovedMail($user));
@@ -93,9 +77,31 @@ class DashboardController extends Controller
     }
 
     /**
-     * Delete a model but answer with a friendly message (instead of a 500)
-     * when something else still depends on it.
+     * Email the farmer and every admin when a farmer joins or leaves a market.
+     * Failures are logged by SafeMail and never break the join/leave action.
      */
+    protected function notifyMarketMembership(User $farmer, Market $market, string $action): bool
+    {
+        $farmerSent = SafeMail::send(
+            $farmer->email,
+            new FarmerMarketMembershipMail($farmer, $market, $action, false)
+        );
+
+        $adminEmails = User::where('role', 'admin')
+            ->whereNotNull('email')
+            ->pluck('email')
+            ->unique();
+
+        foreach ($adminEmails as $adminEmail) {
+            SafeMail::send(
+                $adminEmail,
+                new FarmerMarketMembershipMail($farmer, $market, $action, true)
+            );
+        }
+
+        return $farmerSent;
+    }
+
     protected function deleteModel($model, string $label, string $route)
     {
         try {
@@ -180,11 +186,9 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
-            // Revenue & orders trend for the last 7 days (one grouped query)
             [$revenueTrendLabels, $revenueTrendData, $ordersTrendData] =
                 $this->lastSevenDaysTrend(Order::where('farmer_id', $farmer->id));
 
-            // Order status breakdown
             $statusKeys = ['pending', 'confirmed', 'ready', 'picked_up', 'cancelled'];
             $statusCounts = Order::where('farmer_id', $farmer->id)
                 ->selectRaw('status, count(*) as total')
@@ -196,7 +200,6 @@ class DashboardController extends Controller
                 $statusKeys
             );
 
-            // Top products by units sold
             $topProducts = OrderItem::select('product_id')
                 ->selectRaw('SUM(quantity) as units_sold')
                 ->whereHas('order', function ($query) use ($farmer) {
@@ -448,11 +451,9 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Platform-wide revenue & orders trend for the last 7 days
         [$revenueTrendLabels, $revenueTrendData, $ordersTrendData] =
             $this->lastSevenDaysTrend(Order::query());
 
-        // Platform-wide order status breakdown
         $orderStatusLabels = ['Pending', 'Confirmed', 'Ready', 'Picked Up', 'Cancelled'];
         $statusKeys = ['pending', 'confirmed', 'ready', 'picked_up', 'cancelled'];
         $statusCounts = Order::selectRaw('status, count(*) as total')
@@ -464,7 +465,6 @@ class DashboardController extends Controller
             $statusKeys
         );
 
-        // Top markets by number of active farmers
         $topMarkets = Market::withCount(['marketFarmers' => function ($query) {
             $query->where('is_active', true);
         }])
@@ -475,7 +475,6 @@ class DashboardController extends Controller
         $topMarketLabels = $topMarkets->pluck('name')->values()->all();
         $topMarketData = $topMarkets->pluck('market_farmers_count')->values()->all();
 
-        // Users by role
         $userRoleLabels = ['Customer', 'Farmer', 'Admin'];
         $roleCounts = User::selectRaw('role, count(*) as total')->groupBy('role')->pluck('total', 'role');
         $userRoleData = [
@@ -484,7 +483,6 @@ class DashboardController extends Controller
             (int) ($roleCounts['admin'] ?? 0),
         ];
 
-        // Farmer approval rate
         $totalFarmerProfiles = FarmerProfile::count();
         $approvedFarmers = FarmerProfile::where('approval_status', 'approved')->count();
         $approvalRate = $totalFarmerProfiles > 0
@@ -520,7 +518,13 @@ class DashboardController extends Controller
 
     public function myProfileUpdate(Request $request)
     {
-        $farmer = FarmerProfile::where('user_id', auth()->id())->firstOrFail();
+        $user = auth()->user();
+
+        $farmer = FarmerProfile::firstOrNew(['user_id' => $user->id]);
+
+        if (! $farmer->exists) {
+            $farmer->approval_status = $user->is_active ? 'approved' : 'pending';
+        }
 
         $request->validate([
             'stall_name' => 'required|string|max:255',
@@ -596,34 +600,71 @@ class DashboardController extends Controller
             'market_id' => 'required|exists:markets,id',
         ]);
 
-        $marketFarmer = MarketFarmer::where('market_id', $request->market_id)
+        $market = Market::findOrFail($request->market_id);
+
+        $marketFarmer = MarketFarmer::where('market_id', $market->id)
             ->where('farmer_id', auth()->id())
             ->first();
 
+        $newlyJoined = false;
+
         if ($marketFarmer) {
+            $newlyJoined = ! $marketFarmer->is_active;
+
             $marketFarmer->update([
                 'is_active' => true,
             ]);
         } else {
             MarketFarmer::create([
-                'market_id' => $request->market_id,
+                'market_id' => $market->id,
                 'farmer_id' => auth()->id(),
                 'is_active' => true,
             ]);
+
+            $newlyJoined = true;
+        }
+
+        if ($newlyJoined) {
+            $sent = $this->notifyMarketMembership(auth()->user(), $market, 'joined');
+
+            return redirect()
+                ->route('my_markets')
+                ->with(
+                    $sent ? 'success' : 'warning',
+                    $sent
+                        ? 'Market joined successfully. A confirmation email has been sent.'
+                        : 'Market joined successfully, but the confirmation email could not be sent.'
+                );
         }
 
         return redirect()
             ->route('my_markets')
-            ->with('success', 'Market joined successfully.');
+            ->with('success', 'You are already a member of this market.');
     }
 
     public function myMarketsLeave($id)
     {
-        $marketFarmer = MarketFarmer::where('market_id', $id)
+        $marketFarmer = MarketFarmer::with('market')
+            ->where('market_id', $id)
             ->where('farmer_id', auth()->id())
             ->firstOrFail();
 
+        $market = $marketFarmer->market;
+
         $marketFarmer->delete();
+
+        if ($market) {
+            $sent = $this->notifyMarketMembership(auth()->user(), $market, 'left');
+
+            return redirect()
+                ->route('my_markets')
+                ->with(
+                    $sent ? 'success' : 'warning',
+                    $sent
+                        ? 'Market left successfully. A confirmation email has been sent.'
+                        : 'Market left successfully, but the confirmation email could not be sent.'
+                );
+        }
 
         return redirect()
             ->route('my_markets')
@@ -986,7 +1027,6 @@ class DashboardController extends Controller
             $farmer = FarmerProfile::where('user_id', auth()->id())->first();
 
             if (!$farmer) {
-                // No farmer profile yet: an always-empty (but real) paginator.
                 $query->whereRaw('1 = 0');
             } else {
                 $query->where('farmer_id', $farmer->id);
@@ -1245,7 +1285,10 @@ class DashboardController extends Controller
 
         $user->save();
 
-        // Inactive -> active for a farmer = the admin just approved them: tell them by email.
+        if ($user->role === 'farmer' && $user->is_active) {
+            $this->syncFarmerProfileStatus($user, 'approved');
+        }
+
         if ($user->role === 'farmer' && ! $wasActive && $user->is_active) {
             [$type, $message] = $this->notifyFarmerApproved($user);
 
@@ -1255,9 +1298,15 @@ class DashboardController extends Controller
         return redirect()->route('users')->with('success', 'User updated successfully.');
     }
 
-    /**
-     * One-click approval of a pending farmer from the Users list.
-     */
+    private function syncFarmerProfileStatus(User $user, string $status): void
+    {
+        FarmerProfile::where('user_id', $user->id)->update([
+            'approval_status' => $status,
+            'approved_by' => $status === 'approved' ? auth()->id() : null,
+            'approved_at' => $status === 'approved' ? now() : null,
+        ]);
+    }
+
     public function farmerApprove($id)
     {
         $user = User::where('role', 'farmer')->findOrFail($id);
@@ -1271,14 +1320,13 @@ class DashboardController extends Controller
         $user->rejection_reason = null;
         $user->save();
 
+        $this->syncFarmerProfileStatus($user, 'approved');
+
         [$type, $message] = $this->notifyFarmerApproved($user);
 
         return redirect()->route('users')->with($type, $message);
     }
 
-    /**
-     * Reject a pending farmer. The admin's comment is stored and emailed.
-     */
     public function farmerReject(Request $request, $id)
     {
         $request->validate([
@@ -1291,6 +1339,8 @@ class DashboardController extends Controller
         $user->approval_status = 'rejected';
         $user->rejection_reason = $request->rejection_reason;
         $user->save();
+
+        $this->syncFarmerProfileStatus($user, 'rejected');
 
         $sent = SafeMail::send($user->email, new FarmerRejectedMail($user, $request->rejection_reason));
 
@@ -1506,24 +1556,24 @@ class DashboardController extends Controller
 
             $data = Order::with(['user', 'farmer', 'pickupSlot'])
                 ->whereBetween('order_date', [
-                    $report->date_from . ' 00:00:00',
-                    $report->date_to . ' 23:59:59'
+                    $report->date_from->copy()->startOfDay(),
+                    $report->date_to->copy()->endOfDay()
                 ])
                 ->get();
         } elseif ($report->report_type == 'farmers') {
 
             $data = FarmerProfile::with('user')
                 ->whereBetween('created_at', [
-                    $report->date_from . ' 00:00:00',
-                    $report->date_to . ' 23:59:59'
+                    $report->date_from->copy()->startOfDay(),
+                    $report->date_to->copy()->endOfDay()
                 ])
                 ->get();
         } else {
 
             $data = Product::with(['farmer', 'category'])
                 ->whereBetween('created_at', [
-                    $report->date_from . ' 00:00:00',
-                    $report->date_to . ' 23:59:59'
+                    $report->date_from->copy()->startOfDay(),
+                    $report->date_to->copy()->endOfDay()
                 ])
                 ->get();
         }
@@ -1646,10 +1696,34 @@ class DashboardController extends Controller
             return $this->reportsExportXlsx($sections, $filters);
         }
 
+        $reportQuery = Report::orderBy('id', 'asc');
+
+        if ($type !== 'all') {
+            $reportQuery->where('report_type', $type);
+        }
+
+        if ($dateFrom) {
+            $reportQuery->whereDate('date_to', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $reportQuery->whereDate('date_from', '<=', $dateTo);
+        }
+
+        $groups = $reportQuery->get()->groupBy('report_type');
+
+        $labels = [
+            'sales' => 'Sales Summary',
+            'orders' => 'Orders',
+            'farmers' => 'Farmer Activity',
+            'products' => 'Product Inventory',
+        ];
+
         $pdf = Pdf::loadView(
             'Dashboard.Reports.reports-export-pdf',
             [
-                'sections' => $sections,
+                'groups' => $groups,
+                'labels' => $labels,
                 'filters' => $filters,
             ]
         );
@@ -2046,10 +2120,6 @@ Target="xl/workbook.xml"/>
     {
         return $this->deleteModel(Announcement::findOrFail($id), 'announcement', 'announcements');
     }
-
-    /* ---------------------------------------------------------------
-     | Contact form inbox (messages sent from the public Contact page)
-     * ------------------------------------------------------------- */
 
     public function contactMessages(Request $request)
     {

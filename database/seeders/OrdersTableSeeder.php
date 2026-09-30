@@ -7,11 +7,6 @@ use Illuminate\Support\Facades\DB;
 
 class OrdersTableSeeder extends Seeder
 {
-    /**
-     * Sample orders shared with OrderItemsTableSeeder.
-     * items = [[product index of that farmer (0 = first product), quantity], ...]
-     * slot  = day offset of the pickup slot (must exist in PickupSlotsTableSeeder)
-     */
     public static function specs(): array
     {
         return [
@@ -25,7 +20,6 @@ class OrdersTableSeeder extends Seeder
         ];
     }
 
-    /** Resolve [$product, $qty] rows for a spec, using only that farmer's own products. */
     public static function resolveItems(array $spec, int $farmerProfileId): array
     {
         $rows = [];
@@ -53,7 +47,6 @@ class OrdersTableSeeder extends Seeder
                 continue;
             }
 
-            // one order = one customer + one farmer + one pickup slot
             $slotId = DB::table('pickup_slots')
                 ->where('farmer_id', $farmerId)
                 ->where('date', now()->addDays($spec['slot'])->toDateString())
@@ -69,7 +62,6 @@ class OrdersTableSeeder extends Seeder
                 $total += $product->price * $qty;
             }
 
-            // tag is stored inside notes so the seeder can be re-run safely
             $notes = '[' . $spec['tag'] . '] ' . ($spec['note'] ?? '');
 
             DB::table('orders')->updateOrInsert(

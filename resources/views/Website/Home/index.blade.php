@@ -47,7 +47,6 @@
           </g>
         </svg>
 
-        <!-- LAYER 2: REAL FRUITS -->
         <div class="fruits-container">
           <img src="https://pngimg.com/uploads/apple/apple_PNG12405.png" class="produce-item f-apple" id="prod1" alt="Apple" />
           <img src="https://pngimg.com/uploads/orange/orange_PNG780.png" class="produce-item f-orange" id="prod2" alt="Orange" />
@@ -55,7 +54,6 @@
           <img src="https://pngimg.com/uploads/strawberry/strawberry_PNG2596.png" class="produce-item f-strawberry" id="prod4" alt="Strawberry" />
         </div>
 
-        <!-- LAYER 3: FRONT WIRE MESH -->
         <svg class="basket-svg-layer layer-front" viewBox="0 0 220 180" fill="none">
           <path d="M60 52 L195 58 L182 118 L76 124 Z" fill="none" stroke="var(--cart-metal)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
 

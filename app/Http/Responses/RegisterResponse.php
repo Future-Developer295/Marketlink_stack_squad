@@ -13,12 +13,6 @@ class RegisterResponse implements RegisterResponseContract
     {
     }
 
-    /**
-     * Fortify logs the new user in right after registration. Undo that:
-     * nobody may be logged in until the emailed code has been verified.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     */
     public function toResponse($request)
     {
         $user = Auth::user();
@@ -26,8 +20,6 @@ class RegisterResponse implements RegisterResponseContract
         $sent = false;
         $failure = null;
 
-        // Email the 6-digit code. If SMTP fails, registration still succeeds and
-        // the user can press "Resend code" on the verification page.
         if ($user) {
             try {
                 $this->otp->send($user);
@@ -40,8 +32,6 @@ class RegisterResponse implements RegisterResponseContract
 
         Auth::guard(config('fortify.guard'))->logout();
 
-        // regenerate() (not invalidate()) issues a new session id but keeps the
-        // rest of the session, so a guest's cart survives registration.
         $request->session()->regenerate();
         $request->session()->regenerateToken();
         $request->session()->put('otp_email', $email);

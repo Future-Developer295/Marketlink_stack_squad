@@ -10,17 +10,10 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    // Registration assigns a Spatie role, so the roles must exist.
     foreach (['admin', 'farmer', 'customer'] as $role) {
         Role::findOrCreate($role, 'web');
     }
 });
-
-/*
- * Helpers. Users are built directly (not through UserFactory) so this file
- * does not depend on the factory. Names are prefixed "otp" because Pest
- * helper functions are global.
- */
 
 function otpUser(array $attributes = []): User
 {
@@ -42,10 +35,6 @@ function otpUser(array $attributes = []): User
     return $user;
 }
 
-/**
- * Send a real code through the service (mail is faked) and return the plain
- * 6-digit code that was emailed.
- */
 function otpIssueCode(User $user): string
 {
     Mail::fake();
@@ -68,9 +57,6 @@ function otpWrongCode(string $code): string
     return $code === '000000' ? '111111' : '000000';
 }
 
-/**
- * Fields posted to /register. Adjust here if CreateNewUser expects different names.
- */
 function otpRegistrationPayload(string $role): array
 {
     return [
@@ -84,10 +70,6 @@ function otpRegistrationPayload(string $role): array
         'terms' => true,
     ];
 }
-
-/*
- * Verifying the code
- */
 
 test('the correct code verifies the user', function () {
     $user = otpUser();
@@ -174,7 +156,6 @@ test('five wrong attempts lock the code, so even the right code no longer works'
         ->post(route('verification.otp.verify'), ['code' => $wrong])
         ->assertSessionHasErrors(['code' => 'Too many wrong attempts. Please request a new code.']);
 
-    // The correct code is now useless because the stored hash was wiped.
     $this->withSession(['otp_email' => $user->email])
         ->post(route('verification.otp.verify'), ['code' => $code])
         ->assertSessionHasErrors('code');
@@ -184,7 +165,6 @@ test('five wrong attempts lock the code, so even the right code no longer works'
     expect($user->hasVerifiedEmail())->toBeFalse()
         ->and($user->email_otp_hash)->toBeNull();
 
-    // After the resend cooldown the user can get a fresh code.
     $this->travel(61)->seconds();
 
     $this->withSession(['otp_email' => $user->email])
@@ -209,10 +189,6 @@ test('the verify page renders for a pending user and masks the email', function 
         ->assertDontSee('johndoe@example.com');
 });
 
-/*
- * Resending the code
- */
-
 test('resend is blocked within 60 seconds and allowed afterwards', function () {
     $user = otpUser();
     otpIssueCode($user);
@@ -233,10 +209,6 @@ test('resend is blocked within 60 seconds and allowed afterwards', function () {
     Mail::assertSent(EmailVerificationCodeMail::class, 2);
 });
 
-/*
- * Login
- */
-
 test('an unverified user cannot log in even with the correct password', function () {
     Mail::fake();
 
@@ -247,7 +219,6 @@ test('an unverified user cannot log in even with the correct password', function
 
     $this->assertGuest();
 
-    // They were not sent a code before, so the login attempt emails one.
     Mail::assertSent(EmailVerificationCodeMail::class, fn ($mail) => $mail->hasTo($user->email));
 });
 
@@ -271,10 +242,6 @@ test('a verified user can log in', function () {
 
     $this->assertAuthenticatedAs($user);
 });
-
-/*
- * Registration
- */
 
 test('registration emails a code, does not log the user in, and redirects to the code page', function (string $role) {
     Mail::fake();

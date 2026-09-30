@@ -43,6 +43,9 @@
                         You will get an email as soon as the admin approves it,
                         and you can then open your dashboard.
                     </p>
+                    <a href="{{ route('my_profile') }}" class="btn btn-outline-success px-4 mb-3">
+                        <i class="fa-solid fa-id-card me-1"></i> Complete my farmer profile
+                    </a>
                 @endif
 
                 <form action="{{ route('logout') }}" method="POST">

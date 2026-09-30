@@ -14,7 +14,6 @@ class Cart
 {
     protected string $sessionKey = 'cart';
 
-    /** null = not checked yet. */
     protected static ?bool $tableReady = null;
 
     protected function tableReady(): bool
@@ -22,14 +21,10 @@ class Cart
         return self::$tableReady ??= Schema::hasTable('cart_items');
     }
 
-    /**
-     * @param  int|null  $userId  Login event ke waqt Auth::id() null hota hai, isliye yahan pass karein.
-     */
     public function __construct(protected ?int $userId = null)
     {
     }
 
-    /** Cart ka malik: pass kiya gaya user, warna logged-in user. */
     protected function ownerId(): ?int
     {
         return $this->userId ?? Auth::id();
@@ -98,10 +93,6 @@ class Cart
         }
     }
 
-    /**
-     * Login ke baad: database wali purani basket + guest session basket merge karo
-     * aur dono ko sync kar do.
-     */
     public function restoreSaved(): Collection
     {
         $userId = $this->ownerId();
@@ -118,10 +109,8 @@ class Cart
             $merged[$productId] = ($merged[$productId] ?? 0) + (int) $quantity;
         }
 
-        // save() session + database dono update karta hai.
         $this->save($merged);
 
-        // items() unavailable products hata deta hai aur quantity stock tak cap karta hai.
         return $this->items();
     }
 
@@ -167,7 +156,6 @@ class Cart
             fn ($item) => [$item['product']->id => $item['quantity']]
         )->all();
 
-        // Sirf tab save karo jab kuch badla ho (har page view par DB write nahi).
         if ($clean != $raw) {
             $this->save($clean);
         }
@@ -193,7 +181,6 @@ class Cart
         $this->persist($cart);
     }
 
-    /** Logged-in customer ki basket database mein likho, taake logout ke baad bhi rahe. */
     protected function persist(array $cart): void
     {
         $userId = $this->ownerId();

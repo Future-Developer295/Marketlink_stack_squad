@@ -19,7 +19,6 @@
     <div class="auth-wrap">
         <div class="auth-card">
 
-            {{-- Leaf-pattern visual: plain art on mobile, gains copy + points from desktop up --}}
             <aside class="auth-visual">
                 <a href="{{ url('/') }}" class="auth-back" aria-label="Back to home">
                     <i class="fa-solid fa-arrow-left"></i>
@@ -48,7 +47,6 @@
                 </div>
             </aside>
 
-            {{-- Sheet: heading + form, this is what mobile sees first --}}
             <div class="auth-sheet">
 
                 <div class="auth-panel-head">

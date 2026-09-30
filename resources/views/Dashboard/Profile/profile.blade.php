@@ -341,4 +341,22 @@
         );
     </script>
 
+    @if (session('success') || $errors->any())
+        <script>
+            window.addEventListener('load', function() {
+                if (!window.MLAjax) {
+                    return;
+                }
+
+                @if (session('success'))
+                    MLAjax.toast(@json(session('success')), 'success');
+                @endif
+
+                @if ($errors->any())
+                    MLAjax.toast(@json($errors->first()), 'error');
+                @endif
+            });
+        </script>
+    @endif
+
 @endsection

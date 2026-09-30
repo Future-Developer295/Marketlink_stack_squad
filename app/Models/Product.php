@@ -86,19 +86,16 @@ class Product extends Model
 
         $path = ltrim(str_replace('\\', '/', $this->image), '/');
 
-        // Uploaded via storage (needs: php artisan storage:link)
         if (Storage::disk('public')->exists($path)) {
             return asset('storage/' . $path);
         }
 
-        // Path already relative to /public
         if (is_file(public_path($path))) {
             return asset($path);
         }
 
         $index = static::imageIndex();
 
-        // Exact filename, then normalized name (plural/extension/case-insensitive)
         $match = $index['exact'][strtolower(basename($path))]
             ?? $index['stem'][static::imageStem($path)]
             ?? null;

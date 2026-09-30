@@ -10,12 +10,6 @@ class UsersTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // updateOrInsert (keyed on the unique 'email' column) instead of a raw
-        // batch insert, so re-running `php artisan migrate --seed` on a database
-        // that was already seeded updates these rows instead of throwing a
-        // "Duplicate entry ... users_email_unique" error.
-        // Seeded demo accounts are pre-verified so they can log in without the
-        // email OTP step (email_verified_at is set in the loop below).
         $users = [
             [
                 'name' => 'Admin User',

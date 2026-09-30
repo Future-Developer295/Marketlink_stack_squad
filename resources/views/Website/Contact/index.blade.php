@@ -4,7 +4,6 @@
 
 @section('body')
 
-{{-- Move this <link> to the place where home.css / about.css are loaded if your master has a styles slot --}}
 <link rel="stylesheet" href="{{ asset('Assets/Website_Asset/css/contact.css') }}">
 
 <div class="contact-page" id="contactPage">
@@ -37,7 +36,6 @@
                 <span class="contact-hero-plate" aria-hidden="true"></span>
 
                 <div class="contact-hero-frame">
-                    {{-- Illustrated market stall (always visible, also the fallback if the photo is missing) --}}
                     <svg viewBox="0 0 520 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
                         <defs>
                             <linearGradient id="chSky" x1="0" y1="0" x2="0" y2="1">
@@ -55,11 +53,9 @@
                         <path d="M0 400 C110 350 210 370 300 400 S460 380 520 360 V600 H0Z" fill="#9db77a"/>
                         <rect y="500" width="520" height="100" fill="#40572c"/>
 
-                        <!-- stall posts -->
                         <rect x="88" y="180" width="10" height="322" rx="4" fill="#6b5a3a"/>
                         <rect x="422" y="180" width="10" height="322" rx="4" fill="#6b5a3a"/>
 
-                        <!-- awning -->
                         <path d="M50 215 L90 140 H430 L470 215 Z" fill="url(#chStripe)"/>
                         <rect x="90" y="132" width="340" height="10" rx="5" fill="#2f4224"/>
                         <g>
@@ -73,13 +69,11 @@
                             <circle cx="425" cy="215" r="25" fill="#435a2d"/>
                         </g>
 
-                        <!-- hanging sign -->
                         <line x1="225" y1="238" x2="225" y2="262" stroke="#6b5a3a" stroke-width="2"/>
                         <line x1="295" y1="238" x2="295" y2="262" stroke="#6b5a3a" stroke-width="2"/>
                         <rect x="200" y="258" width="120" height="38" rx="10" fill="#fff9e8"/>
                         <text x="260" y="283" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="19" fill="#435a2d">Fresh today</text>
 
-                        <!-- counter -->
                         <rect x="70" y="430" width="380" height="72" rx="8" fill="#a9814a"/>
                         <rect x="70" y="430" width="380" height="12" rx="6" fill="#c19a63"/>
                         <rect x="110" y="452" width="4" height="50" fill="#94703f"/>
@@ -87,7 +81,6 @@
                         <rect x="316" y="452" width="4" height="50" fill="#94703f"/>
                         <rect x="406" y="452" width="4" height="50" fill="#94703f"/>
 
-                        <!-- crate 1: tomatoes -->
                         <g>
                             <circle cx="122" cy="382" r="19" fill="#c2503a"/><circle cx="156" cy="378" r="19" fill="#cf5a41"/><circle cx="190" cy="382" r="19" fill="#c2503a"/>
                             <circle cx="140" cy="362" r="18" fill="#cf5a41"/><circle cx="174" cy="360" r="18" fill="#c2503a"/>
@@ -96,7 +89,6 @@
                             <rect x="102" y="400" width="108" height="4" fill="#94703f"/><rect x="102" y="416" width="108" height="4" fill="#94703f"/>
                         </g>
 
-                        <!-- crate 2: leafy greens -->
                         <g>
                             <circle cx="248" cy="376" r="21" fill="#5b8434"/><circle cx="282" cy="372" r="22" fill="#6f9a3d"/><circle cx="316" cy="376" r="21" fill="#5b8434"/>
                             <circle cx="264" cy="356" r="19" fill="#7d973f"/><circle cx="300" cy="356" r="19" fill="#6f9a3d"/>
@@ -104,7 +96,6 @@
                             <rect x="228" y="400" width="108" height="4" fill="#94703f"/><rect x="228" y="416" width="108" height="4" fill="#94703f"/>
                         </g>
 
-                        <!-- crate 3: carrots -->
                         <g>
                             <path d="M356 388 L366 336 L376 388Z" fill="#d98a3d"/>
                             <path d="M380 388 L390 328 L400 388Z" fill="#e39a4c"/>
@@ -114,15 +105,12 @@
                             <rect x="344" y="400" width="90" height="4" fill="#94703f"/><rect x="344" y="416" width="90" height="4" fill="#94703f"/>
                         </g>
 
-                        <!-- foreground leaves -->
                         <path d="M0 600 C0 530 44 500 96 492 C98 552 62 596 0 600Z" fill="#2f4224"/>
                         <path d="M520 600 C520 530 476 500 424 492 C422 552 458 596 520 600Z" fill="#2f4224"/>
                         <path d="M0 600 C10 560 40 536 70 526 C66 566 40 590 0 600Z" fill="#435a2d"/>
                         <path d="M520 600 C510 560 480 536 450 526 C454 566 480 590 520 600Z" fill="#435a2d"/>
                     </svg>
 
-                    {{-- Optional real photo: drop any market photo at public/images/contact-hero.jpg.
-                         If the file is missing, it removes itself and the illustration stays. --}}
                     <img src="{{ asset('images/contact-hero.jpg') }}" alt="Farmers market stall" loading="eager" onerror="this.remove()">
                 </div>
 
@@ -152,7 +140,6 @@
         <span><i class="fa-solid fa-ban"></i> No delivery</span>
     </div>
 
-    {{-- ============ DESKS ============ --}}
     <section class="contact-section">
         <div class="contact-shell contact-desks">
             <div class="contact-desks-intro reveal">
@@ -206,7 +193,6 @@
         </div>
     </section>
 
-    {{-- ============ FORM ============ --}}
     <section class="contact-section contact-form-wrap" id="contact-form">
         <div class="contact-shell">
             <div class="contact-form-panel reveal">
@@ -230,7 +216,6 @@
                     <form method="POST" action="{{ url('/contact') }}" id="contactForm" data-ajax data-ajax-reset>
                         @csrf
 
-                        {{-- Honeypot (hidden from humans, catches bots) --}}
                         <div style="position:absolute;left:-9999px;" aria-hidden="true">
                             <label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
                         </div>
@@ -320,7 +305,6 @@
         </div>
     </section>
 
-    {{-- ============ FAQ ============ --}}
     <section class="contact-section">
         <div class="contact-shell contact-faq">
             <div class="contact-faq-side reveal">
@@ -355,7 +339,6 @@
         </div>
     </section>
 
-    {{-- ============ EXPLORE ============ --}}
     <section class="contact-section contact-explore-wrap">
         <div class="contact-shell">
             <div class="contact-head reveal">
@@ -391,7 +374,6 @@
     var page = document.getElementById('contactPage');
     page.classList.add('js-ready');
 
-    // Scroll reveal
     var items = page.querySelectorAll('.reveal');
     if ('IntersectionObserver' in window) {
         var io = new IntersectionObserver(function (entries) {
@@ -404,7 +386,6 @@
         items.forEach(function (el) { el.classList.add('is-in'); });
     }
 
-    // FAQ accordion (one open at a time)
     var faq = document.getElementById('contactFaq');
     faq.addEventListener('click', function (ev) {
         var btn = ev.target.closest('.contact-faq-btn');
@@ -418,10 +399,9 @@
         if (willOpen) { item.classList.add('is-open'); btn.setAttribute('aria-expanded', 'true'); }
     });
 
-    // Form: prevent double submit
     var form = document.getElementById('contactForm');
     form.addEventListener('submit', function () {
-        if (form.hasAttribute('data-ajax')) return; // the shared AJAX layer shows its own busy state
+        if (form.hasAttribute('data-ajax')) return;
         var b = form.querySelector('button[type=submit]');
         b.classList.add('is-loading');
         b.querySelector('span').textContent = 'Sending…';

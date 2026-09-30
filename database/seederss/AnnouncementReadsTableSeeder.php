@@ -9,8 +9,6 @@ class AnnouncementReadsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // updateOrInsert keyed on the unique ('announcement_id','user_id') pair,
-        // so reseeding an already-seeded database doesn't throw a duplicate-entry error.
         $reads = [
             ['announcement_id' => 1, 'user_id' => 4],
             ['announcement_id' => 2, 'user_id' => 5],

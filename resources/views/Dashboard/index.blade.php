@@ -61,55 +61,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {{-- @foreach ($products as $product)
-                        <tr>
-                            <td>
-                                <div class="prod-cell">
-
-                                    <div class="prod-img">
-                                        <img src="{{ asset('Assets/product_images/' . $product->product_image) }}"
-                                            alt="{{ $product->product_name }}">
-                                    </div>
-
-                                    <div class="prod-info">
-                                        <strong>{{ $product->product_name }}</strong>
-                                        <span>{{ $product->product_code }}</span>
-                                    </div>
-
-                                </div>
-                            </td>
-
-                            <td>
-                                <span class="badge-cat">
-                                    {{ $product->category->category_name ?? 'No Category' }}
-                                </span>
-                            </td>
-
-                            <td>
-                                <span class="price-mono">
-                                    {{ $product->product_price }}
-                                </span>
-                            </td>
-
-                            <td>
-                                <span class="qty-tag">
-                                    {{ $product->product_quantity }}
-                                </span>
-                            </td>
-
-                            <td>
-                                @if ($product->product_status)
-                                    <span class="badge-status bs-in">
-                                        <i class="bi bi-circle-fill"></i> InStock
-                                    </span>
-                                @else
-                                    <span class="badge-status bs-out">
-                                        <i class="bi bi-circle-fill"></i> OutStock
-                                    </span>
-                                @endif
-                            </td>
-                        </tr>
-                    @endforeach --}}
                 </tbody>
             </table>
         </div>

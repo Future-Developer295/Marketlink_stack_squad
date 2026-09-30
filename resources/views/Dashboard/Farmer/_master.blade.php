@@ -66,9 +66,9 @@
 
             <div class="sidebar-footer">
                 <div class="user-row">
-                    <div class="user-avatar">F</div>
+                    <div class="user-avatar">@include('Dashboard._avatar')</div>
                     <div class="user-meta">
-                                                <div class="user-name">Farmer Panel</div>
+                                                <div class="user-name">{{ auth()->user()->name }}</div>
                     </div>
                 </div>
             </div>
@@ -90,17 +90,11 @@
                 <div class="topbar-right">
                     <div id="chnage_theme" class="icon-btn"><i class="bi bi-sun-fill"></i></div>
                     <div class="user-dropdown">
-                        <button class="user-avatar" type="button" onclick="toggleUserMenu()">
-                                                        F
-                        </button>
+                        <button class="user-avatar" type="button" onclick="toggleUserMenu()">@include('Dashboard._avatar')</button>
 
                         <div class="user-menu" id="userMenu">
-                            <div class="user-menu-name">
-                                                                Farmer
-                            </div>
-                            <div class="user-menu-email">
-                                                                Farmer@marketlink.test
-                            </div>
+                            <div class="user-menu-name">{{ auth()->user()->name }}</div>
+                            <div class="user-menu-email">{{ auth()->user()->email }}</div>
                             <div class="menu-divider"></div>
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
@@ -119,6 +113,7 @@
         </div>
 
         <script src="{{ asset('Assets/Dashboard_Asset/js/theme-change.js') }}"></script>
+        <script src="{{ asset('Assets/Dashboard_Asset/js/responsive.js') }}"></script>
         <script>
             function toggleUserMenu() {
                 document.getElementById('userMenu').classList.toggle('show');
