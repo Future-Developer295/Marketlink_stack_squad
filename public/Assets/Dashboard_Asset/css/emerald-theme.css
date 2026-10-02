@@ -435,3 +435,7 @@ input[type="file"]::file-selector-button { background: var(--accent-soft); color
 
 .user-avatar { overflow: hidden; padding: 0; }
 .user-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.topbar {
+  position: static;
+  background: transparent;
+}

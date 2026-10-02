@@ -517,7 +517,6 @@ details.nav-dropdown[open]>summary i.nav-ic {
   position: sticky;
   top: 0;
   z-index: 100;
-  position: relative;
   overflow: hidden;
 }
 
