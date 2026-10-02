@@ -106,10 +106,6 @@ class EmailOtpController extends Controller
         return back()->with('success', 'A new code has been sent to your email.');
     }
 
-    /**
-     * The person verifying: whoever just registered or tried to log in
-     * (remembered in the session), or a logged-in user who changed their email.
-     */
     private function pendingUser(Request $request): ?User
     {
         $email = $request->session()->get('otp_email') ?? $request->user()?->email;

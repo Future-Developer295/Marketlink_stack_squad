@@ -9,13 +9,10 @@ class PickupSlotsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // Past days (for completed orders) + upcoming days (for new orders).
         $dayOffsets = [-3, -1, 1, 2, 3, 5];
         $windows    = [['09:00:00', '11:00:00', 20], ['14:00:00', '16:00:00', 15]];
 
         foreach (DB::table('farmer_profile')->orderBy('id')->get() as $farmer) {
-            // pickup_slots.farmer_id = farmer_profile.id
-            // market_farmers.farmer_id = users.id
             $marketIds = DB::table('market_farmers')
                 ->where('farmer_id', $farmer->user_id)
                 ->where('is_active', true)

@@ -2,32 +2,39 @@
 
 namespace App\Providers;
 
+use App\Models\FarmerProfile;
 use App\Services\Cart;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        // Bootstrap 5 markup for $paginator->links() (used by the admin/farmer dashboard).
         Paginator::useBootstrapFive();
 
-        // When a customer logs in: bring back the basket they saved earlier
-        // (merged with any guest basket) and queue the "Welcome back" popup.
+        View::composer(['Dashboard._master', 'Dashboard.Farmer._master'], function ($view) {
+            $user = auth()->user();
+            $avatarUrl = null;
+
+            if ($user && $user->role === 'farmer') {
+                $image = FarmerProfile::where('user_id', $user->id)->value('farmer_image');
+
+                if ($image && is_file(public_path('farmer_images/' . basename($image)))) {
+                    $avatarUrl = asset('farmer_images/' . basename($image));
+                }
+            }
+
+            $view->with('mlAvatarUrl', $avatarUrl);
+        });
+
         Event::listen(Login::class, function (Login $event) {
             $user = $event->user;
 

@@ -8,14 +8,8 @@ use Spatie\Permission\PermissionRegistrar;
 
 return new class extends Migration
 {
-    /** @var array<int, string> */
     private array $permissions = ['view contact messages', 'delete contact messages'];
 
-    /**
-     * Existing databases already have their roles seeded, so the new contact-inbox
-     * permissions are created here and given to the admin role automatically.
-     * (Fresh installs also get them from RolesAndPermissionsSeeder.)
-     */
     public function up(): void
     {
         if (! Schema::hasTable(config('permission.table_names.permissions', 'permissions'))) {

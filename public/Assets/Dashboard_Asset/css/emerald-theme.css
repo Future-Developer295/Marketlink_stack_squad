@@ -1,5 +1,3 @@
-/* MarketLink / Emerald. Presentation only; loaded after the existing styles.
-   Existing class names, state classes, controls, and scripts remain unchanged. */
 :root,
 .theme-admin {
   --primary-dark: #073f3c;
@@ -55,7 +53,6 @@
   color-scheme: light;
 }
 
-/* The original toggle continues to control .dark-mode. */
 .dark-mode,
 .dark-mode.theme-admin {
   --primary-dark: #216b58;
@@ -106,7 +103,6 @@ button, a, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 ::-webkit-scrollbar { width: 7px; height: 7px; }
 ::-webkit-scrollbar-thumb { background: #c6d6cc; border: 1px solid transparent; border-radius: 20px; }
 
-/* Framed desktop shell and persistent, independently scrollable navigation. */
 .shell {
   margin: 14px;
   padding: 8px 8px 8px 0;
@@ -176,7 +172,6 @@ details.nav-dropdown > summary i.chevron { color: #9cbeb0; font-size: 10px; }
 .spacer-24 { height: 24px; }
 .hr-thin { border-color: var(--border); opacity: 1; }
 
-/* Use the original values and labels, with a quieter metric hierarchy. */
 .stats-row { gap: 14px; margin-bottom: 24px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .stat-card { display: flex; flex-direction: column; padding: 22px 20px 20px; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
 .stat-card::before { content: none; }
@@ -190,7 +185,6 @@ details.nav-dropdown > summary i.chevron { color: #9cbeb0; font-size: 10px; }
 .stat-trend.up { color: var(--success); }
 .stat-trend.down { color: var(--danger); }
 
-/* Buttons include Bootstrap and the existing bespoke action classes. */
 .btn-primary, .btn-ghost, .btn, .role-save-btn, .permission-edit-btn, .role-back-btn,
 .permission-back-btn, .permission-actions button {
   min-height: 40px; height: auto; padding: 10px 16px; border-radius: var(--r);
@@ -216,7 +210,6 @@ details.nav-dropdown > summary i.chevron { color: #9cbeb0; font-size: 10px; }
 :where(button, .btn, .btn-primary, .btn-ghost):disabled,
 .btn.disabled { opacity: .5; cursor: not-allowed; }
 
-/* Scrolling stays on each table, never on the entire page. */
 .tbl-wrap, .table-responsive { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 .panel > .table-responsive { border: 0; border-radius: 0; }
 .dtable { min-width: 620px; }
@@ -244,7 +237,6 @@ details.nav-dropdown > summary i.chevron { color: #9cbeb0; font-size: 10px; }
 .table > :not(caption) > * > * { padding: 15px 20px; vertical-align: middle; }
 .table thead { font-size: 11px; }
 
-/* Forms retain native inputs, browser validation and file-picker behavior. */
 .grid-2, .grid-3, .detail-grid { gap: 20px; }
 .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -294,7 +286,6 @@ input[type="file"]::file-selector-button { background: var(--accent-soft); color
 .detail-cell .dv { font-size: 13px; }
 #map { isolation: isolate; border: 1px solid var(--border); }
 
-/* Role/permission screens use the same surfaces and selectable controls. */
 .rp-page-header h1, .role-page-header h1, .permission-page-header h1 { font-size: 23px; letter-spacing: -.65px; }
 .rp-card-title, .role-panel-title, .role-view-header { border-color: var(--border); }
 .permission-module-header, .permission-item { background: var(--surface); }
@@ -306,7 +297,6 @@ input[type="file"]::file-selector-button { background: var(--accent-soft); color
 .rp-form-actions, .role-form-actions { flex-wrap: wrap; }
 .rp-cancel-link, .role-cancel { padding: 10px 4px; }
 
-/* Popovers, Bootstrap dialogs and notices: appearance only, no state overrides. */
 .user-menu { width: 246px; max-width: calc(100vw - 36px); padding: 12px; border-radius: 16px; box-shadow: var(--shadow-popover); }
 .user-menu-name { font-size: 13px; }
 .user-menu-email { font-size: 11px; overflow-wrap: anywhere; }
@@ -332,7 +322,6 @@ input[type="file"]::file-selector-button { background: var(--accent-soft); color
 .nav-tabs .nav-link.active { color: var(--indigo); background: var(--surface); border-color: var(--border) var(--border) var(--surface); }
 .nav-pills .nav-link.active { background: var(--primary); color: #fff; }
 
-/* Laravel's existing Tailwind pagination, including its small-screen controls. */
 .page-body nav[role="navigation"] { padding: 18px 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
 .page-body nav[role="navigation"] svg { width: 18px; height: 18px; }
 .page-body nav[role="navigation"] a,
@@ -344,8 +333,6 @@ input[type="file"]::file-selector-button { background: var(--accent-soft); color
 .page-body nav[role="navigation"] > .flex { display: none; }
 .page-body nav[role="navigation"] p { margin: 0; }
 
-/* Existing Jetstream login, security, account, and API screens. Scoped so that
-   Tailwind layout/state utilities and Alpine/Livewire behavior keep working. */
 .ml-account { background: var(--bg); color: var(--text); font-family: Figtree, "Segoe UI", sans-serif; }
 .ml-account .bg-gray-100 { background-color: var(--bg); }
 .ml-account .bg-gray-50 { background-color: var(--lift); }
@@ -380,7 +367,6 @@ input[type="file"]::file-selector-button { background: var(--accent-soft); color
 .ml-auth .min-h-screen > div:first-child a { color: #99d8ae; }
 .ml-auth form label { font-size: 13px; font-weight: 600; }
 
-/* Preserve both existing sidebar state spellings at the existing breakpoint. */
 @media (max-width: 1240px) {
   .stats-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .topbar { padding: 24px; }
@@ -445,4 +431,11 @@ input[type="file"]::file-selector-button { background: var(--accent-soft); color
 @media (prefers-reduced-motion: reduce) {
   .sidebar, .nav-link-custom, .nav-sublink, details.nav-dropdown > summary,
   .btn, .btn-primary, .btn-ghost, .stat-card, .field-input { transition: none; }
+}
+
+.user-avatar { overflow: hidden; padding: 0; }
+.user-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.topbar {
+  position: static;
+  background: transparent;
 }

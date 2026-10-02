@@ -9,7 +9,6 @@ class ContactMessagesTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // user_id is nullable (guests can contact too)
         $messages = [
             ['customer@gmail.com', 'Ahmed Customer', 'customer@gmail.com',      'Pickup timing question', 'Can I collect my order 30 minutes later than my slot?', null],
             [null,                 'Guest Visitor',  'guest@example.com',       'How do I become a farmer?', 'I grow vegetables and want to sell on MarketLink. What are the steps?', null],

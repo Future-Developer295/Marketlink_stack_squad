@@ -16,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Turns redirect()->back()->with(...) into JSON for fetch()/AJAX requests.
         $middleware->appendToGroup('web', \App\Http\Middleware\AjaxRedirectToJson::class);
 
         $middleware->alias([

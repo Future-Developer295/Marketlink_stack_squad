@@ -12,7 +12,6 @@ class AnnouncementsTableSeeder extends Seeder
         $adminId = DB::table('users')->where('role', 'admin')->value('id');
         $farmerUserId = DB::table('users')->where('email', 'farmer@gmail.com')->value('id');
 
-        // audience: all | all_farmers | farmer (a single farmer -> farmer_id = users.id)
         $announcements = [
             ['MarketLink New Update',      'MarketLink platform has been updated with new features.',      'all',         null],
             ['Farmers Market Schedule',    'New market schedules are now available for customers.',        'all',         null],

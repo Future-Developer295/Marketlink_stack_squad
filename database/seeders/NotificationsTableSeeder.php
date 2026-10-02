@@ -9,7 +9,6 @@ class NotificationsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // [email, type, title, message, is_read]
         $notifications = [
             ['customer@gmail.com',       'order',   'Order Confirmed',      'Your order has been confirmed successfully.',        false],
             ['customer@gmail.com',       'pickup',  'Pickup Reminder',      'Your pickup slot is scheduled for tomorrow.',        false],

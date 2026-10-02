@@ -9,7 +9,6 @@ class ReviewsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // [customer, farmer, product index of that farmer (null = farmer review), rating, comment, flagged]
         $reviews = [
             ['customer@gmail.com',       'farmer@gmail.com',       0,    5, 'Fresh and good quality products.',           false],
             ['customer2@marketlink.com', 'farmer2@marketlink.com', 1,    4, 'Good quality and fresh, will order again.',  false],
@@ -30,7 +29,6 @@ class ReviewsTableSeeder extends Seeder
 
             $productId = null;
             if ($productIndex !== null) {
-                // product must belong to the same farmer (ERD rule)
                 $productId = DB::table('products')->where('farmer_id', $farmerId)
                     ->orderBy('id')->skip($productIndex)->value('id');
             }
@@ -38,7 +36,7 @@ class ReviewsTableSeeder extends Seeder
             DB::table('reviews')->updateOrInsert(
                 ['user_id' => $userId, 'farmer_id' => $farmerId, 'product_id' => $productId],
                 [
-                    'rating'     => $rating,           // CHECK: 1..5
+                    'rating'     => $rating,
                     'comment'    => $comment,
                     'is_flagged' => $flagged,
                     'is_active'  => true,

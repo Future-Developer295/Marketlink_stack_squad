@@ -9,7 +9,7 @@
     background: var(--paper);
     color: var(--ink);
     font-family: 'DM Sans', sans-serif;
-    padding-bottom: 110px
+    padding-bottom: 0
 }
 
 .harvest-shop h1,
@@ -1379,7 +1379,6 @@
     line-height: 1.6
 }
 
-/* Shopping refinement: readable type, a desktop sidebar and connected product stories. */
 .harvest-shop {
     font-size: 16px;
 }
@@ -2760,7 +2759,6 @@
     margin: 0;
 }
 
-/* Order confirmation: what was ordered */
 .placed-orders {
     max-width: 760px;
     margin: 10px auto 40px;

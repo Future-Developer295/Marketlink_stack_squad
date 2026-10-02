@@ -29,7 +29,7 @@ class OrderItemsTableSeeder extends Seeder
                     ['order_id' => $orderId, 'product_id' => $product->id],
                     [
                         'quantity'   => $qty,
-                        'price'      => $product->price,           // real price snapshot
+                        'price'      => $product->price,
                         'subtotal'   => $product->price * $qty,
                         'created_at' => now(),
                         'updated_at' => now(),

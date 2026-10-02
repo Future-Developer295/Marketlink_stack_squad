@@ -29,7 +29,6 @@ active
 
             <div class="grid-2">
 
-                {{-- Market --}}
                 <div class="field">
                     <label class="field-label">Market</label>
 
@@ -44,7 +43,6 @@ active
                 </div>
 
 
-                {{-- Farmer --}}
                 <div class="field">
                     <label class="field-label">Farmer</label>
 
@@ -61,7 +59,6 @@ active
             </div>
 
 
-            {{-- Status --}}
             <div class="field">
                 <label class="field-label">Status</label>
 

@@ -67,7 +67,6 @@ test('editing a pending farmer to active emails them once', function () {
     expect($farmer->fresh()->is_active)->toBeTrue();
     Mail::assertSent(FarmerApprovedMail::class, fn ($mail) => $mail->hasTo($farmer->email));
 
-    // Saving an already-active farmer again must not send a second email.
     $this->actingAs($admin)->post(route('user_update', $farmer->id), userPayload($farmer, ['is_active' => '1']));
     Mail::assertSent(FarmerApprovedMail::class, 1);
 });

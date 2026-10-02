@@ -9,7 +9,6 @@ class FavoritesTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // CHECK rule: either farmer_id OR product_id is set, never both / neither.
         $favorites = [
             ['customer@gmail.com',       'farmer', 'sanafarmer@gmail.com'],
             ['customer@gmail.com',       'farmer', 'alifarmer@gmail.com'],

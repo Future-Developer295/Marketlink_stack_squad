@@ -13,7 +13,6 @@ return new class extends Migration {
             $table->text('rejection_reason')->nullable()->after('approval_status');
         });
 
-        // Farmers who are still waiting are "pending"; everyone else stays "approved".
         DB::table('users')->where('role', 'farmer')->where('is_active', 0)
             ->update(['approval_status' => 'pending']);
     }

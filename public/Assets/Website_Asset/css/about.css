@@ -872,13 +872,6 @@
 }
 
 
-/* MarketLink – Login & Register (mobile-first)
-   Base rules below = phone layout: a leaf-pattern photo strip up top with a back
-   button, and a curved white sheet rising over it that holds the heading + form
-   (this mirrors the plant-app reference). min-width queries then turn the same
-   markup into a proper two-pane desktop layout instead of floating a narrow
-   phone card in empty space. Tokens match shop.css / about.css exactly. */
-
 .auth-page{
   --ink:#263c2a; --leaf:#40572c; --leaf-dark:#263c2a; --lime:#dcecac;
   --paper:#f7f8f2; --line:#dde3d7; --sage:#e8eddc; --muted:#63705d; --danger:#a4432f;
@@ -893,17 +886,15 @@
 .auth-page em{font-family:Georgia,serif;font-weight:400;font-style:italic;color:var(--leaf)}
 .auth-page a:focus-visible,.auth-page button:focus-visible,.auth-page input:focus-visible{outline:3px solid #8a6a28;outline-offset:3px}
 
-.auth-breadcrumb{display:none} /* shown from tablet up, replaces the back arrow */
+.auth-breadcrumb{display:none}
 
 .auth-wrap{width:100%;max-width:440px;margin:0 auto}
 
-/* ---------- Card shell ---------- */
 .auth-card{
   position:relative;border-radius:28px;overflow:hidden;background:#fff;
   box-shadow:0 20px 50px #263c2a22;
 }
 
-/* ---------- Visual: pure leaf-pattern art, no text on mobile ---------- */
 .auth-visual{
   position:relative;isolation:isolate;overflow:hidden;color:#fff;
   min-height:190px;padding:16px;
@@ -933,10 +924,8 @@
   background:#ffffff1c;border:1px solid #ffffff30;border-radius:100px;padding:7px 12px;
 }
 
-/* Desktop-only tagline block inside the visual (hidden on mobile) */
 .auth-visual-copy{display:none}
 
-/* ---------- Sheet: heading + form, always here ---------- */
 .auth-sheet{
   position:relative;z-index:2;margin-top:-24px;
   border-radius:26px 26px 0 0;background:#fff;
@@ -995,7 +984,6 @@
 .auth-page .alert-danger{background:#fbeeea;border-color:#efcfc6;color:#7d2f20}
 .auth-page .alert-success{background:#eaf3dc;border-color:#c9dcaa;color:#2b4025}
 
-/* ---------- Role picker (register) ---------- */
 .auth-roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .auth-role-input{position:absolute;opacity:0;pointer-events:none}
 .auth-role-card{
@@ -1014,9 +1002,6 @@
 .auth-role-input:checked+.auth-role-card i{background:#e4edce;color:var(--leaf-dark)}
 .auth-role-input:focus-visible+.auth-role-card{outline:3px solid #8a6a28;outline-offset:3px}
 
-/* =========================================================
-   TABLET — a bit more room, breadcrumb replaces the back arrow
-   ========================================================= */
 @media(min-width:600px){
   .auth-page{padding:32px 20px 48px}
   .auth-wrap{max-width:480px}
@@ -1031,9 +1016,6 @@
   .auth-back{display:none}
 }
 
-/* =========================================================
-   DESKTOP — from a stacked phone card to a full two-pane layout
-   ========================================================= */
 @media(min-width:992px){
   .auth-page{padding:36px 24px 60px}
   .auth-wrap{max-width:920px}
@@ -1045,7 +1027,7 @@
   .auth-visual{
     min-height:100%;padding:48px 44px;justify-content:space-between;
   }
-  .auth-back{display:grid} /* becomes a "home" affordance inside the green panel */
+  .auth-back{display:grid}
 
   .auth-visual-copy{display:block;position:relative;z-index:2;margin-top:auto}
   .auth-visual-copy .auth-kicker{color:var(--lime)}

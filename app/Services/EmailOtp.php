@@ -27,11 +27,6 @@ class EmailOtp
 
     public const RESULT_LOCKED = 'locked';
 
-    /**
-     * Generate a fresh 6-digit code, email it and store its hash.
-     * Any previous code stops working. If the email cannot be sent the
-     * exception is thrown and nothing is stored.
-     */
     public function send(User $user): void
     {
         $code = str_pad((string) random_int(0, 999999), self::CODE_LENGTH, '0', STR_PAD_LEFT);
@@ -46,10 +41,6 @@ class EmailOtp
         ])->save();
     }
 
-    /**
-     * Message shown when the code email could not be sent. With APP_DEBUG=true the real
-     * SMTP reason is included so the problem can be fixed; in production it stays generic.
-     */
     public static function failureMessage(Throwable $e): string
     {
         $base = 'We could not send the email right now.';
@@ -59,11 +50,6 @@ class EmailOtp
             : $base.' Please try again in a moment.';
     }
 
-    /**
-     * Check the code a user typed in and, when it is right, mark the email as verified.
-     *
-     * @return self::RESULT_*
-     */
     public function verify(User $user, string $code): string
     {
         if ($user->email_otp_hash === null || $user->email_otp_expires_at === null) {
@@ -100,9 +86,6 @@ class EmailOtp
         return self::RESULT_VERIFIED;
     }
 
-    /**
-     * Seconds left before the current code expires (0 when there is no valid code).
-     */
     public function secondsUntilExpiry(User $user): int
     {
         if ($user->email_otp_hash === null || $user->email_otp_expires_at === null) {
@@ -112,9 +95,6 @@ class EmailOtp
         return max(0, (int) now()->diffInSeconds($user->email_otp_expires_at, false));
     }
 
-    /**
-     * Seconds left before a new code may be requested.
-     */
     public function secondsUntilResend(User $user): int
     {
         if ($user->email_otp_sent_at === null) {
@@ -131,9 +111,6 @@ class EmailOtp
         return $this->secondsUntilExpiry($user) > 0;
     }
 
-    /**
-     * Forget the stored code (used after success, expiry or too many wrong tries).
-     */
     public function clear(User $user): void
     {
         $user->forceFill([

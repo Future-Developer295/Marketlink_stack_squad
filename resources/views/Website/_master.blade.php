@@ -155,7 +155,6 @@
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </a>
 
-                        {{-- Favorite --}}
                         <a href="{{ auth()->check() ? url('/dashboard/customer/favorites') : url('/login') }}"
                             class="ml-icon-btn ml-fav-btn {{ request()->is('dashboard/customer/favorites*') ? 'is-active' : '' }}"
                             aria-label="Favourites{{ $favCount ? ' (' . $favCount . ')' : '' }}">
@@ -168,7 +167,6 @@
 
                         </a>
 
-                        {{-- Cart --}}
                         <a href="{{ url('/cart') }}" class="ml-icon-btn" aria-label="Cart">
 
                             <i class="fa-solid fa-cart-shopping"></i>
@@ -330,50 +328,40 @@
 
                 <span class="mlf-watermark" aria-hidden="true">MarketLink</span>
 
-                {{-- Illustrated landscape: pure SVG, no image files needed --}}
                 <svg class="mlf-scene" viewBox="0 0 1200 340" preserveAspectRatio="xMidYMax slice" aria-hidden="true"
                     focusable="false">
-                    <!-- far hills -->
                     <path d="M0 190 C120 140 230 118 360 165 S560 150 640 130 S900 100 1010 140 S1130 150 1200 130 V340 H0Z"
                         fill="#d3dfbb" />
                     <path d="M0 215 C110 165 240 150 340 195 S520 200 620 170 S880 130 1000 175 S1120 190 1200 165 V340 H0Z"
                         fill="#b6cb95" />
-                    <!-- mid hills -->
                     <path d="M0 250 C90 195 220 185 330 225 S500 245 580 215 L600 340 H0Z" fill="#8fae66" />
                     <path d="M1200 235 C1110 190 980 180 880 215 S720 245 640 215 L610 340 H1200Z" fill="#7da058" />
-                    <!-- river -->
                     <path
                         d="M585 205 C540 235 650 250 600 285 C575 305 520 315 490 340 H770 C770 320 715 300 705 272 C695 240 655 222 615 205Z"
                         fill="#d6e8de" />
                     <path d="M600 222 C585 240 625 252 610 272 C600 288 585 298 575 312" fill="none" stroke="#ffffff"
                         stroke-opacity=".7" stroke-width="3" stroke-linecap="round" />
-                    <!-- front banks -->
                     <path d="M0 268 C110 240 260 262 420 312 C455 325 475 334 490 340 H0Z" fill="#5f8d3c" />
                     <path d="M1200 262 C1090 238 940 262 800 312 C765 325 745 334 730 340 H1200Z" fill="#4f7a34" />
 
-                    <!-- left tree -->
                     <rect x="92" y="105" width="12" height="235" rx="5" fill="#6b4a32" />
                     <rect x="60" y="150" width="8" height="190" rx="4" fill="#7a573c" />
                     <circle cx="95" cy="88" r="58" fill="#4f7a34" />
                     <circle cx="52" cy="122" r="44" fill="#5f8d3c" />
                     <circle cx="140" cy="120" r="46" fill="#3f6a2b" />
                     <circle cx="98" cy="140" r="40" fill="#6f9a3d" />
-                    <!-- small left tree -->
                     <rect x="222" y="200" width="7" height="140" rx="3" fill="#6b4a32" />
                     <circle cx="225" cy="192" r="30" fill="#5f8d3c" />
                     <circle cx="248" cy="208" r="22" fill="#4f7a34" />
 
-                    <!-- right pine -->
                     <rect x="1072" y="90" width="9" height="250" rx="4" fill="#6b4a32" />
                     <polygon points="1076,30 1030,96 1122,96" fill="#3f6a2b" />
                     <polygon points="1076,66 1018,138 1134,138" fill="#4f7a34" />
                     <polygon points="1076,108 1004,190 1148,190" fill="#5f8d3c" />
-                    <!-- right small pine -->
                     <rect x="960" y="190" width="6" height="150" rx="3" fill="#6b4a32" />
                     <polygon points="963,150 934,196 992,196" fill="#3f6a2b" />
                     <polygon points="963,178 924,232 1002,232" fill="#4f7a34" />
 
-                    <!-- lupine spikes -->
                     <g fill="#6a7db5">
                         <rect x="880" y="228" width="10" height="70" rx="5" />
                         <rect x="900" y="214" width="10" height="84" rx="5" />
@@ -381,14 +369,12 @@
                         <rect x="330" y="262" width="9" height="56" rx="4" fill="#586ca6" />
                         <rect x="348" y="250" width="9" height="68" rx="4" />
                     </g>
-                    <!-- grasses -->
                     <g stroke="#3f6a2b" stroke-width="3" stroke-linecap="round" fill="none">
                         <path d="M860 340 C862 310 870 296 880 280" />
                         <path d="M930 340 C930 312 938 300 950 288" />
                         <path d="M380 340 C382 318 372 304 362 292" />
                         <path d="M300 340 C302 322 312 310 322 300" />
                     </g>
-                    <!-- daisies -->
                     <g fill="#fbfaf0">
                         <circle cx="1120" cy="300" r="9" />
                         <circle cx="1160" cy="312" r="8" />
@@ -405,7 +391,6 @@
                         <circle cx="410" cy="322" r="2.6" />
                         <circle cx="160" cy="305" r="3" />
                     </g>
-                    <!-- birds -->
                     <g fill="none" stroke="#3f6a2b" stroke-width="2" stroke-linecap="round">
                         <path d="M500 70 q5 -6 10 0 q5 -6 10 0" />
                         <path d="M560 40 q4 -5 8 0 q4 -5 8 0" />
@@ -419,7 +404,6 @@
                     <div class="mlf-bar-links">
                         <a href="{{ url('/contact') }}">Contact &amp; Support</a>
                         <a href="{{ url('/pickup-guidelines') }}">Pickup Guide</a>
-                        {{-- Replace the # with your real social links --}}
                         <a class="mlf-social" href="#" aria-label="Facebook"><i
                                 class="fa-brands fa-facebook-f"></i></a>
                         <a class="mlf-social" href="#" aria-label="Instagram"><i

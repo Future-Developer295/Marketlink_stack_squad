@@ -90,7 +90,6 @@ active
         </div>
     </div>
 
-    {{-- Charts row 1: Platform revenue trend + Order status --}}
     <div class="chart-grid g-2-1">
 
         <div class="chart-panel">
@@ -123,7 +122,6 @@ active
 
     </div>
 
-    {{-- Charts row 2: Top markets + Users by role + Approval rate gauge --}}
     <div class="chart-grid g-1-1-1">
 
         <div class="chart-panel">
@@ -216,7 +214,6 @@ document.addEventListener('DOMContentLoaded', function () {
     Chart.defaults.font.family = "'Figtree','Plus Jakarta Sans',sans-serif";
     Chart.defaults.color = cMuted;
 
-    // Platform revenue & orders trend
     var revenueEl = document.getElementById('adminRevenueTrendChart');
     if (revenueEl) {
         new Chart(revenueEl, {
@@ -262,7 +259,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Order status donut
     var statusEl = document.getElementById('adminOrderStatusChart');
     if (statusEl) {
         var statusLabels = @json($orderStatusLabels);
@@ -285,7 +281,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Top markets bar
     var topMarketsEl = document.getElementById('topMarketsChart');
     if (topMarketsEl) {
         new Chart(topMarketsEl, {
@@ -313,7 +308,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Users by role donut
     var roleEl = document.getElementById('usersByRoleChart');
     if (roleEl) {
         var roleLabels = @json($userRoleLabels);
@@ -336,7 +330,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Farmer approval rate gauge
     var approvalEl = document.getElementById('approvalGaugeChart');
     if (approvalEl) {
         var rate = {{ (float) $approvalRate }};

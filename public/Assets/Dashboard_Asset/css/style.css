@@ -31,7 +31,6 @@
   --sidebar-w: 260px;
   --topbar-h: 72px;
 
-  /* Loader keeps a fixed dark look regardless of theme, for brand consistency */
   --loader-bg: #0B0F0E;
   --loader-card: #121817;
   --loader-text: #F1F5F4;
@@ -42,7 +41,6 @@
 }
 
 .dark-mode {
-  /* ===== DARK MODE (toggle) ===== */
   --bg: #0B0F0E;
   --panel: #121817;
   --card: #121817;
@@ -519,7 +517,6 @@ details.nav-dropdown[open]>summary i.nav-ic {
   position: sticky;
   top: 0;
   z-index: 100;
-  position: relative;
   overflow: hidden;
 }
 
@@ -890,7 +887,6 @@ details.nav-dropdown[open]>summary i.nav-ic {
   overflow-x: auto;
 }
 
-/* Reusable responsive table wrapper */
 .table-responsive {
   width: 100%;
   overflow-x: auto;
@@ -1949,8 +1945,6 @@ input[type="time"].field-input::-webkit-calendar-picker-indicator {
   border-color: var(--indigo);
 }
  
-/* Generic card — replaces role-details-card / role-info-card /
-   permission-create-card / role-view-card (they were identical) */
 .rp-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -1978,7 +1972,6 @@ input[type="time"].field-input::-webkit-calendar-picker-indicator {
   padding: 24px;
 }
  
-/* Role create layout */
 .role-create-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
@@ -1992,7 +1985,6 @@ input[type="time"].field-input::-webkit-calendar-picker-indicator {
   gap: 24px;
 }
  
-/* Permission module (checkbox groups inside role create/edit) */
 .permission-module {
   border-bottom: 1px solid var(--border);
 }
@@ -2071,11 +2063,6 @@ input[type="time"].field-input::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
  
-/* NOTE: form fields intentionally do NOT get their own .role-input /
-   .permission-input anymore — reuse the base .field / .field-label /
-   .field-input classes that already exist for every other form. */
- 
-/* Form actions (shared by role + permission create/edit) */
 .rp-form-actions {
   display: flex;
   justify-content: flex-end;
@@ -2150,10 +2137,7 @@ input[type="time"].field-input::-webkit-calendar-picker-indicator {
     color: var(--muted);
     font-size: 13px;
 }
-/* NOTE: the save/edit button reuses the base .btn-primary class —
-   no more separate .role-save-btn / .permission-edit-btn. */
  
-/* View pages */
 .role-permission-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2210,7 +2194,6 @@ input[type="time"].field-input::-webkit-calendar-picker-indicator {
     object-fit: cover;
     display: block;
 }
-/* Responsive */
 @media (max-width: 900px) {
   .role-create-layout {
     grid-template-columns: 1fr;
@@ -2246,25 +2229,18 @@ input[type="time"].field-input::-webkit-calendar-picker-indicator {
   }
 }
 
-/* ==========================================================================
-   RESPONSIVE LAYOUT
-   ========================================================================== */
-
-/* Large desktops / wide screens */
 @media (min-width: 1600px) {
   .page-body {
     padding: 28px 36px;
   }
 }
 
-/* Laptops / small desktops */
 @media (max-width: 1200px) {
   .stats-row {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-/* Tablets */
 @media (max-width: 992px) {
   .sidebar {
     transform: translateX(-100%);
@@ -2300,7 +2276,6 @@ input[type="time"].field-input::-webkit-calendar-picker-indicator {
   }
 }
 
-/* Small tablets / large phones */
 @media (max-width: 768px) {
   .stats-row {
     grid-template-columns: 1fr 1fr;
@@ -2342,7 +2317,6 @@ input[type="time"].field-input::-webkit-calendar-picker-indicator {
   }
 }
 
-/* Phones */
 @media (max-width: 576px) {
   :root {
     --topbar-h: 64px;
@@ -2410,7 +2384,6 @@ input[type="time"].field-input::-webkit-calendar-picker-indicator {
   }
 }
 
-/* ===== Role accent overrides (Admin = blue, Farmer = green default) ===== */
 .theme-admin {
   --primary: #2563EB;
   --primary-hover: #1D4ED8;

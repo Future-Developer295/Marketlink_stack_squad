@@ -1,22 +1,3 @@
-/*
- * MarketLink shared AJAX layer (Website + Dashboard).
- *
- * Forms / buttons
- *   form[data-ajax]                 send with fetch instead of a full page load
- *   data-confirm="Question?"        styled confirm dialog (works with or without data-ajax)
- *   data-ajax-remove=".selector"    remove the closest matching row/card on success
- *   data-ajax-refresh="#a, #b"      re-fetch the current page and swap only those regions
- *   data-ajax-reset                 reset the form after success
- *   data-ajax-follow                go to the redirect URL the server returned
- *   data-ajax-saved="Saved"         (favorites) turn the heart solid + change the label
- *
- * Lists (pagination + search/filter without reload)
- *   <div id="x" data-ajax-list> ... table + pager ... </div>
- *   <form data-ajax-filter="#x" method="GET" action="...">   search / filter form
- *   Links inside .pagination / .ml-pagination / [data-ajax-nav] load via AJAX.
- *
- * Every feature falls back to a normal page load when JavaScript is off.
- */
 (() => {
     'use strict';
     if (window.MLAjax) return;
@@ -27,7 +8,6 @@
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const csrf = () => $('meta[name="csrf-token"]')?.content || '';
 
-    /* ---------- Toast ---------- */
     function toast(message, type = 'success') {
         if (!message) return;
         let box = $('#ml-toasts');
@@ -40,13 +20,12 @@
         const el = document.createElement('div');
         el.className = 'ml-toast ml-toast-' + type;
         el.setAttribute('role', type === 'error' ? 'alert' : 'status');
-        el.textContent = message; // textContent: never inject server text as HTML
+        el.textContent = message;
         box.appendChild(el);
         requestAnimationFrame(() => el.classList.add('is-in'));
         setTimeout(() => { el.classList.remove('is-in'); setTimeout(() => el.remove(), 250); }, type === 'error' ? 6000 : 3500);
     }
 
-    /* ---------- Confirm dialog ---------- */
     function confirmDialog(message) {
         return new Promise(resolve => {
             const overlay = document.createElement('div');
@@ -72,7 +51,6 @@
         });
     }
 
-    /* ---------- Helpers ---------- */
     const firstError = d => (d && d.errors ? Object.values(d.errors).flat()[0] : null);
 
     function errorFor(status, data) {
@@ -121,7 +99,6 @@
         return new DOMParser().parseFromString(await res.text(), 'text/html');
     }
 
-    /* ---------- Region refresh ---------- */
     async function refreshRegions(selectors, url = location.href) {
         try {
             const doc = await fetchDoc(url);
@@ -134,7 +111,6 @@
         }
     }
 
-    /* ---------- AJAX lists (pagination + filters) ---------- */
     const controllers = new WeakMap();
 
     async function loadList(list, url, { push = true, scroll = true } = {}) {
@@ -184,7 +160,6 @@
         });
     }
 
-    /* ---------- Form success handling ---------- */
     function markSaved(form) {
         const btn = $('button', form);
         if (!btn) return;
@@ -207,7 +182,6 @@
         await sleep(reduced ? 0 : 200);
         el.remove();
         if (!list) return;
-        // Re-fetch the list so ids, counts, the pager and the empty state stay correct.
         const url = new URL(location.href);
         const page = parseInt(url.searchParams.get('page') || '1', 10);
         if (list.querySelectorAll(selector).length === 0 && page > 1) {
@@ -261,7 +235,6 @@
         }
     }
 
-    /* ---------- Event delegation (survives DOM swaps) ---------- */
     document.addEventListener('submit', async event => {
         const form = event.target;
         if (!(form instanceof HTMLFormElement)) return;
@@ -286,7 +259,7 @@
             await sendForm(form, submitter);
             delete form.dataset.mlSending;
         } else {
-            HTMLFormElement.prototype.submit.call(form); // plain form that only wanted a confirm
+            HTMLFormElement.prototype.submit.call(form);
         }
     });
 
@@ -303,7 +276,6 @@
         loadList(list, href);
     });
 
-    // Live search (debounced) and instant filters
     const timers = new WeakMap();
     document.addEventListener('input', event => {
         const form = event.target.closest?.('form[data-ajax-filter]');

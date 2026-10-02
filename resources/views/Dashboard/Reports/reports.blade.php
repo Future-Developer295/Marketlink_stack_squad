@@ -151,7 +151,6 @@
                 </form>
 
 
-                {{-- TOP EXPORT --}}
                 <details class="export-dropdown">
 
                     <summary class="btn-ghost" style="height:38px;">
@@ -334,7 +333,6 @@
 
                                     <div class="export-dropdown-menu">
 
-                                        {{-- PDF --}}
                                         <a
                                             href="{{ route('report_download', [
                                                 'id' => $report->id,
@@ -350,7 +348,6 @@
                                         </a>
 
 
-                                        {{-- EXCEL --}}
                                         <a
                                             href="{{ route('report_download', [
                                                 'id' => $report->id,

@@ -1,5 +1,4 @@
 <div>
-    <!-- Generate API Token -->
     <x-form-section submit="createApiToken">
         <x-slot name="title">
             {{ __('Create API Token') }}
@@ -10,14 +9,12 @@
         </x-slot>
 
         <x-slot name="form">
-            <!-- Token Name -->
             <div class="col-span-6 sm:col-span-4">
                 <x-label for="name" value="{{ __('Token Name') }}" />
                 <x-input id="name" type="text" class="mt-1 block w-full" wire:model="createApiTokenForm.name" autofocus />
                 <x-input-error for="name" class="mt-2" />
             </div>
 
-            <!-- Token Permissions -->
             @if (Laravel\Jetstream\Jetstream::hasPermissions())
                 <div class="col-span-6">
                     <x-label for="permissions" value="{{ __('Permissions') }}" />
@@ -48,7 +45,6 @@
     @if ($this->user->tokens->isNotEmpty())
         <x-section-border />
 
-        <!-- Manage API Tokens -->
         <div class="mt-10 sm:mt-0">
             <x-action-section>
                 <x-slot name="title">
@@ -59,7 +55,6 @@
                     {{ __('You may delete any of your existing tokens if they are no longer needed.') }}
                 </x-slot>
 
-                <!-- API Token List -->
                 <x-slot name="content">
                     <div class="space-y-6">
                         @foreach ($this->user->tokens->sortBy('name') as $token)
@@ -93,7 +88,6 @@
         </div>
     @endif
 
-    <!-- Token Value Modal -->
     <x-dialog-modal wire:model.live="displayingToken">
         <x-slot name="title">
             {{ __('API Token') }}
@@ -118,7 +112,6 @@
         </x-slot>
     </x-dialog-modal>
 
-    <!-- API Token Permissions Modal -->
     <x-dialog-modal wire:model.live="managingApiTokenPermissions">
         <x-slot name="title">
             {{ __('API Token Permissions') }}
@@ -146,7 +139,6 @@
         </x-slot>
     </x-dialog-modal>
 
-    <!-- Delete Token Confirmation Modal -->
     <x-confirmation-modal wire:model.live="confirmingApiTokenDeletion">
         <x-slot name="title">
             {{ __('Delete API Token') }}

@@ -20,7 +20,6 @@ class ContactMessageMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            // Reply goes straight to the person who filled in the form.
             replyTo: [new Address($this->contact->email, $this->contact->full_name)],
             subject: '[MarketLink Contact] '.$this->contact->subject,
         );

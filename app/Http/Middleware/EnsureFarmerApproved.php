@@ -6,10 +6,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * A farmer can use the dashboard only after an admin approved the account.
- * Pending / rejected farmers are sent to the status page instead.
- */
 class EnsureFarmerApproved
 {
     public function handle(Request $request, Closure $next): Response

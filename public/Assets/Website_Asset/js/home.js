@@ -134,9 +134,6 @@
         }
     };
 
-    /*
-     * Hero animation loader finish hone ke baad start hogi.
-     */
     window.addEventListener(
         'marketlink:loader-finished',
         startHeroMotion
@@ -147,9 +144,6 @@
         syncMotion();
     });
 
-    /*
-     * Swiper
-     */
     if (!window.Swiper) {
         return;
     }
@@ -217,9 +211,6 @@
         }
     }
 
-    /*
-     * Reviews
-     */
     const reviewElement = document.querySelector(
         '.home-review-slider'
     );
